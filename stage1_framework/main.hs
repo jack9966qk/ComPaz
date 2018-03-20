@@ -33,4 +33,4 @@ main = do
                     die ("Syntax error:\n" ++ show error)
                 Right ast -> do
                     putStrLn "AST result:"
-                    putStrLn (astPrettyShow ast)
+                    pprintProgram ast
