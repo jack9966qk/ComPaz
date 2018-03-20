@@ -32,5 +32,5 @@ main = do
                 Left error ->
                     die ("Syntax error:\n" ++ show error)
                 Right ast -> do
-                    putStrLn "AST result:"
+                    putStrLn "AST result:\n\n======================"
                     pprintProgram ast
