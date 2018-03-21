@@ -597,6 +597,7 @@ parseStartSymbol =
             )
 
 type ASTProgram = (ASTIdentifier, ASTVariableDeclarationPart, ASTProcedureDeclarationPart, ASTCompoundStatement)
+-- type ASTProgram = (ASTIdentifier, ASTVariableDeclarationPart, ASTProcedureDeclarationPart, ASTUnsignedConstant)
 parseProgram :: Parser ASTProgram
 parseProgram =
     trace
@@ -635,12 +636,61 @@ parseProcedureDeclarationPart =
             )
 
 -- your code starts here
+type ASTUnsignedConstant = UnsignedConstantDenoter
+data UnsignedConstantDenoter =
+    UnsignedNumberDenoter ASTUnsignedNumber |
+    CharacterStringDenoter ASTCharacterString
+    deriving(Show)
+parseUnsignedConstantDenoter :: Parser ASTUnsignedConstant
+parseUnsignedConstantDenoter =
+    trace
+        "parseUnsignedConstantDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            x <-
+                                parseUnsignedNumber
+                            return (UnsignedNumberDenoter x)
+                        ),
+                    do
+                        x <-
+                            parseCharacterString
+                        return (CharacterStringDenoter x)
+                ]
+        )
+
+type ASTUnsignedNumber = UnsignedNumberDenoter
+data UnsignedNumberDenoter =
+    UnsignedIntegerDenoter ASTUnsignedInteger |
+    UnsignedRealDenoter ASTUnsignedReal
+    deriving(Show)
+parseUnsignedNumber :: Parser ASTUnsignedNumber
+parseUnsignedNumber =
+    trace
+        "parseUnsignedNumber"
+    (
+        choice
+            [
+                try (
+                    do
+                        x <-
+                            parseUnsignedInteger
+                        return (UnsignedIntegerDenoter x)
+                    ),
+                do
+                    x <-
+                        parseUnsignedReal
+                    return (UnsignedRealDenoter x)
+            ]
+    )
 
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = ()
+type ASTCompoundStatement = (ASTUnsignedConstant)
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -648,35 +698,38 @@ parseCompoundStatement =
         (
             do
                 parseTokenBegin
-                many (
-                    try (
-                        parseSkipLexicalToken
-                        )
-                    )
+                -- many (
+                    -- try (
+                        -- parseSkipLexicalToken
+                x0 <- parseUnsignedConstantDenoter
+                        -- parseUnsignedConstantDenoter
+                        -- )
+                    -- )
                 parseTokenEnd
+                return x0
             )
 
-type ASTSkipLexicalToken = ()
-parseSkipLexicalToken :: Parser ASTSkipLexicalToken
-parseSkipLexicalToken =
-    trace
-        "parseSkipLexicalToken"
-        (
-            choice
-                [
-                    try (
-                        parseCompoundStatement
-                        ),
-                    void (
-                        satisfy (
-                            \x ->
-                                case x of
-                                    LTEnd -> False
-                                    _ -> True
-                            )
-                        )
-                    ]
-            )
+-- type ASTSkipLexicalToken = ()
+-- parseSkipLexicalToken :: Parser ASTSkipLexicalToken
+-- parseSkipLexicalToken =
+    -- trace
+        -- "parseSkipLexicalToken"
+        -- (
+            -- choice
+                -- [
+                    -- try (
+                        -- parseCompoundStatement
+                        -- ),
+                    -- void (
+                        -- satisfy (
+                            -- \x ->
+                                -- case x of
+                                    -- LTEnd -> False
+                                    -- _ -> True
+                            -- )
+                        -- )
+                    -- ]
+            -- )
 
 -- your code ends here
 
