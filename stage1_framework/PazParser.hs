@@ -619,6 +619,7 @@ parseProgram =
             )
 
 type ASTProcedureDeclarationPart = [ASTProcedureDeclaration]
+-- type ASTProcedureDeclarationPart = ()
 parseProcedureDeclarationPart :: Parser ASTProcedureDeclarationPart
 parseProcedureDeclarationPart =
     trace
@@ -690,7 +691,7 @@ parseUnsignedNumber =
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = (ASTUnsignedConstant)
+type ASTCompoundStatement = [ASTUnsignedConstant]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -698,16 +699,20 @@ parseCompoundStatement =
         (
             do
                 parseTokenBegin
-                -- many (
-                    -- try (
-                        -- parseSkipLexicalToken
-                x0 <- parseUnsignedConstantDenoter
-                        -- parseUnsignedConstantDenoter
-                        -- )
-                    -- )
+                x0 <- many
+                    (
+                        try (
+                            do
+                                -- parseSkipLexicalToken
+                                -- x0 <-
+                                parseUnsignedConstantDenoter
+                                -- parseUnsignedConstantDenoter
+                                -- return x0
+                            )
+                    )
                 parseTokenEnd
                 return x0
-            )
+        )
 
 -- type ASTSkipLexicalToken = ()
 -- parseSkipLexicalToken :: Parser ASTSkipLexicalToken
