@@ -637,31 +637,6 @@ parseProcedureDeclarationPart =
             )
 
 -- your code starts here
-type ASTUnsignedConstant = UnsignedConstantDenoter
-data UnsignedConstantDenoter =
-    UnsignedNumberDenoter ASTUnsignedNumber |
-    CharacterStringDenoter ASTCharacterString
-    deriving(Show)
-parseUnsignedConstantDenoter :: Parser ASTUnsignedConstant
-parseUnsignedConstantDenoter =
-    trace
-        "parseUnsignedConstantDenoter"
-        (
-            choice
-                [
-                    try (
-                        do
-                            x <-
-                                parseUnsignedNumber
-                            return (UnsignedNumberDenoter x)
-                        ),
-                    do
-                        x <-
-                            parseCharacterString
-                        return (CharacterStringDenoter x)
-                ]
-        )
-
 type ASTUnsignedNumber = UnsignedNumberDenoter
 data UnsignedNumberDenoter =
     UnsignedIntegerDenoter ASTUnsignedInteger |
@@ -687,11 +662,62 @@ parseUnsignedNumber =
             ]
     )
 
+type ASTUnsignedConstant = UnsignedConstantDenoter
+data UnsignedConstantDenoter =
+    UnsignedNumberDenoter ASTUnsignedNumber |
+    CharacterStringDenoter ASTCharacterString
+    deriving(Show)
+parseUnsignedConstantDenoter :: Parser ASTUnsignedConstant
+parseUnsignedConstantDenoter =
+    trace
+        "parseUnsignedConstantDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            x <-
+                                parseUnsignedNumber
+                            return (UnsignedNumberDenoter x)
+                        ),
+                    do
+                        x <-
+                            parseCharacterString
+                        return (CharacterStringDenoter x)
+                ]
+        )
+
+type ASTFactor = FactorDenoter
+data FactorDenoter =
+    UnsignedConstantDenoter ASTUnsignedConstant -- |
+    -- VariableAccessDenoter ASTVariableAccess |
+    -- ExpressionDenoter ASTExpression
+    deriving(Show)
+parseFactor =
+    trace
+        "parseFactor"
+        (
+            -- choice
+                -- [
+                    try (
+                        do
+                            x <-
+                                parseUnsignedConstantDenoter
+                            return (UnsignedConstantDenoter x)
+                        ) -- ,
+                    -- do
+                        -- x <-
+                            -- parse
+                        -- return (x)
+                -- ]
+        )
+
+
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = [ASTUnsignedConstant]
+type ASTCompoundStatement = [ASTFactor]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -704,10 +730,7 @@ parseCompoundStatement =
                         try (
                             do
                                 -- parseSkipLexicalToken
-                                -- x0 <-
-                                parseUnsignedConstantDenoter
-                                -- parseUnsignedConstantDenoter
-                                -- return x0
+                                parseFactor
                             )
                     )
                 parseTokenEnd
