@@ -26,8 +26,8 @@
    [ ]  |   [ ]   | factor
    [x]  |   [x]   | unsigned_constant
    [x]  |   [x]   | unsigned_number
-   [ ]  |   [ ]   | variable_access
-   [ ]  |   [ ]   | indexed_variable
+   [x]  |   [x]   | variable_access
+   [x]  |   [x]   | indexed_variable
    [x]  |   [x]   | procedure_declaration
    [x]  |   [x]   | formal_parameter_list
    [x]  |   [x]   | formal_parameter_section
@@ -72,8 +72,8 @@
    [x]   | GREATER_THAN
    [x]   | LEFT_BRACKET
    [x]   | RIGHT_BRACKET
-   [ ]   | character_string
-   [ ]   | SINGLE_QUOTE
+   [x]   | character_string
+   [x]   | SINGLE_QUOTE
    [ ]   | string_element
    [x]   | identifier
    [x]   | unsigned_integer
