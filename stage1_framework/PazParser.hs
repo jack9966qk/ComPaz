@@ -690,10 +690,11 @@ parseUnsignedConstantDenoter =
 type ASTFactor = FactorDenoter
 data FactorDenoter =
     UnsignedConstantDenoter ASTUnsignedConstant |
-    VariableAccessDenoter ASTIdentifier -- |
+    VariableAccessDenoter ASTVariableAccess -- |
     -- ExpressionDenoter ASTExpression
     deriving(Show)
-parseFactor =
+parseFactorDenoter :: Parser ASTFactor
+parseFactorDenoter =
     trace
         "parseFactor"
         (
@@ -707,12 +708,54 @@ parseFactor =
                         ),
                     do
                         x <-
-                            parseIdentifier 
+                            parseVariableAccess 
                         return (VariableAccessDenoter x)
                 ]
         )
 
+type ASTIndexedVariable = (ASTIdentifier, ASTFactor)
+parseIndexedVariable :: Parser ASTIndexedVariable
+parseIndexedVariable =
+    trace
+        "parseIndexedVariable"
+        (
+            try (
+                do
+                    x0 <-
+                        parseIdentifier
+                    parseTokenLeftBracket
+                    x1 <- parseFactorDenoter
+                    parseTokenRightBracket
+                    return (x0, x1)
+                )
+        )
 
+type ASTVariableAccess = VariableAccessDenoter
+data VariableAccessDenoter =
+    IndexedVariableDenoter ASTIndexedVariable |
+    IdentifierDenoter ASTIdentifier
+    deriving(Show)
+parseVariableAccess :: Parser VariableAccessDenoter
+parseVariableAccess =
+    trace
+        "parseVariableAccess"
+        (
+            choice
+                [
+                    try (
+                        do
+                            x <-
+                                parseIndexedVariable
+                            return (IndexedVariableDenoter x)
+                        ),
+                    do
+                        x <-
+                            parseIdentifier
+                        return (IdentifierDenoter x)
+                ]
+        )
+
+ 
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
@@ -730,7 +773,7 @@ parseCompoundStatement =
                         try (
                             do
                                 -- parseSkipLexicalToken
-                                parseFactor
+                                parseFactorDenoter
                             )
                     )
                 parseTokenEnd
