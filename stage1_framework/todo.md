@@ -6,7 +6,7 @@
 --------|---------|------------------------------
    [x]  |   [x]   | start_symbol
    [x]  |   [x]   | program
-   [x]  |   [ ]   | procedure_declaration_part
+   [x]  |   [x]   | procedure_declaration_part
    [ ]  |   [ ]   | statement
    [ ]  |   [ ]   | empty_statement
    [ ]  |   [ ]   | assignment_statement
@@ -28,18 +28,18 @@
    [ ]  |   [ ]   | unsigned_number
    [ ]  |   [ ]   | variable_access
    [ ]  |   [ ]   | indexed_variable
-   [x]  |   [ ]   | procedure_declaration
-   [x]  |   [ ]   | formal_parameter_list
-   [x]  |   [ ]   | formal_parameter_section
-   [x]  |   [ ]   | identifier_list
+   [x]  |   [x]   | procedure_declaration
+   [x]  |   [x]   | formal_parameter_list
+   [x]  |   [x]   | formal_parameter_section
+   [x]  |   [x]   | identifier_list
    [x]  |   [x]   | variable_declaration_part
-   [x]  |   [ ]   | variable_declaration
-   [x]  |   [ ]   | type_denoter
-   [x]  |   [ ]   | type_identifier
-   [x]  |   [ ]   | array_type
-   [x]  |   [ ]   | subrange_type
-   [x]  |   [ ]   | constant
-   [x]  |   [ ]   | sign
+   [x]  |   [x]   | variable_declaration
+   [x]  |   [x]   | type_denoter
+   [x]  |   [x]   | type_identifier
+   [x]  |   [x]   | array_type
+   [x]  |   [x]   | subrange_type
+   [x]  |   [x]   | constant
+   [x]  |   [x]   | sign
 
 
 ## Tokens
@@ -49,39 +49,39 @@
    [ ]   | start_symbol
    [ ]   | WHITESPACE
    [ ]   | COMMENT
-   [ ]   | LEFT_BRACE
-   [ ]   | RIGHT_BRACE
+   [x]   | LEFT_BRACE
+   [x]   | RIGHT_BRACE
    [ ]   | lexical_token
-   [ ]   | LEFT_PARENTHESIS
-   [ ]   | RIGHT_PARENTHESIS
-   [ ]   | TIMES
-   [ ]   | PLUS
-   [ ]   | COMMA
-   [ ]   | MINUS
-   [ ]   | ELLIPSIS
+   [x]   | LEFT_PARENTHESIS
+   [x]   | RIGHT_PARENTHESIS
+   [x]   | TIMES
+   [x]   | PLUS
+   [x]   | COMMA
+   [x]   | MINUS
+   [x]   | ELLIPSIS
    [x]   | DOT
-   [ ]   | DIVIDE_BY
-   [ ]   | ASSIGN
-   [ ]   | COLON
+   [x]   | DIVIDE_BY
+   [x]   | ASSIGN
+   [x]   | COLON
    [x]   | SEMICOLON
-   [ ]   | LESS_THAN_OR_EQUAL
-   [ ]   | NOT_EQUAL
-   [ ]   | LESS_THAN
-   [ ]   | EQUAL
-   [ ]   | GREATER_THAN_OR_EQUAL
-   [ ]   | GREATER_THAN
-   [ ]   | LEFT_BRACKET
-   [ ]   | RIGHT_BRACKET
+   [x]   | LESS_THAN_OR_EQUAL
+   [x]   | NOT_EQUAL
+   [x]   | LESS_THAN
+   [x]   | EQUAL
+   [x]   | GREATER_THAN_OR_EQUAL
+   [x]   | GREATER_THAN
+   [x]   | LEFT_BRACKET
+   [x]   | RIGHT_BRACKET
    [ ]   | character_string
    [ ]   | SINGLE_QUOTE
    [ ]   | string_element
    [ ]   | identifier
-   [ ]   | unsigned_integer
+   [x]   | unsigned_integer
    [ ]   | digit_sequence
    [ ]   | unsigned_real
    [ ]   | E
    [ ]   | scale_factor
-   [ ]   | sign
+   [x]   | sign
    [x]   | AND
    [x]   | ARRAY
    [x]   | BEGIN
