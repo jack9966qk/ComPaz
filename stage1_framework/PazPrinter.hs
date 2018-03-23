@@ -24,7 +24,10 @@ import PazParser (
     ASTUnsignedNumber,
     UnsignedNumberDenoter(..),
     ASTFactor,
-    FactorDenoter(..)
+    FactorDenoter(..),
+    ASTVariableAccess,
+    VariableAccessDenoter(..),
+    ASTIndexedVariable
     )
 
 import PazLexer (
@@ -241,8 +244,24 @@ pprintFactor obj@(_, denoter) =
     case denoter of
         UnsignedConstantDenoter c
             -> pprintUnsignedConstant $ replace obj c
-        -- VariableAccessDenoter v ->
+        VariableAccessDenoter v
+            -> pprintVariableAccess $ replace obj v
         -- ExpressionDenoter e ->
+
+pprintVariableAccess :: PprintObj ASTVariableAccess -> IO ()
+pprintVariableAccess obj@(_, denoter) =
+    case denoter of
+        IndexedVariableDenoter i
+            -> pprintIndexedVariable $ replace obj i
+        IdentifierDenoter i
+            -> pprintIdentifier $ replace obj i
+
+pprintIndexedVariable :: PprintObj ASTIndexedVariable -> IO ()
+pprintIndexedVariable obj@(_, (id, factor)) = do
+    pprintIdentifier $ replace obj id
+    pprintTokenLeftBracket $ empty obj
+    pprintFactor $ replace obj factor
+    pprintTokenRightBracket $ empty obj
 
 pprintUnsignedConstant :: PprintObj ASTUnsignedConstant -> IO ()
 pprintUnsignedConstant obj@(_, denoter) =
@@ -276,7 +295,10 @@ pprintScaleFactor obj@(_, (maybeSign, seq)) = do
     putStr seq
 
 pprintCharacterString :: PprintObj ASTCharacterString -> IO ()
-pprintCharacterString (_, s) = putStr s
+pprintCharacterString obj@(_, s) = do
+    pprintTokenSingleQuote $ empty obj
+    putStr s
+    pprintTokenSingleQuote $ empty obj
 
 -- Tokens
 
@@ -333,6 +355,9 @@ pprintTokenE _ = putStr "E"
 
 pprintTokenEqual :: PprintObj () -> IO ()
 pprintTokenEqual _ = putStr "="
+
+pprintTokenSingleQuote :: PprintObj () -> IO ()
+pprintTokenSingleQuote _ = putStr "'"
 
 pprintTokenGreaterThanOrEqual :: PprintObj () -> IO ()
 pprintTokenGreaterThanOrEqual _ = putStr ">="
