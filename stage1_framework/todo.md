@@ -6,7 +6,7 @@
 --------|---------|------------------------------
    [x]  |   [x]   | start_symbol
    [x]  |   [x]   | program
-   [x]  |   [ ]   | procedure_declaration_part
+   [x]  |   [x]   | procedure_declaration_part
    [ ]  |   [ ]   | statement
    [ ]  |   [ ]   | empty_statement
    [ ]  |   [ ]   | assignment_statement
@@ -28,9 +28,9 @@
    [ ]  |   [ ]   | unsigned_number
    [ ]  |   [ ]   | variable_access
    [ ]  |   [ ]   | indexed_variable
-   [x]  |   [ ]   | procedure_declaration
-   [x]  |   [ ]   | formal_parameter_list
-   [x]  |   [ ]   | formal_parameter_section
+   [x]  |   [x]   | procedure_declaration
+   [x]  |   [x]   | formal_parameter_list
+   [x]  |   [x]   | formal_parameter_section
    [x]  |   [x]   | identifier_list
    [x]  |   [x]   | variable_declaration_part
    [x]  |   [x]   | variable_declaration

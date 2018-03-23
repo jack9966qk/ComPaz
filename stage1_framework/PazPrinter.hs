@@ -15,7 +15,10 @@ import PazParser (
     ASTSubrangeType,
     ASTConstant,
     ASTSign,
-    Sign(..)
+    Sign(..),
+    ASTProcedureDeclaration,
+    ASTFormalParameterList,
+    ASTFormalParameterSection
     )
 
 import PazLexer (
@@ -26,18 +29,7 @@ import PazLexer (
 type IndentationLvl = Int
 type PprintObj a = (IndentationLvl, a)
 
-printSepBy :: IO () -> [IO ()] -> IO ()
-printSepBy _ [] = return ()
-printSepBy _ [x] = x
-printSepBy sep (x:y:zs) =
-    x >> sep >> (printSepBy sep (y:zs))
-
-printIndentation :: Int -> IO ()
-printIndentation 0 = return ()
-printIndentation n = (putStr "    ") >> (printIndentation (n-1))
-
-pprintLineBreak :: PprintObj () -> IO ()
-pprintLineBreak (lvl, _) = (putStr "\n") >> (printIndentation lvl)
+-- Helper functions
 
 replace :: PprintObj a -> b -> PprintObj b
 replace (lvl, _) x = (lvl, x)
@@ -51,8 +43,23 @@ levelUp (lvl, x) = (lvl + 1, x)
 ast :: PprintObj a -> a
 ast (_, x) = x
 
+printSepBy :: IO () -> [IO ()] -> IO ()
+printSepBy _ [] = return ()
+printSepBy _ [x] = x
+printSepBy sep (x:y:zs) =
+    x >> sep >> (printSepBy sep (y:zs))
+
+printIndentation :: IndentationLvl -> IO ()
+printIndentation 0 = return ()
+printIndentation n = (putStr "    ") >> (printIndentation (n-1))
+
+pprintLineBreak :: PprintObj () -> IO ()
+pprintLineBreak (lvl, _) = (putStr "\n") >> (printIndentation lvl)
+
 printSpace :: IO ()
 printSpace = putStr " "
+
+-- Program
 
 pprintProgram :: ASTProgram -> IO ()
 pprintProgram prog = pprintProgram' (0, prog)
@@ -73,6 +80,7 @@ pprintProgram' obj@(lvl, (id, var, pro, com)) = do
     pprintTokenDot e
 
 
+-- Variable declaration part
 
 pprintVariableDeclarationPart :: PprintObj ASTVariableDeclarationPart -> IO ()
 pprintVariableDeclarationPart (_, Nothing) = return ()
@@ -150,8 +158,53 @@ pprintSign obj@(_, sign) = case sign of
 pprintUnsignedInteger :: PprintObj ASTUnsignedInteger -> IO ()
 pprintUnsignedInteger (_, x) = putStr x
 
+-- Procedure declaration part
+
 pprintProcedureDeclarationPart :: PprintObj ASTProcedureDeclarationPart -> IO ()
-pprintProcedureDeclarationPart _ = putStr "[TODO] Procedure Declaration part"
+pprintProcedureDeclarationPart obj = do
+    let decls = ast obj
+    let pprintDecl d = (do
+        pprintProcedureDeclaration $ replace obj d
+        pprintTokenSemicolon $ empty obj)
+    printSepBy (pprintLineBreak $ empty obj) (map pprintDecl decls)
+
+pprintProcedureDeclaration :: PprintObj ASTProcedureDeclaration -> IO ()
+pprintProcedureDeclaration obj = do
+    let e = empty obj
+    let (id, maybeParamList, var, com) = ast obj
+    pprintTokenProcedure e
+    printSpace
+    pprintIdentifier $ replace obj id
+    case maybeParamList of
+        Just paramList  -> pprintFormalParameterList $ replace obj paramList
+        Nothing         -> return ()
+    pprintTokenSemicolon e
+    pprintLineBreak e
+    pprintVariableDeclarationPart $ replace obj var
+    pprintLineBreak e
+    pprintCompondStatement $ replace obj com
+
+pprintFormalParameterList :: PprintObj ASTFormalParameterList -> IO ()
+pprintFormalParameterList obj@(_, (p, ps)) = do
+    let e = empty obj
+    let pList = p:ps
+    let printParamSec p = pprintFormalParameterSection $ replace obj p
+    pprintTokenLeftParenthesis e
+    printSepBy (pprintTokenSemicolon e >> printSpace) (map printParamSec pList)
+    pprintTokenRightParenthesis e
+
+pprintFormalParameterSection :: PprintObj ASTFormalParameterSection -> IO ()
+pprintFormalParameterSection obj@(_, (bool, idList, typeDenoter)) = do
+    let e = empty obj
+    case bool of
+        True    -> (pprintTokenVar e >> printSpace)
+        False   -> return ()
+    pprintIdentifierList $ replace obj idList
+    pprintTokenColon e
+    printSpace
+    pprintTypeDenoter $ replace obj typeDenoter
+
+-- Compound statement
 
 pprintCompondStatement :: PprintObj ASTCompoundStatement -> IO ()
 pprintCompondStatement _ = putStr "[TODO] Compound Statement"
