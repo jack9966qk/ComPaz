@@ -689,27 +689,27 @@ parseUnsignedConstantDenoter =
 
 type ASTFactor = FactorDenoter
 data FactorDenoter =
-    UnsignedConstantDenoter ASTUnsignedConstant -- |
-    -- VariableAccessDenoter ASTVariableAccess |
+    UnsignedConstantDenoter ASTUnsignedConstant |
+    VariableAccessDenoter ASTIdentifier -- |
     -- ExpressionDenoter ASTExpression
     deriving(Show)
 parseFactor =
     trace
         "parseFactor"
         (
-            -- choice
-                -- [
+            choice
+                [
                     try (
                         do
                             x <-
                                 parseUnsignedConstantDenoter
                             return (UnsignedConstantDenoter x)
-                        ) -- ,
-                    -- do
-                        -- x <-
-                            -- parse
-                        -- return (x)
-                -- ]
+                        ),
+                    do
+                        x <-
+                            parseIdentifier 
+                        return (VariableAccessDenoter x)
+                ]
         )
 
 
