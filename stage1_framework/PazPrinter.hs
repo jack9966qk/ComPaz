@@ -18,12 +18,21 @@ import PazParser (
     Sign(..),
     ASTProcedureDeclaration,
     ASTFormalParameterList,
-    ASTFormalParameterSection
+    ASTFormalParameterSection,
+    ASTUnsignedConstant,
+    UnsignedConstantDenoter(..),
+    ASTUnsignedNumber,
+    UnsignedNumberDenoter(..)
     )
 
 import PazLexer (
     ASTIdentifier,
-    ASTUnsignedInteger
+    ASTUnsignedInteger,
+    ASTUnsignedReal,
+    ASTScaleFactor,
+    ASTCharacterString,
+    ASTSign,
+    Sign(..)
     )
 
 type IndentationLvl = Int
@@ -48,6 +57,10 @@ printSepBy _ [] = return ()
 printSepBy _ [x] = x
 printSepBy sep (x:y:zs) =
     x >> sep >> (printSepBy sep (y:zs))
+
+printMaybe :: Maybe a -> (a -> IO ()) -> IO ()
+printMaybe Nothing _ = return ()
+printMaybe (Just a) f = f a
 
 printIndentation :: IndentationLvl -> IO ()
 printIndentation 0 = return ()
@@ -145,15 +158,19 @@ pprintSubrangeType obj@(_, (c1, c2)) = do
 
 pprintConstant :: PprintObj ASTConstant -> IO ()
 pprintConstant obj@(_, (maybeSign, unsignedInt)) = do
-    case maybeSign of
-        Just sign -> pprintSign $ replace obj sign
-        Nothing   -> return ()
+    printMaybe maybeSign (\s -> pprintParserSign $ replace obj s)
     pprintUnsignedInteger $ replace obj unsignedInt
 
-pprintSign :: PprintObj ASTSign -> IO ()
-pprintSign obj@(_, sign) = case sign of
-    SignPlus    -> pprintTokenPlus $ empty obj
-    SignMinus   -> pprintTokenMinus $ empty obj
+-- have to define two functions for ASTSign in PazParser and PazLexer
+pprintParserSign :: PprintObj PazParser.ASTSign -> IO ()
+pprintParserSign obj@(_, sign) = case sign of
+    PazParser.SignPlus    -> pprintTokenPlus $ empty obj
+    PazParser.SignMinus   -> pprintTokenMinus $ empty obj
+
+pprintLexerSign :: PprintObj PazLexer.ASTSign -> IO ()
+pprintLexerSign obj@(_, sign) = case sign of
+    PazLexer.SignPlus    -> pprintTokenPlus $ empty obj
+    PazLexer.SignMinus   -> pprintTokenMinus $ empty obj
 
 pprintUnsignedInteger :: PprintObj ASTUnsignedInteger -> IO ()
 pprintUnsignedInteger (_, x) = putStr x
@@ -175,9 +192,7 @@ pprintProcedureDeclaration obj = do
     pprintTokenProcedure e
     printSpace
     pprintIdentifier $ replace obj id
-    case maybeParamList of
-        Just paramList  -> pprintFormalParameterList $ replace obj paramList
-        Nothing         -> return ()
+    printMaybe maybeParamList (\l -> pprintFormalParameterList $ replace obj l)
     pprintTokenSemicolon e
     pprintLineBreak e
     pprintVariableDeclarationPart $ replace obj var
@@ -207,7 +222,51 @@ pprintFormalParameterSection obj@(_, (bool, idList, typeDenoter)) = do
 -- Compound statement
 
 pprintCompondStatement :: PprintObj ASTCompoundStatement -> IO ()
-pprintCompondStatement _ = putStr "[TODO] Compound Statement"
+pprintCompondStatement obj@(_, consts) = do
+    let e = empty obj
+    let o2 = levelUp obj
+    let e2 = levelUp e
+    let pprintConst c = pprintUnsignedConstant $ replace o2 c
+    pprintTokenBegin e
+    pprintLineBreak e2
+    -- placeholder: assume compound statement = [unsigned_constant]
+    printSepBy printSpace (map pprintConst consts)
+    pprintLineBreak e
+    pprintTokenEnd e
+
+pprintUnsignedConstant :: PprintObj ASTUnsignedConstant -> IO ()
+pprintUnsignedConstant obj@(_, denoter) =
+    case denoter of
+        UnsignedNumberDenoter n
+            -> pprintUnsignedNumber $ replace obj n
+        CharacterStringDenoter c
+            -> pprintCharacterString $ replace obj c
+
+pprintUnsignedNumber :: PprintObj ASTUnsignedNumber -> IO ()
+pprintUnsignedNumber obj@(_, denoter) = 
+    case denoter of
+        UnsignedIntegerDenoter i
+            -> pprintUnsignedInteger $ replace obj i
+        UnsignedRealDenoter r
+            -> pprintUnsignedReal $ replace obj r
+
+pprintUnsignedReal :: PprintObj ASTUnsignedReal -> IO ()
+pprintUnsignedReal obj@(_, (seq, maybeSeq, maybeScale)) = do
+    putStr seq
+    printMaybe maybeSeq (\s -> do
+        pprintTokenDot $ empty obj
+        putStr s)
+    printMaybe maybeScale (\s -> do
+        pprintTokenE $ empty obj
+        pprintScaleFactor $ replace obj s)
+
+pprintScaleFactor :: PprintObj ASTScaleFactor -> IO ()
+pprintScaleFactor obj@(_, (maybeSign, seq)) = do
+    printMaybe maybeSign (\s -> pprintLexerSign $ replace obj s)
+    putStr seq
+
+pprintCharacterString :: PprintObj ASTCharacterString -> IO ()
+pprintCharacterString (_, s) = putStr s
 
 -- Tokens
 
@@ -258,6 +317,9 @@ pprintTokenNotEqual _ = putStr "<>"
 
 pprintTokenLessThan :: PprintObj () -> IO ()
 pprintTokenLessThan _ = putStr "<"
+
+pprintTokenE :: PprintObj () -> IO ()
+pprintTokenE _ = putStr "E"
 
 pprintTokenEqual :: PprintObj () -> IO ()
 pprintTokenEqual _ = putStr "="

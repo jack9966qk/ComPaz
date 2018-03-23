@@ -24,8 +24,8 @@
    [ ]  |   [ ]   | term
    [ ]  |   [ ]   | multiplying_operator
    [ ]  |   [ ]   | factor
-   [ ]  |   [ ]   | unsigned_constant
-   [ ]  |   [ ]   | unsigned_number
+   [x]  |   [x]   | unsigned_constant
+   [x]  |   [x]   | unsigned_number
    [ ]  |   [ ]   | variable_access
    [ ]  |   [ ]   | indexed_variable
    [x]  |   [x]   | procedure_declaration
@@ -75,12 +75,12 @@
    [ ]   | character_string
    [ ]   | SINGLE_QUOTE
    [ ]   | string_element
-   [ ]   | identifier
+   [x]   | identifier
    [x]   | unsigned_integer
-   [ ]   | digit_sequence
-   [ ]   | unsigned_real
-   [ ]   | E
-   [ ]   | scale_factor
+   [x]   | digit_sequence
+   [x]   | unsigned_real
+   [x]   | E
+   [x]   | scale_factor
    [x]   | sign
    [x]   | AND
    [x]   | ARRAY
