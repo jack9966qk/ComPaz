@@ -22,7 +22,9 @@ import PazParser (
     ASTUnsignedConstant,
     UnsignedConstantDenoter(..),
     ASTUnsignedNumber,
-    UnsignedNumberDenoter(..)
+    UnsignedNumberDenoter(..),
+    ASTFactor,
+    FactorDenoter(..)
     )
 
 import PazLexer (
@@ -222,17 +224,25 @@ pprintFormalParameterSection obj@(_, (bool, idList, typeDenoter)) = do
 -- Compound statement
 
 pprintCompondStatement :: PprintObj ASTCompoundStatement -> IO ()
-pprintCompondStatement obj@(_, consts) = do
+pprintCompondStatement obj@(_, factors) = do
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
-    let pprintConst c = pprintUnsignedConstant $ replace o2 c
+    let pprintFac f = pprintFactor $ replace obj f
     pprintTokenBegin e
     pprintLineBreak e2
     -- placeholder: assume compound statement = [unsigned_constant]
-    printSepBy printSpace (map pprintConst consts)
+    printSepBy printSpace (map pprintFac factors)
     pprintLineBreak e
     pprintTokenEnd e
+
+pprintFactor :: PprintObj ASTFactor -> IO ()
+pprintFactor obj@(_, denoter) =
+    case denoter of
+        UnsignedConstantDenoter c
+            -> pprintUnsignedConstant $ replace obj c
+        -- VariableAccessDenoter v ->
+        -- ExpressionDenoter e ->
 
 pprintUnsignedConstant :: PprintObj ASTUnsignedConstant -> IO ()
 pprintUnsignedConstant obj@(_, denoter) =
