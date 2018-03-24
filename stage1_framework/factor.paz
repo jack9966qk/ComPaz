@@ -1,7 +1,6 @@
 program p;
 
 begin
-    a[2]
-    0 1.1 abc 'abc'
+    a[2] 0 1.1 abc 'abc' (3)
 
 end.
