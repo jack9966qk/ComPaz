@@ -691,7 +691,8 @@ type ASTFactor = FactorDenoter
 data FactorDenoter =
     UnsignedConstantDenoter ASTUnsignedConstant |
     VariableAccessDenoter ASTVariableAccess |
-    ExpressionDenoter ASTFactor
+    ExpressionDenoter ASTFactor |
+    NegatedFactorDenoter ASTFactor
     deriving(Show)
 parseFactorDenoter :: Parser ASTFactor
 parseFactorDenoter =
@@ -712,12 +713,19 @@ parseFactorDenoter =
                                 parseVariableAccess 
                             return (VariableAccessDenoter x)
                         ),
+                    try (
+                        do
+                            parseTokenLeftParenthesis
+                            x <-
+                                parseFactorDenoter
+                            parseTokenRightParenthesis
+                            return (ExpressionDenoter x)
+                        ),
                     do
-                        parseTokenLeftParenthesis
+                        parseTokenNot
                         x <-
                             parseFactorDenoter
-                        parseTokenRightParenthesis
-                        return (ExpressionDenoter x)
+                        return (NegatedFactorDenoter x)
                 ]
         )
 
