@@ -246,7 +246,17 @@ pprintFactor obj@(_, denoter) =
             -> pprintUnsignedConstant $ replace obj c
         VariableAccessDenoter v
             -> pprintVariableAccess $ replace obj v
-        -- ExpressionDenoter e ->
+        ExpressionDenoter e
+            -> (do
+                pprintTokenLeftParenthesis $ empty obj
+                -- placeholder: assume expression to be factor
+                pprintFactor $ replace obj e
+                pprintTokenRightParenthesis $ empty obj)
+        NegatedFactorDenoter f
+            -> (do
+                pprintTokenNot $ empty obj
+                printSpace
+                pprintFactor $ replace obj f)
 
 pprintVariableAccess :: PprintObj ASTVariableAccess -> IO ()
 pprintVariableAccess obj@(_, denoter) =
