@@ -691,7 +691,7 @@ type ASTFactor = FactorDenoter
 data FactorDenoter =
     UnsignedConstantDenoter ASTUnsignedConstant |
     VariableAccessDenoter ASTVariableAccess |
-    ExpressionDenoter ASTFactor |
+    ExpressionDenoter ASTTerm |
     NegatedFactorDenoter ASTFactor
     deriving(Show)
 parseFactorDenoter :: Parser ASTFactor
@@ -717,7 +717,7 @@ parseFactorDenoter =
                         do
                             parseTokenLeftParenthesis
                             x <-
-                                parseFactorDenoter
+                                parseTerm
                             parseTokenRightParenthesis
                             return (ExpressionDenoter x)
                         ),
@@ -772,12 +772,78 @@ parseVariableAccess =
                 ]
         )
 
+type ASTMultiplyingOperator = MultiplyingOperatorDenoter
+data MultiplyingOperatorDenoter =
+    TimesDenoter |
+    DivideByDenoter |
+    DivDenoter |
+    AndDenoter 
+    deriving(Show)
+parseMultiplyingOperatorDenoter :: Parser MultiplyingOperatorDenoter
+parseMultiplyingOperatorDenoter  =
+    trace
+        "parseMultiplyingOperator"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenTimes 
+                            return TimesDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenDivideBy
+                            return DivideByDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenDiv
+                            return DivDenoter
+                        ),
+                    do
+                        parseTokenAnd
+                        return AndDenoter
+                ]
+        )
  
+type ASTPostTermModifier = (MultiplyingOperatorDenoter, FactorDenoter)
+parsePostTermModifier :: Parser ASTPostTermModifier 
+parsePostTermModifier =
+    trace
+        "parsePostTermModifier"
+            try (
+                do
+                    x0 <-
+                        parseMultiplyingOperatorDenoter
+                    x1 <-
+                        parseFactorDenoter
+                    return (x0, x1)
+            )
+
+type ASTTerm = (ASTFactor, (Maybe ASTPostTermModifier))
+parseTerm :: Parser ASTTerm
+parseTerm =
+    trace
+        "parseTerm"
+            try (
+                do
+                    x0 <-
+                        parseFactorDenoter
+                    x1 <-
+                        optionMaybe (
+                            try (
+                                parsePostTermModifier
+                                )
+                            )
+                    return (x0, x1)
+            )
+
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = [ASTFactor]
+type ASTCompoundStatement = [ASTTerm]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -790,7 +856,7 @@ parseCompoundStatement =
                         try (
                             do
                                 -- parseSkipLexicalToken
-                                parseFactorDenoter
+                                parseTerm
                             )
                     )
                 parseTokenEnd

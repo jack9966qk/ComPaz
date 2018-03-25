@@ -1,6 +1,6 @@
 program p;
 
 begin
-    a[2] 0 1.1 abc 'abc' not (3)
+    a[2] / 0 (1.1 * abc) AND ('abc' div not (3))
 
 end.
