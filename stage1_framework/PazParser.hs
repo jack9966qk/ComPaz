@@ -691,7 +691,7 @@ type ASTFactor = FactorDenoter
 data FactorDenoter =
     UnsignedConstantDenoter ASTUnsignedConstant |
     VariableAccessDenoter ASTVariableAccess |
-    ExpressionDenoter ASTTerm |
+    ExpressionDenoter ASTSimpleExpression |
     NegatedFactorDenoter ASTFactor
     deriving(Show)
 parseFactorDenoter :: Parser ASTFactor
@@ -717,7 +717,7 @@ parseFactorDenoter =
                         do
                             parseTokenLeftParenthesis
                             x <-
-                                parseTerm
+                                parseSimpleExpression
                             parseTokenRightParenthesis
                             return (ExpressionDenoter x)
                         ),
@@ -807,11 +807,11 @@ parseMultiplyingOperatorDenoter  =
                 ]
         )
  
-type ASTPostTermModifier = (MultiplyingOperatorDenoter, FactorDenoter)
-parsePostTermModifier :: Parser ASTPostTermModifier 
-parsePostTermModifier =
+type ASTPostFactorModifier = (MultiplyingOperatorDenoter, FactorDenoter)
+parsePostFactorModifier :: Parser ASTPostFactorModifier 
+parsePostFactorModifier =
     trace
-        "parsePostTermModifier"
+        "parsePostFactorModifier"
             try (
                 do
                     x0 <-
@@ -821,7 +821,7 @@ parsePostTermModifier =
                     return (x0, x1)
             )
 
-type ASTTerm = (ASTFactor, (Maybe ASTPostTermModifier))
+type ASTTerm = (ASTFactor, (Maybe ASTPostFactorModifier))
 parseTerm :: Parser ASTTerm
 parseTerm =
     trace
@@ -833,17 +833,84 @@ parseTerm =
                     x1 <-
                         optionMaybe (
                             try (
-                                parsePostTermModifier
+                                parsePostFactorModifier
                                 )
                             )
                     return (x0, x1)
+            )
+
+type ASTAddingOperator = AddingOperatorDenoter
+data AddingOperatorDenoter =
+    PlusDenoter |
+    MinusDenoter |
+    OrDenoter
+    deriving(Show)
+parseAddingOperatorDenoter :: Parser AddingOperatorDenoter
+parseAddingOperatorDenoter  =
+    trace
+        "parseAddingOperator"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenPlus
+                            return PlusDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenMinus
+                            return MinusDenoter
+                        ),
+                    do
+                        parseTokenOr
+                        return OrDenoter
+                ]
+        )
+ 
+type ASTPostTermModifier = (AddingOperatorDenoter, ASTTerm)
+parsePostTermModifier :: Parser ASTPostTermModifier 
+parsePostTermModifier =
+    trace
+        "parseTermModifier"
+            try (
+                do
+                    x0 <-
+                        parseAddingOperatorDenoter
+                    x1 <-
+                        parseTerm
+                    return (x0, x1)
+            )
+
+type ASTSimpleExpression = ((Maybe ASTSign), ASTTerm, (Maybe ASTPostTermModifier))
+parseSimpleExpression :: Parser ASTSimpleExpression  
+parseSimpleExpression =
+    trace
+        "parseSimpleExpression"
+            try (
+                do
+                    x0 <-
+                        optionMaybe (
+                            try (
+                                parseSign
+                                )
+                            )
+                    x1 <-
+                        parseTerm
+                    x2 <-
+                        optionMaybe (
+                            try (
+                                parsePostTermModifier
+                                )
+                            )
+                    return (x0, x1, x2)
             )
 
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = [ASTTerm]
+type ASTCompoundStatement = [ASTSimpleExpression]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -856,7 +923,7 @@ parseCompoundStatement =
                         try (
                             do
                                 -- parseSkipLexicalToken
-                                parseTerm
+                                parseSimpleExpression
                             )
                     )
                 parseTokenEnd
