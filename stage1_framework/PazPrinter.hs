@@ -290,8 +290,7 @@ pprintTerm obj@(_, (factor, modifiers)) = do
         printSpace
         pprintFactor $ replace obj fac)
     pprintFactor $ replace obj factor
-    -- printSpace
-    printSepBy (printSpace) (map pprintModifier modifiers)
+    printSepBy (return ()) (map pprintModifier modifiers)
 
 pprintMultiplyingOperator :: PprintObj ASTMultiplyingOperator -> IO ()
 pprintMultiplyingOperator obj@(_, denoter) =
