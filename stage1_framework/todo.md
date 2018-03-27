@@ -19,8 +19,8 @@
    [ ]  |   [ ]   | for_statement
    [ ]  |   [ ]   | expression
    [ ]  |   [ ]   | relational_operator
-   [ ]  |   [ ]   | simple_expression
-   [ ]  |   [ ]   | adding_operator
+   [x]  |   [x]   | simple_expression
+   [x]  |   [x]   | adding_operator
    [x]  |   [x]   | term
    [x]  |   [x]   | multiplying_operator
    [ ]  |   [ ]   | factor
