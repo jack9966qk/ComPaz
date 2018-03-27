@@ -821,7 +821,7 @@ parsePostFactorModifier =
                     return (x0, x1)
             )
 
-type ASTTerm = (ASTFactor, (Maybe ASTPostFactorModifier))
+type ASTTerm = (ASTFactor, [ASTPostFactorModifier])
 parseTerm :: Parser ASTTerm
 parseTerm =
     trace
@@ -831,7 +831,7 @@ parseTerm =
                     x0 <-
                         parseFactorDenoter
                     x1 <-
-                        optionMaybe (
+                        many (
                             try (
                                 parsePostFactorModifier
                                 )
@@ -882,7 +882,7 @@ parsePostTermModifier =
                     return (x0, x1)
             )
 
-type ASTSimpleExpression = ((Maybe ASTSign), ASTTerm, (Maybe ASTPostTermModifier))
+type ASTSimpleExpression = ((Maybe ASTSign), ASTTerm, [ASTPostTermModifier])
 parseSimpleExpression :: Parser ASTSimpleExpression  
 parseSimpleExpression =
     trace
@@ -898,7 +898,7 @@ parseSimpleExpression =
                     x1 <-
                         parseTerm
                     x2 <-
-                        optionMaybe (
+                        many (
                             try (
                                 parsePostTermModifier
                                 )
