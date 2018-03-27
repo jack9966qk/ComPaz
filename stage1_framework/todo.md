@@ -21,8 +21,8 @@
    [ ]  |   [ ]   | relational_operator
    [ ]  |   [ ]   | simple_expression
    [ ]  |   [ ]   | adding_operator
-   [ ]  |   [ ]   | term
-   [ ]  |   [ ]   | multiplying_operator
+   [x]  |   [x]   | term
+   [x]  |   [x]   | multiplying_operator
    [ ]  |   [ ]   | factor
    [x]  |   [x]   | unsigned_constant
    [x]  |   [x]   | unsigned_number

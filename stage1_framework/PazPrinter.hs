@@ -27,7 +27,10 @@ import PazParser (
     FactorDenoter(..),
     ASTVariableAccess,
     VariableAccessDenoter(..),
-    ASTIndexedVariable
+    ASTIndexedVariable,
+    ASTTerm,
+    ASTMultiplyingOperator,
+    MultiplyingOperatorDenoter(..)
     )
 
 import PazLexer (
@@ -227,15 +230,15 @@ pprintFormalParameterSection obj@(_, (bool, idList, typeDenoter)) = do
 -- Compound statement
 
 pprintCompondStatement :: PprintObj ASTCompoundStatement -> IO ()
-pprintCompondStatement obj@(_, factors) = do
+pprintCompondStatement obj@(_, terms) = do
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
-    let pprintFac f = pprintFactor $ replace obj f
+    let pTerm f = pprintTerm $ replace obj f
     pprintTokenBegin e
     pprintLineBreak e2
-    -- placeholder: assume compound statement = [unsigned_constant]
-    printSepBy printSpace (map pprintFac factors)
+    -- placeholder: assume compound statement = [terms]
+    printSepBy printSpace (map pTerm terms)
     pprintLineBreak e
     pprintTokenEnd e
 
@@ -249,14 +252,31 @@ pprintFactor obj@(_, denoter) =
         ExpressionDenoter e
             -> (do
                 pprintTokenLeftParenthesis $ empty obj
-                -- placeholder: assume expression to be factor
-                pprintFactor $ replace obj e
+                -- placeholder: assume expression to be term
+                pprintTerm $ replace obj e
                 pprintTokenRightParenthesis $ empty obj)
         NegatedFactorDenoter f
             -> (do
                 pprintTokenNot $ empty obj
                 printSpace
                 pprintFactor $ replace obj f)
+
+pprintTerm :: PprintObj ASTTerm -> IO ()
+pprintTerm obj@(_, (factor, maybeMore)) = do
+    pprintFactor $ replace obj factor
+    printMaybe maybeMore (\(mult, fac) -> do
+        printSpace
+        pprintMultiplyingOperator $ replace obj mult
+        printSpace
+        pprintFactor $ replace obj fac)
+
+pprintMultiplyingOperator :: PprintObj ASTMultiplyingOperator -> IO ()
+pprintMultiplyingOperator obj@(_, denoter) =
+    case denoter of
+        TimesDenoter    -> pprintTokenTimes $ empty obj
+        DivideByDenoter -> pprintTokenDivideBy $ empty obj
+        DivDenoter      -> pprintTokenDiv $ empty obj
+        AndDenoter      -> pprintTokenAnd $ empty obj
 
 pprintVariableAccess :: PprintObj ASTVariableAccess -> IO ()
 pprintVariableAccess obj@(_, denoter) =
