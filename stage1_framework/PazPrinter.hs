@@ -30,7 +30,10 @@ import PazParser (
     ASTIndexedVariable,
     ASTTerm,
     ASTMultiplyingOperator,
-    MultiplyingOperatorDenoter(..)
+    MultiplyingOperatorDenoter(..),
+    ASTSimpleExpression,
+    ASTAddingOperator,
+    AddingOperatorDenoter(..)
     )
 
 import PazLexer (
@@ -234,13 +237,31 @@ pprintCompondStatement obj@(_, terms) = do
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
-    let pTerm f = pprintTerm $ replace obj f
+    let pExp f = pprintSimpleExpression $ replace obj f
     pprintTokenBegin e
     pprintLineBreak e2
-    -- placeholder: assume compound statement = [terms]
-    printSepBy printSpace (map pTerm terms)
+    -- placeholder: assume compound statement = [simple expression]
+    printSepBy printSpace (map pExp terms)
     pprintLineBreak e
     pprintTokenEnd e
+
+pprintSimpleExpression :: PprintObj ASTSimpleExpression -> IO ()
+pprintSimpleExpression obj@(_, (maybeSign, term, modifiers)) = do
+    let printModifier (op, t) = (do
+        printSpace
+        pprintAddingOperator $ replace obj op
+        printSpace
+        pprintTerm $ replace obj t)
+    printMaybe maybeSign (\s -> pprintParserSign $ replace obj s)
+    pprintTerm $ replace obj term
+    printSepBy (return ()) (map printModifier modifiers)
+
+pprintAddingOperator :: PprintObj ASTAddingOperator -> IO ()
+pprintAddingOperator obj@(_, op) =
+    case op of
+        PlusDenoter    -> pprintTokenPlus $ empty obj
+        MinusDenoter   -> pprintTokenMinus $ empty obj
+        OrDenoter      -> pprintTokenOr $ empty obj
 
 pprintFactor :: PprintObj ASTFactor -> IO ()
 pprintFactor obj@(_, denoter) =
@@ -252,8 +273,8 @@ pprintFactor obj@(_, denoter) =
         ExpressionDenoter e
             -> (do
                 pprintTokenLeftParenthesis $ empty obj
-                -- placeholder: assume expression to be term
-                pprintTerm $ replace obj e
+                -- placeholder: assume expression to be simpleExpression
+                pprintSimpleExpression $ replace obj e
                 pprintTokenRightParenthesis $ empty obj)
         NegatedFactorDenoter f
             -> (do
@@ -262,13 +283,14 @@ pprintFactor obj@(_, denoter) =
                 pprintFactor $ replace obj f)
 
 pprintTerm :: PprintObj ASTTerm -> IO ()
-pprintTerm obj@(_, (factor, maybeMore)) = do
-    pprintFactor $ replace obj factor
-    printMaybe maybeMore (\(mult, fac) -> do
+pprintTerm obj@(_, (factor, modifiers)) = do
+    let pprintModifier (mult, fac) = (do
         printSpace
         pprintMultiplyingOperator $ replace obj mult
         printSpace
         pprintFactor $ replace obj fac)
+    pprintFactor $ replace obj factor
+    printSepBy (return ()) (map pprintModifier modifiers)
 
 pprintMultiplyingOperator :: PprintObj ASTMultiplyingOperator -> IO ()
 pprintMultiplyingOperator obj@(_, denoter) =
