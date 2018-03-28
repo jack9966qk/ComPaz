@@ -697,7 +697,7 @@ data FactorDenoter =
 parseFactorDenoter :: Parser ASTFactor
 parseFactorDenoter =
     trace
-        "parseFactor"
+        "parseFactorDenoter"
         (
             choice
                 [
@@ -782,7 +782,7 @@ data MultiplyingOperatorDenoter =
 parseMultiplyingOperatorDenoter :: Parser MultiplyingOperatorDenoter
 parseMultiplyingOperatorDenoter  =
     trace
-        "parseMultiplyingOperator"
+        "parseMultiplyingOperatorDenoter"
         (
             choice
                 [
@@ -848,7 +848,7 @@ data AddingOperatorDenoter =
 parseAddingOperatorDenoter :: Parser AddingOperatorDenoter
 parseAddingOperatorDenoter  =
     trace
-        "parseAddingOperator"
+        "parseAddingOperatorDenoter"
         (
             choice
                 [
@@ -906,11 +906,90 @@ parseSimpleExpression =
                     return (x0, x1, x2)
             )
 
+type ASTRelationalOperator = RelationalOperatorDenoter
+data RelationalOperatorDenoter =
+    EqualDenoter |
+    NotEqualDenoter |
+    LessThanDenoter |
+    GreaterThanDenoter |
+    LessThanOrEqualDenoter |
+    GreaterThanOrEqualDenoter
+    deriving(Show)
+parseRelationalOperatorDenoter :: Parser RelationalOperatorDenoter
+parseRelationalOperatorDenoter  =
+    trace
+        "parseRelationalOperatorDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenEqual
+                            return EqualDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenNotEqual
+                            return NotEqualDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenLessThan
+                            return LessThanDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenGreaterThan
+                            return GreaterThanDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenLessThanOrEqual
+                            return LessThanOrEqualDenoter
+                        ),
+                    do
+                        parseTokenGreaterThanOrEqual
+                        return GreaterThanOrEqualDenoter
+                ]
+        )
+
+type ASTPostSimpleExpressionModifier = (RelationalOperatorDenoter, ASTSimpleExpression)
+parsePostSimpleExpressionModifier :: Parser ASTPostSimpleExpressionModifier 
+parsePostSimpleExpressionModifier =
+    trace
+        "parseSimpleExpressionModifier"
+            try (
+                do
+                    x0 <-
+                        parseRelationalOperatorDenoter
+                    x1 <-
+                        parseSimpleExpression
+                    return (x0, x1)
+            )
+
+type ASTExpression = (ASTSimpleExpression, (Maybe ASTPostSimpleExpressionModifier))
+parseExpression :: Parser ASTExpression  
+parseExpression =
+    trace
+        "parseExpression"
+            try (
+                do
+                    x0 <-
+                        parseSimpleExpression
+                    x1 <-
+                        optionMaybe (
+                            try (
+                                parsePostSimpleExpressionModifier
+                                )
+                            )
+                    return (x0, x1)
+            )
+
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = [ASTSimpleExpression]
+type ASTCompoundStatement = [ASTExpression]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -923,7 +1002,7 @@ parseCompoundStatement =
                         try (
                             do
                                 -- parseSkipLexicalToken
-                                parseSimpleExpression
+                                parseExpression
                             )
                     )
                 parseTokenEnd

@@ -1,6 +1,8 @@
 program p;
 
 begin
-    (1 + a[2] * b - 'c') / 0 or (1.1 * abc) AND ('abc' div not (3))
+    a = (1 + a[2] * b - 'c') / 0 or (1.1 * abc) AND ('abc' div not (3))
+    b <> c b < c b > c b <= c b >= c
+    b
 
 end.
