@@ -36,7 +36,10 @@ import PazParser (
     AddingOperatorDenoter(..),
     ASTExpression,
     ASTRelationalOperator,
-    RelationalOperatorDenoter(..)
+    RelationalOperatorDenoter(..),
+    ASTAssignmentStatement,
+    ASTLvalue,
+    LvalueDenoter(..)
     )
 
 import PazLexer (
@@ -98,12 +101,12 @@ pprintProgram' obj@(lvl, (id, var, pro, com)) = do
     pprintTokenProgram e
     printSpace
     pprintIdentifier $ replace obj id
-    printSepBy (lineBreak >> lineBreak) [
-        pprintTokenSemicolon e,
-        pprintVariableDeclarationPart $ replace obj var,
-        pprintProcedureDeclarationPart $ replace obj pro,
-        pprintCompondStatement $ replace obj com
-        ]
+    pprintTokenSemicolon e
+    lineBreak
+    lineBreak
+    pprintVariableDeclarationPart $ replace obj var
+    pprintProcedureDeclarationPart $ replace obj pro
+    pprintCompondStatement $ replace obj com
     pprintTokenDot e
 
 
@@ -121,6 +124,8 @@ pprintVariableDeclarationPart obj@(lvl, Just (decl, moreDecl)) = do
     pprintTokenVar e
     pprintLineBreak e2
     printSepBy (pprintLineBreak e2) (map pprintDecl decls)
+    pprintLineBreak e
+    pprintLineBreak e
 
 pprintVariableDeclaration :: PprintObj ASTVariableDeclaration -> IO ()
 pprintVariableDeclaration obj = do
@@ -198,6 +203,11 @@ pprintProcedureDeclarationPart obj = do
         pprintProcedureDeclaration $ replace obj d
         pprintTokenSemicolon $ empty obj)
     printSepBy (pprintLineBreak $ empty obj) (map pprintDecl decls)
+    if length decls /= 0
+        then (do
+            pprintLineBreak $ empty obj
+            pprintLineBreak $ empty obj)
+        else return ()
 
 pprintProcedureDeclaration :: PprintObj ASTProcedureDeclaration -> IO ()
 pprintProcedureDeclaration obj = do
@@ -240,12 +250,25 @@ pprintCompondStatement obj@(_, terms) = do
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
-    let pExp f = pprintExpression $ replace obj f
+    let pStatement s = pprintAssignmentStatement $ replace obj s
     pprintTokenBegin e
     pprintLineBreak e2
-    printSepBy printSpace (map pExp terms)
+    -- placeholder: assume compound statement to be [assignment statement]
+    printSepBy (pprintLineBreak e2) (map pStatement terms)
     pprintLineBreak e
     pprintTokenEnd e
+
+pprintAssignmentStatement :: PprintObj ASTAssignmentStatement -> IO ()
+pprintAssignmentStatement obj@(_, (lval, expr)) = do
+    case lval of
+        LvalueVariableAccessDenoter var
+            -> pprintVariableAccess $ replace obj var
+        LvalueIdentifierDenoter id
+            -> pprintIdentifier $ replace obj id
+    printSpace
+    pprintTokenAssign $ empty obj
+    printSpace
+    pprintExpression $ replace obj expr
 
 pprintExpression :: PprintObj ASTExpression -> IO ()
 pprintExpression obj@(_, (simpleExp, maybeModifier)) = do
@@ -301,8 +324,7 @@ pprintFactor obj@(_, denoter) =
         ExpressionDenoter e
             -> (do
                 pprintTokenLeftParenthesis $ empty obj
-                -- placeholder: assume expression to be simpleExpression
-                pprintSimpleExpression $ replace obj e
+                pprintExpression $ replace obj e
                 pprintTokenRightParenthesis $ empty obj)
         NegatedFactorDenoter f
             -> (do
