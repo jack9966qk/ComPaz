@@ -39,7 +39,11 @@ import PazParser (
     RelationalOperatorDenoter(..),
     ASTAssignmentStatement,
     ASTLvalue,
-    LvalueDenoter(..)
+    LvalueDenoter(..),
+    ASTStatement,
+    ASTStatementDenoter(..),
+    ASTProcedureStatement,
+    ASTActualParameterList
     )
 
 import PazLexer (
@@ -250,7 +254,7 @@ pprintCompondStatement obj@(_, terms) = do
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
-    let pStatement s = pprintAssignmentStatement $ replace obj s
+    let pStatement s = pprintStatement $ replace obj s
     pprintTokenBegin e
     pprintLineBreak e2
     -- placeholder: assume compound statement to be [assignment statement]
@@ -258,6 +262,31 @@ pprintCompondStatement obj@(_, terms) = do
     pprintLineBreak e
     pprintTokenEnd e
 
+pprintStatement :: PprintObj ASTStatement -> IO ()
+pprintStatement obj@(_, stmt) =
+    case stmt of
+        AssignmentStatementDenoter s
+            -> pprintAssignmentStatement $ replace obj s
+        ProcedureStatementDenoter s
+            -> pprintProcedureStatement $ replace obj s
+
+
+pprintProcedureStatement :: PprintObj ASTProcedureStatement -> IO ()
+pprintProcedureStatement obj@(_, (id, maybeParamList)) = do
+    pprintIdentifier $ replace obj id
+    printMaybe maybeParamList (\l ->
+        pprintActualParameterList $ replace obj l)
+
+pprintActualParameterList :: PprintObj ASTActualParameterList -> IO ()
+pprintActualParameterList obj@(_, expressions) = do
+    let pprintExpr e = pprintExpression $ replace obj e
+    let printSep = (do
+        pprintTokenComma $ empty obj
+        printSpace)
+    pprintTokenLeftParenthesis $ empty obj
+    printSepBy printSep (map pprintExpr expressions)
+    pprintTokenRightParenthesis $ empty obj
+    
 pprintAssignmentStatement :: PprintObj ASTAssignmentStatement -> IO ()
 pprintAssignmentStatement obj@(_, (lval, expr)) = do
     case lval of
