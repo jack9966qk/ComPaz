@@ -101,12 +101,12 @@ pprintProgram' obj@(lvl, (id, var, pro, com)) = do
     pprintTokenProgram e
     printSpace
     pprintIdentifier $ replace obj id
-    printSepBy (lineBreak >> lineBreak) [
-        pprintTokenSemicolon e,
-        pprintVariableDeclarationPart $ replace obj var,
-        pprintProcedureDeclarationPart $ replace obj pro,
-        pprintCompondStatement $ replace obj com
-        ]
+    pprintTokenSemicolon e
+    lineBreak
+    lineBreak
+    pprintVariableDeclarationPart $ replace obj var
+    pprintProcedureDeclarationPart $ replace obj pro
+    pprintCompondStatement $ replace obj com
     pprintTokenDot e
 
 
@@ -124,6 +124,8 @@ pprintVariableDeclarationPart obj@(lvl, Just (decl, moreDecl)) = do
     pprintTokenVar e
     pprintLineBreak e2
     printSepBy (pprintLineBreak e2) (map pprintDecl decls)
+    pprintLineBreak e
+    pprintLineBreak e
 
 pprintVariableDeclaration :: PprintObj ASTVariableDeclaration -> IO ()
 pprintVariableDeclaration obj = do
@@ -201,6 +203,11 @@ pprintProcedureDeclarationPart obj = do
         pprintProcedureDeclaration $ replace obj d
         pprintTokenSemicolon $ empty obj)
     printSepBy (pprintLineBreak $ empty obj) (map pprintDecl decls)
+    if length decls /= 0
+        then (do
+            pprintLineBreak $ empty obj
+            pprintLineBreak $ empty obj)
+        else return ()
 
 pprintProcedureDeclaration :: PprintObj ASTProcedureDeclaration -> IO ()
 pprintProcedureDeclaration obj = do
