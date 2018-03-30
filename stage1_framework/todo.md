@@ -9,21 +9,21 @@
    [x]  |   [x]   | procedure_declaration_part
    [ ]  |   [ ]   | statement
    [ ]  |   [ ]   | empty_statement
-   [ ]  |   [ ]   | assignment_statement
-   [ ]  |   [ ]   | procedure_statement
-   [ ]  |   [ ]   | actual_parameter_list
+   [x]  |   [x]   | assignment_statement
+   [x]  |   [x]   | procedure_statement
+   [x]  |   [x]   | actual_parameter_list
    [ ]  |   [ ]   | compound_statement
    [ ]  |   [ ]   | statement_sequence
    [ ]  |   [ ]   | if_statement
    [ ]  |   [ ]   | while_statement
    [ ]  |   [ ]   | for_statement
-   [ ]  |   [ ]   | expression
-   [ ]  |   [ ]   | relational_operator
+   [x]  |   [x]   | expression
+   [x]  |   [x]   | relational_operator
    [x]  |   [x]   | simple_expression
    [x]  |   [x]   | adding_operator
    [x]  |   [x]   | term
    [x]  |   [x]   | multiplying_operator
-   [ ]  |   [ ]   | factor
+   [x]  |   [x]   | factor
    [x]  |   [x]   | unsigned_constant
    [x]  |   [x]   | unsigned_number
    [x]  |   [x]   | variable_access
