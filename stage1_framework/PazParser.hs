@@ -710,7 +710,7 @@ parseFactorDenoter =
                     try (
                         do
                             x <-
-                                parseVariableAccess 
+                                parseVariableAccessDenoter
                             return (VariableAccessDenoter x)
                         ),
                     try (
@@ -752,10 +752,10 @@ data VariableAccessDenoter =
     IndexedVariableDenoter ASTIndexedVariable |
     IdentifierDenoter ASTIdentifier
     deriving(Show)
-parseVariableAccess :: Parser VariableAccessDenoter
-parseVariableAccess =
+parseVariableAccessDenoter :: Parser VariableAccessDenoter
+parseVariableAccessDenoter =
     trace
-        "parseVariableAccess"
+        "parseVariableAccessDenoter"
         (
             choice
                 [
@@ -984,6 +984,29 @@ parseExpression =
                             )
                     return (x0, x1)
             )
+
+type ASTLvalue = LvalueDenoter
+data LvalueDenoter =
+    LvalueVariableAccessDenoter VariableAccessDenoter |
+    LvalueIdentifierDenoter ASTIdentifier
+    deriving(Show)
+parseLvalueDenoter  :: Parser ASTLvalue
+parseLvalueDenoter =
+    trace
+        "parseLvalueDenoter"
+            choice
+                [
+                    try (
+                        do
+                            x0 <-
+                                parseVariableAccessDenoter
+                            return (LvalueVariableAccessDenoter x0)
+                        ),
+                    do
+                        x0 <-
+                            parseIdentifier
+                        return (LvalueIdentifierDenoter x0)
+                ]
 
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
