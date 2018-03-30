@@ -33,7 +33,10 @@ import PazParser (
     MultiplyingOperatorDenoter(..),
     ASTSimpleExpression,
     ASTAddingOperator,
-    AddingOperatorDenoter(..)
+    AddingOperatorDenoter(..),
+    ASTExpression,
+    ASTRelationalOperator,
+    RelationalOperatorDenoter(..)
     )
 
 import PazLexer (
@@ -237,13 +240,38 @@ pprintCompondStatement obj@(_, terms) = do
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
-    let pExp f = pprintSimpleExpression $ replace obj f
+    let pExp f = pprintExpression $ replace obj f
     pprintTokenBegin e
     pprintLineBreak e2
-    -- placeholder: assume compound statement = [simple expression]
     printSepBy printSpace (map pExp terms)
     pprintLineBreak e
     pprintTokenEnd e
+
+pprintExpression :: PprintObj ASTExpression -> IO ()
+pprintExpression obj@(_, (simpleExp, maybeModifier)) = do
+    pprintSimpleExpression $ replace obj simpleExp
+    printMaybe maybeModifier (\(op, simpleExp) -> do
+        printSpace
+        pprintRelationalOperator $ replace obj op
+        printSpace
+        pprintSimpleExpression $ replace obj simpleExp
+        )
+
+pprintRelationalOperator :: PprintObj ASTRelationalOperator -> IO ()
+pprintRelationalOperator obj@(_, op) =
+    case op of
+        EqualDenoter
+            -> pprintTokenEqual $ empty obj
+        NotEqualDenoter
+            -> pprintTokenNotEqual $ empty obj
+        LessThanDenoter
+            -> pprintTokenLessThan $ empty obj
+        GreaterThanDenoter
+            -> pprintTokenGreaterThan $ empty obj
+        LessThanOrEqualDenoter
+            -> pprintTokenLessThanOrEqual $ empty obj
+        GreaterThanOrEqualDenoter
+            -> pprintTokenGreaterThanOrEqual $ empty obj
 
 pprintSimpleExpression :: PprintObj ASTSimpleExpression -> IO ()
 pprintSimpleExpression obj@(_, (maybeSign, term, modifiers)) = do
