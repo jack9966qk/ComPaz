@@ -1023,11 +1023,84 @@ parseAssignmentStatement =
                     return (x0, x1)
             )
 
+parseNonPrimaryParameter :: Parser ASTExpression
+parseNonPrimaryParameter =
+    trace
+        "parseNonPrimaryParamater"
+            try (
+                do
+                    parseTokenComma
+                    x0 <-
+                        parseExpression
+                    return x0
+            )
+
+type ASTActualParameterList = [ASTExpression]
+parseActualParameterList :: Parser ASTActualParameterList
+parseActualParameterList =
+    trace
+        "parseActualParameterList"
+            try (
+                do
+                    parseTokenLeftParenthesis
+                    x0 <-
+                        parseExpression
+                    x1 <-
+                        many (
+                            try (
+                                parseNonPrimaryParameter
+                            )
+                        )
+                    parseTokenRightParenthesis
+                    return (x0:x1)
+            )
+
+type ASTProcedureStatement = (ASTIdentifier, (Maybe ASTActualParameterList))
+parseProcedureStatement :: Parser ASTProcedureStatement
+parseProcedureStatement =
+    trace
+        "parseProcedureStatement"
+            try (
+                do
+                    x0 <-
+                        parseIdentifier
+                    x1 <-
+                        optionMaybe (
+                            try (
+                                parseActualParameterList
+                                )
+                            )
+                    return (x0, x1)
+                )
+
+type ASTStatement = ASTStatementDenoter
+data ASTStatementDenoter =
+    AssignmentStatementDenoter ASTAssignmentStatement |
+    ProcedureStatementDenoter ASTProcedureStatement
+    deriving(Show)
+parseStatement :: Parser ASTStatement
+parseStatement =
+    trace
+        "parseStatement"
+            choice
+                [
+                    try (
+                        do
+                            x0 <-
+                                parseAssignmentStatement
+                            return (AssignmentStatementDenoter x0)
+                        ),
+                    do
+                        x0 <-
+                            parseProcedureStatement
+                        return (ProcedureStatementDenoter x0)
+                ]
+
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = [ASTAssignmentStatement]
+type ASTCompoundStatement = [ASTStatement]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -1040,7 +1113,7 @@ parseCompoundStatement =
                         try (
                             do
                                 -- parseSkipLexicalToken
-                                parseAssignmentStatement
+                                parseStatement
                             )
                     )
                 parseTokenEnd
