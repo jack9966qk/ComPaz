@@ -691,7 +691,7 @@ type ASTFactor = FactorDenoter
 data FactorDenoter =
     UnsignedConstantDenoter ASTUnsignedConstant |
     VariableAccessDenoter ASTVariableAccess |
-    ExpressionDenoter ASTSimpleExpression |
+    ExpressionDenoter ASTExpression |
     NegatedFactorDenoter ASTFactor
     deriving(Show)
 parseFactorDenoter :: Parser ASTFactor
@@ -717,7 +717,7 @@ parseFactorDenoter =
                         do
                             parseTokenLeftParenthesis
                             x <-
-                                parseSimpleExpression
+                                parseExpression
                             parseTokenRightParenthesis
                             return (ExpressionDenoter x)
                         ),
@@ -1008,11 +1008,26 @@ parseLvalueDenoter =
                         return (LvalueIdentifierDenoter x0)
                 ]
 
+type ASTAssignmentStatement = (ASTLvalue, ASTExpression)
+parseAssignmentStatement  :: Parser ASTAssignmentStatement
+parseAssignmentStatement =
+    trace
+        "parseAssignmentStatement"
+            try (
+                do
+                    x0 <-
+                        parseLvalueDenoter
+                    parseTokenAssign
+                    x1 <-
+                        parseExpression
+                    return (x0, x1)
+            )
+
 -- the following is a dummy implementation that you can delete
 -- the dummy implementation simply scans and skips tokens between BEGIN and
 -- END (it also skips anything that looks like a nested BEGIN and END block)
 
-type ASTCompoundStatement = [ASTExpression]
+type ASTCompoundStatement = [ASTAssignmentStatement]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
@@ -1025,7 +1040,7 @@ parseCompoundStatement =
                         try (
                             do
                                 -- parseSkipLexicalToken
-                                parseExpression
+                                parseAssignmentStatement
                             )
                     )
                 parseTokenEnd
