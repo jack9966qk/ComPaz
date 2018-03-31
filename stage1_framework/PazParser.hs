@@ -1096,9 +1096,36 @@ parseStatement =
                         return (ProcedureStatementDenoter x0)
                 ]
 
--- the following is a dummy implementation that you can delete
--- the dummy implementation simply scans and skips tokens between BEGIN and
--- END (it also skips anything that looks like a nested BEGIN and END block)
+type ASTNonPrimaryStatement = ASTStatement
+parseNonPrimaryStatement :: Parser ASTNonPrimaryStatement  
+parseNonPrimaryStatement =
+    trace
+        "parseNonPrimaryStatement"
+            try (
+                do
+                    parseTokenSemicolon
+                    x0 <-
+                        parseStatement
+                    return x0
+            )
+
+type ASTStatementSequence = [ASTStatement]
+parseStatementSequence :: Parser ASTStatementSequence 
+parseStatementSequence =
+    trace
+        "parseStatementSequence"
+            try (
+                do
+                    x0 <-
+                        parseStatement
+                    x1 <-
+                        many (
+                            try (
+                                parseNonPrimaryStatement
+                                )
+                            )
+                    return (x0:x1)
+            )
 
 type ASTCompoundStatement = [ASTStatement]
 parseCompoundStatement :: Parser ASTCompoundStatement
@@ -1106,18 +1133,15 @@ parseCompoundStatement =
     trace
         "parseCompoundStatement"
         (
-            do
-                parseTokenBegin
-                x0 <- many
-                    (
-                        try (
-                            do
-                                -- parseSkipLexicalToken
-                                parseStatement
-                            )
-                    )
-                parseTokenEnd
-                return x0
+            try (
+                do
+                    -- parseSkipLexicalToken
+                    parseTokenBegin
+                    x0 <-
+                        parseStatementSequence
+                    parseTokenEnd
+                    return x0
+                )
         )
 
 -- type ASTSkipLexicalToken = ()
