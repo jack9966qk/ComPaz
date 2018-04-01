@@ -225,7 +225,10 @@ pprintProcedureDeclarationPart obj = do
     let pprintDecl d = (do
         pprintProcedureDeclaration $ replace obj d
         pprintTokenSemicolon $ empty obj)
-    printSepBy (pprintLineBreak $ empty obj) (map pprintDecl decls)
+    let printSep = do
+        pprintLineBreak $ empty obj
+        pprintLineBreak $ empty obj
+    printSepBy printSep (map pprintDecl decls)
 
 pprintProcedureDeclaration :: PprintObj ASTProcedureDeclaration -> IO ()
 pprintProcedureDeclaration obj = do
@@ -308,11 +311,16 @@ pprintIfStatement obj@(_, (expr, stmt, maybeElse)) = do
     pprintExpression $ replace obj expr
     printSpace
     pprintTokenThen e
+    -- statement after "then"
+    pprintLineBreak e2
+    pprintStatement $ replace e2 stmt
+    -- optional "else" part
     printMaybe maybeElse (\s -> do
+        let e2' = levelUpIfNotCompound e s
         pprintLineBreak e
         pprintTokenElse e
-        pprintLineBreak e2
-        pprintStatement $ replace e2 s
+        pprintLineBreak e2'
+        pprintStatement $ replace e2' s
         )
 
 pprintWhileStatement :: PprintObj ASTWhileStatement -> IO ()
