@@ -7,16 +7,16 @@
    [x]  |   [x]   | start_symbol
    [x]  |   [x]   | program
    [x]  |   [x]   | procedure_declaration_part
-   [ ]  |   [ ]   | statement
-   [ ]  |   [ ]   | empty_statement
+   [x]  |   [x]   | statement
+   [x]  |   [x]   | empty_statement
    [x]  |   [x]   | assignment_statement
    [x]  |   [x]   | procedure_statement
    [x]  |   [x]   | actual_parameter_list
-   [ ]  |   [ ]   | compound_statement
-   [ ]  |   [ ]   | statement_sequence
-   [ ]  |   [ ]   | if_statement
-   [ ]  |   [ ]   | while_statement
-   [ ]  |   [ ]   | for_statement
+   [x]  |   [x]   | compound_statement
+   [x]  |   [x]   | statement_sequence
+   [x]  |   [x]   | if_statement
+   [x]  |   [x]   | while_statement
+   [x]  |   [x]   | for_statement
    [x]  |   [x]   | expression
    [x]  |   [x]   | relational_operator
    [x]  |   [x]   | simple_expression
@@ -46,12 +46,8 @@
 
  Printer | Token
 ---------|------------------------------
-   [ ]   | start_symbol
-   [ ]   | WHITESPACE
-   [ ]   | COMMENT
    [x]   | LEFT_BRACE
    [x]   | RIGHT_BRACE
-   [ ]   | lexical_token
    [x]   | LEFT_PARENTHESIS
    [x]   | RIGHT_PARENTHESIS
    [x]   | TIMES
@@ -74,7 +70,6 @@
    [x]   | RIGHT_BRACKET
    [x]   | character_string
    [x]   | SINGLE_QUOTE
-   [ ]   | string_element
    [x]   | identifier
    [x]   | unsigned_integer
    [x]   | digit_sequence

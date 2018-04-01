@@ -43,7 +43,11 @@ import PazParser (
     ASTStatement,
     ASTStatementDenoter(..),
     ASTProcedureStatement,
-    ASTActualParameterList
+    ASTActualParameterList,
+    ASTIfStatement,
+    ASTWhileStatement,
+    ASTForStatement,
+    ToDownToDenoter(..)
     )
 
 import PazLexer (
@@ -92,6 +96,14 @@ pprintLineBreak (lvl, _) = (putStr "\n") >> (printIndentation lvl)
 
 printSpace :: IO ()
 printSpace = putStr " "
+
+isCompound :: ASTStatement -> Bool
+isCompound (CompoundStatementDenoter _)  = True
+isCompound _                             = False
+
+levelUpIfNotCompound :: PprintObj a -> ASTStatement -> PprintObj a
+levelUpIfNotCompound obj stmt =
+    if isCompound stmt then obj else levelUp obj
 
 -- Program
 
@@ -254,13 +266,12 @@ pprintCompondStatement obj@(_, terms) = do
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
-    let pStatement s = pprintStatement $ replace obj s
+    let pStatement s = pprintStatement $ replace e2 s
     let printSep = (do
         pprintTokenSemicolon e2
         pprintLineBreak e2)
     pprintTokenBegin e
     pprintLineBreak e2
-    -- placeholder: assume compound statement to be [assignment statement]
     printSepBy printSep (map pStatement terms)
     pprintLineBreak e
     pprintTokenEnd e
@@ -272,6 +283,69 @@ pprintStatement obj@(_, stmt) =
             -> pprintAssignmentStatement $ replace obj s
         ProcedureStatementDenoter s
             -> pprintProcedureStatement $ replace obj s
+        CompoundStatementDenoter s
+            -> pprintCompondStatement $ replace obj s
+        IfStatementDenoter s
+            -> pprintIfStatement $ replace obj s
+        WhileStatementDenoter s
+            -> pprintWhileStatement $ replace obj s
+        ForStatementDenoter s
+            -> pprintForStatement $ replace obj s
+        EmptyStatementDenoter
+            -> pprintEmptyStatement $ empty obj
+
+pprintEmptyStatement :: PprintObj () -> IO ()
+pprintEmptyStatement _ = return ()
+
+pprintIfStatement :: PprintObj ASTIfStatement -> IO ()
+pprintIfStatement obj@(_, (expr, stmt, maybeElse)) = do
+    let e = empty obj
+    let e2 = levelUpIfNotCompound e stmt
+    pprintTokenIf e
+    printSpace
+    pprintExpression $ replace obj expr
+    printSpace
+    pprintTokenThen e
+    printMaybe maybeElse (\s -> do
+        pprintLineBreak e
+        pprintTokenElse e
+        pprintLineBreak e2
+        pprintStatement $ replace e2 s
+        )
+
+pprintWhileStatement :: PprintObj ASTWhileStatement -> IO ()
+pprintWhileStatement obj@(_, (expr, stmt)) = do
+    let e = empty obj
+    let e2 = levelUpIfNotCompound e stmt
+    pprintTokenWhile e
+    printSpace
+    pprintExpression $ replace obj expr
+    printSpace
+    pprintTokenDo e
+    pprintLineBreak e2
+    pprintStatement $ replace e2 stmt
+
+pprintForStatement :: PprintObj ASTForStatement -> IO ()
+pprintForStatement obj@(_, (id, expr, toDownto, bodyExpr, stmt)) = do
+    let e = empty obj
+    let e2 = levelUpIfNotCompound e stmt
+    pprintTokenFor e
+    printSpace
+    pprintIdentifier $ replace obj id
+    printSpace
+    pprintTokenAssign e
+    printSpace
+    pprintExpression $ replace obj expr
+    printSpace
+    case toDownto of
+        ToDenoter -> pprintTokenTo e
+        DownToDenoter -> pprintTokenDownTo e
+    printSpace
+    pprintExpression $ replace obj bodyExpr
+    printSpace
+    pprintTokenDo $ empty obj
+    pprintLineBreak e2
+    pprintStatement $ replace e2 stmt
 
 
 pprintProcedureStatement :: PprintObj ASTProcedureStatement -> IO ()
@@ -525,8 +599,8 @@ pprintTokenDiv _ = putStr "div"
 pprintTokenDo :: PprintObj () -> IO ()
 pprintTokenDo _ = putStr "do"
 
-pprintTokenDown_to :: PprintObj () -> IO ()
-pprintTokenDown_to _ = putStr "down_to"
+pprintTokenDownTo :: PprintObj () -> IO ()
+pprintTokenDownTo _ = putStr "down_to"
 
 pprintTokenElse :: PprintObj () -> IO ()
 pprintTokenElse _ = putStr "else"
