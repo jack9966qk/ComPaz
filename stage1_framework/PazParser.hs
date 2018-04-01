@@ -1080,7 +1080,8 @@ data ASTStatementDenoter =
     CompoundStatementDenoter ASTCompoundStatement |
     IfStatementDenoter ASTIfStatement |
     WhileStatementDenoter ASTWhileStatement |
-    ForStatementDenoter ASTForStatement
+    ForStatementDenoter ASTForStatement |
+    EmptyStatementDenoter
     deriving(Show)
 parseStatement :: Parser ASTStatement
 parseStatement =
@@ -1118,10 +1119,15 @@ parseStatement =
                                 parseWhileStatement
                             return (WhileStatementDenoter x0)
                         ),
+                    try (
+                        do
+                            x0 <-
+                                parseForStatement
+                            return (ForStatementDenoter x0)
+                        ),
                     do
-                        x0 <-
-                            parseForStatement
-                        return (ForStatementDenoter x0)
+                        parseEmptyStatement
+                        return EmptyStatementDenoter
                 ]
 
 type ASTNonPrimaryStatement = ASTStatement
@@ -1276,6 +1282,15 @@ parseForStatement =
                         parseStatement
                     return (x0, x1, x2, x3, x4)
                 )
+        )
+
+type ASTEmptyStatement = ()
+parseEmptyStatement :: Parser ASTEmptyStatement
+parseEmptyStatement =
+    trace
+        "parseEmptyStatement"
+        (
+            return ()
         )
 
 -- type ASTSkipLexicalToken = ()
