@@ -255,10 +255,13 @@ pprintCompondStatement obj@(_, terms) = do
     let o2 = levelUp obj
     let e2 = levelUp e
     let pStatement s = pprintStatement $ replace obj s
+    let printSep = (do
+        pprintTokenSemicolon e2
+        pprintLineBreak e2)
     pprintTokenBegin e
     pprintLineBreak e2
     -- placeholder: assume compound statement to be [assignment statement]
-    printSepBy (pprintLineBreak e2) (map pStatement terms)
+    printSepBy printSep (map pStatement terms)
     pprintLineBreak e
     pprintTokenEnd e
 
