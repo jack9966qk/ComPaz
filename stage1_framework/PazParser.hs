@@ -1079,7 +1079,8 @@ data ASTStatementDenoter =
     ProcedureStatementDenoter ASTProcedureStatement |
     CompoundStatementDenoter ASTCompoundStatement |
     IfStatementDenoter ASTIfStatement |
-    WhileStatementDenoter ASTWhileStatement
+    WhileStatementDenoter ASTWhileStatement |
+    ForStatementDenoter ASTForStatement
     deriving(Show)
 parseStatement :: Parser ASTStatement
 parseStatement =
@@ -1111,10 +1112,16 @@ parseStatement =
                                 parseIfStatement
                             return (IfStatementDenoter x0)
                         ),
+                    try (
+                        do
+                            x0 <-
+                                parseWhileStatement
+                            return (WhileStatementDenoter x0)
+                        ),
                     do
                         x0 <-
-                            parseWhileStatement
-                        return (WhileStatementDenoter x0)
+                            parseForStatement
+                        return (ForStatementDenoter x0)
                 ]
 
 type ASTNonPrimaryStatement = ASTStatement
@@ -1220,6 +1227,54 @@ parseWhileStatement =
                     x1 <-
                         parseStatement
                     return (x0, x1)
+                )
+        )
+
+type ASTToDownTo = ToDownToDenoter
+data ToDownToDenoter =
+    ToDenoter |
+    DownToDenoter
+    deriving(Show)
+parseToDownTo :: Parser ASTToDownTo
+parseToDownTo =
+    trace
+        "parseToDownTo"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenTo
+                            return ToDenoter
+                        ),
+                    do
+                        parseTokenDownTo
+                        return DownToDenoter
+                ]
+        )
+
+type ASTForStatement = (ASTIdentifier, ASTExpression, ASTToDownTo, ASTExpression, ASTStatement)
+parseForStatement :: Parser ASTForStatement
+parseForStatement =
+    trace
+        "parseForStatement"
+        (
+            try (
+                do
+                    parseTokenFor
+                    x0 <-
+                        parseIdentifier
+                    parseTokenAssign
+                    x1 <-
+                        parseExpression
+                    x2 <-
+                        parseToDownTo
+                    x3 <-
+                        parseExpression
+                    parseTokenDo
+                    x4 <-
+                        parseStatement
+                    return (x0, x1, x2, x3, x4)
                 )
         )
 
