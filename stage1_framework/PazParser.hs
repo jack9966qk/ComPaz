@@ -1076,7 +1076,9 @@ parseProcedureStatement =
 type ASTStatement = ASTStatementDenoter
 data ASTStatementDenoter =
     AssignmentStatementDenoter ASTAssignmentStatement |
-    ProcedureStatementDenoter ASTProcedureStatement
+    ProcedureStatementDenoter ASTProcedureStatement |
+    CompoundStatementDenoter ASTCompoundStatement |
+    IfStatementDenoter ASTIfStatement
     deriving(Show)
 parseStatement :: Parser ASTStatement
 parseStatement =
@@ -1090,10 +1092,22 @@ parseStatement =
                                 parseAssignmentStatement
                             return (AssignmentStatementDenoter x0)
                         ),
+                    try (
+                        do
+                            x0 <-
+                                parseProcedureStatement
+                            return (ProcedureStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseCompoundStatement
+                            return (CompoundStatementDenoter x0)
+                        ),
                     do
                         x0 <-
-                            parseProcedureStatement
-                        return (ProcedureStatementDenoter x0)
+                            parseIfStatement
+                        return (IfStatementDenoter x0)
                 ]
 
 type ASTNonPrimaryStatement = ASTStatement
@@ -1141,6 +1155,46 @@ parseCompoundStatement =
                         parseStatementSequence
                     parseTokenEnd
                     return x0
+                )
+        )
+
+type ASTElseClause = ASTStatement
+parseElseClause :: Parser ASTElseClause
+parseElseClause =
+    trace
+        "parseElseClause"
+        (
+            try (
+                do
+                    parseTokenElse
+                    x0 <-
+                        parseStatement
+                    return x0
+                )
+        )
+
+type ASTIfStatement = (ASTExpression, ASTStatement, (Maybe ASTStatement))
+parseIfStatement :: Parser ASTIfStatement
+parseIfStatement =
+    trace
+        "parseIfStatement"
+        (
+            try (
+                do
+                    parseTokenIf
+                    x0 <-
+                        parseExpression
+                    parseTokenThen
+                    x1 <-
+                        parseStatement
+                    return x0
+                    x2 <-
+                        optionMaybe (
+                            try (
+                                parseElseClause
+                                )
+                            )
+                    return (x0, x1, x2)
                 )
         )
 

@@ -1,7 +1,9 @@
 program p;
 
 begin
-    a := (1 + a[2] * b - 'c') / 0 or (1.1 * abc) AND ('abc' div not (3));
-    a[0] := b <> c AND (b < c) + (b > c) - (b <= c) or (b >= c);
-    writeln('Hello, world!')
+
+    if  b <>
+c AND d
+then   begin        a := (1 + a[2] * b - 'c') / 0 or (1.1 * abc) AND ('abc' div not (3));
+    a[0] := b < c + (b > c) - (b <= c) or (b >= c)  end else begin writeln('Hello, world!') end
 end.
