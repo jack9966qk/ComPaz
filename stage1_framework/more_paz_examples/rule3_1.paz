@@ -1,0 +1,8 @@
+{ Should have line break before variable definition }
+
+program rule3test1; var
+    n: integer;
+
+begin
+
+end.
