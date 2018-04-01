@@ -1078,7 +1078,8 @@ data ASTStatementDenoter =
     AssignmentStatementDenoter ASTAssignmentStatement |
     ProcedureStatementDenoter ASTProcedureStatement |
     CompoundStatementDenoter ASTCompoundStatement |
-    IfStatementDenoter ASTIfStatement
+    IfStatementDenoter ASTIfStatement |
+    WhileStatementDenoter ASTWhileStatement
     deriving(Show)
 parseStatement :: Parser ASTStatement
 parseStatement =
@@ -1104,10 +1105,16 @@ parseStatement =
                                 parseCompoundStatement
                             return (CompoundStatementDenoter x0)
                         ),
+                    try (
+                        do
+                            x0 <-
+                                parseIfStatement
+                            return (IfStatementDenoter x0)
+                        ),
                     do
                         x0 <-
-                            parseIfStatement
-                        return (IfStatementDenoter x0)
+                            parseWhileStatement
+                        return (WhileStatementDenoter x0)
                 ]
 
 type ASTNonPrimaryStatement = ASTStatement
@@ -1195,6 +1202,24 @@ parseIfStatement =
                                 )
                             )
                     return (x0, x1, x2)
+                )
+        )
+
+type ASTWhileStatement = (ASTExpression, ASTStatement)
+parseWhileStatement :: Parser ASTWhileStatement
+parseWhileStatement =
+    trace
+        "parseWhileStatement"
+        (
+            try (
+                do
+                    parseTokenWhile
+                    x0 <-
+                        parseExpression
+                    parseTokenDo
+                    x1 <-
+                        parseStatement
+                    return (x0, x1)
                 )
         )
 
