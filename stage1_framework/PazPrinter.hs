@@ -114,14 +114,23 @@ pprintProgram' :: PprintObj ASTProgram -> IO ()
 pprintProgram' obj@(lvl, (id, var, pro, com)) = do
     let e = empty obj
     let lineBreak = pprintLineBreak e
+    -- program identification part
     pprintTokenProgram e
     printSpace
     pprintIdentifier $ replace obj id
     pprintTokenSemicolon e
-    lineBreak
-    lineBreak
+    -- variable declaration part, add line break if not empty
+    case var of
+        Nothing -> return ()
+        _       -> lineBreak >> lineBreak
     pprintVariableDeclarationPart $ replace obj var
+    -- procedure declaration part, add line break if not empty
+    case pro of
+        []  -> return ()
+        _   -> lineBreak >> lineBreak
     pprintProcedureDeclarationPart $ replace obj pro
+    -- compound statement (program's body)
+    lineBreak >> lineBreak
     pprintCompondStatement $ replace obj com
     pprintTokenDot e
 
@@ -140,8 +149,6 @@ pprintVariableDeclarationPart obj@(lvl, Just (decl, moreDecl)) = do
     pprintTokenVar e
     pprintLineBreak e2
     printSepBy (pprintLineBreak e2) (map pprintDecl decls)
-    pprintLineBreak e
-    pprintLineBreak e
 
 pprintVariableDeclaration :: PprintObj ASTVariableDeclaration -> IO ()
 pprintVariableDeclaration obj = do
@@ -219,11 +226,6 @@ pprintProcedureDeclarationPart obj = do
         pprintProcedureDeclaration $ replace obj d
         pprintTokenSemicolon $ empty obj)
     printSepBy (pprintLineBreak $ empty obj) (map pprintDecl decls)
-    if length decls /= 0
-        then (do
-            pprintLineBreak $ empty obj
-            pprintLineBreak $ empty obj)
-        else return ()
 
 pprintProcedureDeclaration :: PprintObj ASTProcedureDeclaration -> IO ()
 pprintProcedureDeclaration obj = do
