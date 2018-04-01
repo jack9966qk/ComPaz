@@ -7,27 +7,27 @@
    [x]  |   [x]   | start_symbol
    [x]  |   [x]   | program
    [x]  |   [x]   | procedure_declaration_part
-   [ ]  |   [ ]   | statement
-   [ ]  |   [ ]   | empty_statement
-   [ ]  |   [ ]   | assignment_statement
-   [ ]  |   [ ]   | procedure_statement
-   [ ]  |   [ ]   | actual_parameter_list
-   [ ]  |   [ ]   | compound_statement
-   [ ]  |   [ ]   | statement_sequence
-   [ ]  |   [ ]   | if_statement
-   [ ]  |   [ ]   | while_statement
-   [ ]  |   [ ]   | for_statement
-   [ ]  |   [ ]   | expression
-   [ ]  |   [ ]   | relational_operator
-   [ ]  |   [ ]   | simple_expression
-   [ ]  |   [ ]   | adding_operator
-   [ ]  |   [ ]   | term
-   [ ]  |   [ ]   | multiplying_operator
-   [ ]  |   [ ]   | factor
-   [ ]  |   [ ]   | unsigned_constant
-   [ ]  |   [ ]   | unsigned_number
-   [ ]  |   [ ]   | variable_access
-   [ ]  |   [ ]   | indexed_variable
+   [x]  |   [x]   | statement
+   [x]  |   [x]   | empty_statement
+   [x]  |   [x]   | assignment_statement
+   [x]  |   [x]   | procedure_statement
+   [x]  |   [x]   | actual_parameter_list
+   [x]  |   [x]   | compound_statement
+   [x]  |   [x]   | statement_sequence
+   [x]  |   [x]   | if_statement
+   [x]  |   [x]   | while_statement
+   [x]  |   [x]   | for_statement
+   [x]  |   [x]   | expression
+   [x]  |   [x]   | relational_operator
+   [x]  |   [x]   | simple_expression
+   [x]  |   [x]   | adding_operator
+   [x]  |   [x]   | term
+   [x]  |   [x]   | multiplying_operator
+   [x]  |   [x]   | factor
+   [x]  |   [x]   | unsigned_constant
+   [x]  |   [x]   | unsigned_number
+   [x]  |   [x]   | variable_access
+   [x]  |   [x]   | indexed_variable
    [x]  |   [x]   | procedure_declaration
    [x]  |   [x]   | formal_parameter_list
    [x]  |   [x]   | formal_parameter_section
@@ -46,12 +46,8 @@
 
  Printer | Token
 ---------|------------------------------
-   [ ]   | start_symbol
-   [ ]   | WHITESPACE
-   [ ]   | COMMENT
    [x]   | LEFT_BRACE
    [x]   | RIGHT_BRACE
-   [ ]   | lexical_token
    [x]   | LEFT_PARENTHESIS
    [x]   | RIGHT_PARENTHESIS
    [x]   | TIMES
@@ -72,15 +68,14 @@
    [x]   | GREATER_THAN
    [x]   | LEFT_BRACKET
    [x]   | RIGHT_BRACKET
-   [ ]   | character_string
-   [ ]   | SINGLE_QUOTE
-   [ ]   | string_element
-   [ ]   | identifier
+   [x]   | character_string
+   [x]   | SINGLE_QUOTE
+   [x]   | identifier
    [x]   | unsigned_integer
-   [ ]   | digit_sequence
-   [ ]   | unsigned_real
-   [ ]   | E
-   [ ]   | scale_factor
+   [x]   | digit_sequence
+   [x]   | unsigned_real
+   [x]   | E
+   [x]   | scale_factor
    [x]   | sign
    [x]   | AND
    [x]   | ARRAY

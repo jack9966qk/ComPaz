@@ -597,6 +597,7 @@ parseStartSymbol =
             )
 
 type ASTProgram = (ASTIdentifier, ASTVariableDeclarationPart, ASTProcedureDeclarationPart, ASTCompoundStatement)
+-- type ASTProgram = (ASTIdentifier, ASTVariableDeclarationPart, ASTProcedureDeclarationPart, ASTUnsignedConstant)
 parseProgram :: Parser ASTProgram
 parseProgram =
     trace
@@ -618,6 +619,7 @@ parseProgram =
             )
 
 type ASTProcedureDeclarationPart = [ASTProcedureDeclaration]
+-- type ASTProcedureDeclarationPart = ()
 parseProcedureDeclarationPart :: Parser ASTProcedureDeclarationPart
 parseProcedureDeclarationPart =
     trace
@@ -635,48 +637,683 @@ parseProcedureDeclarationPart =
             )
 
 -- your code starts here
+type ASTUnsignedNumber = UnsignedNumberDenoter
+data UnsignedNumberDenoter =
+    UnsignedIntegerDenoter ASTUnsignedInteger |
+    UnsignedRealDenoter ASTUnsignedReal
+    deriving(Show)
+parseUnsignedNumber :: Parser ASTUnsignedNumber
+parseUnsignedNumber =
+    trace
+        "parseUnsignedNumber"
+    (
+        choice
+            [
+                try (
+                    do
+                        x <-
+                            parseUnsignedInteger
+                        return (UnsignedIntegerDenoter x)
+                    ),
+                do
+                    x <-
+                        parseUnsignedReal
+                    return (UnsignedRealDenoter x)
+            ]
+    )
 
--- the following is a dummy implementation that you can delete
--- the dummy implementation simply scans and skips tokens between BEGIN and
--- END (it also skips anything that looks like a nested BEGIN and END block)
+type ASTUnsignedConstant = UnsignedConstantDenoter
+data UnsignedConstantDenoter =
+    UnsignedNumberDenoter ASTUnsignedNumber |
+    CharacterStringDenoter ASTCharacterString
+    deriving(Show)
+parseUnsignedConstantDenoter :: Parser ASTUnsignedConstant
+parseUnsignedConstantDenoter =
+    trace
+        "parseUnsignedConstantDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            x <-
+                                parseUnsignedNumber
+                            return (UnsignedNumberDenoter x)
+                        ),
+                    do
+                        x <-
+                            parseCharacterString
+                        return (CharacterStringDenoter x)
+                ]
+        )
 
-type ASTCompoundStatement = ()
+type ASTFactor = FactorDenoter
+data FactorDenoter =
+    UnsignedConstantDenoter ASTUnsignedConstant |
+    VariableAccessDenoter ASTVariableAccess |
+    ExpressionDenoter ASTExpression |
+    NegatedFactorDenoter ASTFactor
+    deriving(Show)
+parseFactorDenoter :: Parser ASTFactor
+parseFactorDenoter =
+    trace
+        "parseFactorDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            x <-
+                                parseUnsignedConstantDenoter
+                            return (UnsignedConstantDenoter x)
+                        ),
+                    try (
+                        do
+                            x <-
+                                parseVariableAccessDenoter
+                            return (VariableAccessDenoter x)
+                        ),
+                    try (
+                        do
+                            parseTokenLeftParenthesis
+                            x <-
+                                parseExpression
+                            parseTokenRightParenthesis
+                            return (ExpressionDenoter x)
+                        ),
+                    do
+                        parseTokenNot
+                        x <-
+                            parseFactorDenoter
+                        return (NegatedFactorDenoter x)
+                ]
+        )
+
+type ASTIndexedVariable = (ASTIdentifier, ASTFactor)
+parseIndexedVariable :: Parser ASTIndexedVariable
+parseIndexedVariable =
+    trace
+        "parseIndexedVariable"
+        (
+            try (
+                do
+                    x0 <-
+                        parseIdentifier
+                    parseTokenLeftBracket
+                    x1 <-
+                        parseFactorDenoter
+                    parseTokenRightBracket
+                    return (x0, x1)
+                )
+        )
+
+type ASTVariableAccess = VariableAccessDenoter
+data VariableAccessDenoter =
+    IndexedVariableDenoter ASTIndexedVariable |
+    IdentifierDenoter ASTIdentifier
+    deriving(Show)
+parseVariableAccessDenoter :: Parser VariableAccessDenoter
+parseVariableAccessDenoter =
+    trace
+        "parseVariableAccessDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            x <-
+                                parseIndexedVariable
+                            return (IndexedVariableDenoter x)
+                        ),
+                    do
+                        x <-
+                            parseIdentifier
+                        return (IdentifierDenoter x)
+                ]
+        )
+
+type ASTMultiplyingOperator = MultiplyingOperatorDenoter
+data MultiplyingOperatorDenoter =
+    TimesDenoter |
+    DivideByDenoter |
+    DivDenoter |
+    AndDenoter 
+    deriving(Show)
+parseMultiplyingOperatorDenoter :: Parser MultiplyingOperatorDenoter
+parseMultiplyingOperatorDenoter  =
+    trace
+        "parseMultiplyingOperatorDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenTimes 
+                            return TimesDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenDivideBy
+                            return DivideByDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenDiv
+                            return DivDenoter
+                        ),
+                    do
+                        parseTokenAnd
+                        return AndDenoter
+                ]
+        )
+ 
+type ASTPostFactorModifier = (MultiplyingOperatorDenoter, FactorDenoter)
+parsePostFactorModifier :: Parser ASTPostFactorModifier 
+parsePostFactorModifier =
+    trace
+        "parsePostFactorModifier"
+            try (
+                do
+                    x0 <-
+                        parseMultiplyingOperatorDenoter
+                    x1 <-
+                        parseFactorDenoter
+                    return (x0, x1)
+            )
+
+type ASTTerm = (ASTFactor, [ASTPostFactorModifier])
+parseTerm :: Parser ASTTerm
+parseTerm =
+    trace
+        "parseTerm"
+            try (
+                do
+                    x0 <-
+                        parseFactorDenoter
+                    x1 <-
+                        many (
+                            try (
+                                parsePostFactorModifier
+                                )
+                            )
+                    return (x0, x1)
+            )
+
+type ASTAddingOperator = AddingOperatorDenoter
+data AddingOperatorDenoter =
+    PlusDenoter |
+    MinusDenoter |
+    OrDenoter
+    deriving(Show)
+parseAddingOperatorDenoter :: Parser AddingOperatorDenoter
+parseAddingOperatorDenoter  =
+    trace
+        "parseAddingOperatorDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenPlus
+                            return PlusDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenMinus
+                            return MinusDenoter
+                        ),
+                    do
+                        parseTokenOr
+                        return OrDenoter
+                ]
+        )
+ 
+type ASTPostTermModifier = (AddingOperatorDenoter, ASTTerm)
+parsePostTermModifier :: Parser ASTPostTermModifier 
+parsePostTermModifier =
+    trace
+        "parseTermModifier"
+            try (
+                do
+                    x0 <-
+                        parseAddingOperatorDenoter
+                    x1 <-
+                        parseTerm
+                    return (x0, x1)
+            )
+
+type ASTSimpleExpression = ((Maybe ASTSign), ASTTerm, [ASTPostTermModifier])
+parseSimpleExpression :: Parser ASTSimpleExpression  
+parseSimpleExpression =
+    trace
+        "parseSimpleExpression"
+            try (
+                do
+                    x0 <-
+                        optionMaybe (
+                            try (
+                                parseSign
+                                )
+                            )
+                    x1 <-
+                        parseTerm
+                    x2 <-
+                        many (
+                            try (
+                                parsePostTermModifier
+                                )
+                            )
+                    return (x0, x1, x2)
+            )
+
+type ASTRelationalOperator = RelationalOperatorDenoter
+data RelationalOperatorDenoter =
+    EqualDenoter |
+    NotEqualDenoter |
+    LessThanDenoter |
+    GreaterThanDenoter |
+    LessThanOrEqualDenoter |
+    GreaterThanOrEqualDenoter
+    deriving(Show)
+parseRelationalOperatorDenoter :: Parser RelationalOperatorDenoter
+parseRelationalOperatorDenoter  =
+    trace
+        "parseRelationalOperatorDenoter"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenEqual
+                            return EqualDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenNotEqual
+                            return NotEqualDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenLessThan
+                            return LessThanDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenGreaterThan
+                            return GreaterThanDenoter
+                        ),
+                    try (
+                        do
+                            parseTokenLessThanOrEqual
+                            return LessThanOrEqualDenoter
+                        ),
+                    do
+                        parseTokenGreaterThanOrEqual
+                        return GreaterThanOrEqualDenoter
+                ]
+        )
+
+type ASTPostSimpleExpressionModifier = (RelationalOperatorDenoter, ASTSimpleExpression)
+parsePostSimpleExpressionModifier :: Parser ASTPostSimpleExpressionModifier 
+parsePostSimpleExpressionModifier =
+    trace
+        "parseSimpleExpressionModifier"
+            try (
+                do
+                    x0 <-
+                        parseRelationalOperatorDenoter
+                    x1 <-
+                        parseSimpleExpression
+                    return (x0, x1)
+            )
+
+type ASTExpression = (ASTSimpleExpression, (Maybe ASTPostSimpleExpressionModifier))
+parseExpression :: Parser ASTExpression  
+parseExpression =
+    trace
+        "parseExpression"
+            try (
+                do
+                    x0 <-
+                        parseSimpleExpression
+                    x1 <-
+                        optionMaybe (
+                            try (
+                                parsePostSimpleExpressionModifier
+                                )
+                            )
+                    return (x0, x1)
+            )
+
+type ASTLvalue = LvalueDenoter
+data LvalueDenoter =
+    LvalueVariableAccessDenoter VariableAccessDenoter |
+    LvalueIdentifierDenoter ASTIdentifier
+    deriving(Show)
+parseLvalueDenoter  :: Parser ASTLvalue
+parseLvalueDenoter =
+    trace
+        "parseLvalueDenoter"
+            choice
+                [
+                    try (
+                        do
+                            x0 <-
+                                parseVariableAccessDenoter
+                            return (LvalueVariableAccessDenoter x0)
+                        ),
+                    do
+                        x0 <-
+                            parseIdentifier
+                        return (LvalueIdentifierDenoter x0)
+                ]
+
+type ASTAssignmentStatement = (ASTLvalue, ASTExpression)
+parseAssignmentStatement  :: Parser ASTAssignmentStatement
+parseAssignmentStatement =
+    trace
+        "parseAssignmentStatement"
+            try (
+                do
+                    x0 <-
+                        parseLvalueDenoter
+                    parseTokenAssign
+                    x1 <-
+                        parseExpression
+                    return (x0, x1)
+            )
+
+parseNonPrimaryParameter :: Parser ASTExpression
+parseNonPrimaryParameter =
+    trace
+        "parseNonPrimaryParamater"
+            try (
+                do
+                    parseTokenComma
+                    x0 <-
+                        parseExpression
+                    return x0
+            )
+
+type ASTActualParameterList = [ASTExpression]
+parseActualParameterList :: Parser ASTActualParameterList
+parseActualParameterList =
+    trace
+        "parseActualParameterList"
+            try (
+                do
+                    parseTokenLeftParenthesis
+                    x0 <-
+                        parseExpression
+                    x1 <-
+                        many (
+                            try (
+                                parseNonPrimaryParameter
+                            )
+                        )
+                    parseTokenRightParenthesis
+                    return (x0:x1)
+            )
+
+type ASTProcedureStatement = (ASTIdentifier, (Maybe ASTActualParameterList))
+parseProcedureStatement :: Parser ASTProcedureStatement
+parseProcedureStatement =
+    trace
+        "parseProcedureStatement"
+            try (
+                do
+                    x0 <-
+                        parseIdentifier
+                    x1 <-
+                        optionMaybe (
+                            try (
+                                parseActualParameterList
+                                )
+                            )
+                    return (x0, x1)
+                )
+
+type ASTStatement = ASTStatementDenoter
+data ASTStatementDenoter =
+    AssignmentStatementDenoter ASTAssignmentStatement |
+    ProcedureStatementDenoter ASTProcedureStatement |
+    CompoundStatementDenoter ASTCompoundStatement |
+    IfStatementDenoter ASTIfStatement |
+    WhileStatementDenoter ASTWhileStatement |
+    ForStatementDenoter ASTForStatement |
+    EmptyStatementDenoter
+    deriving(Show)
+parseStatement :: Parser ASTStatement
+parseStatement =
+    trace
+        "parseStatement"
+            choice
+                [
+                    try (
+                        do
+                            x0 <-
+                                parseAssignmentStatement
+                            return (AssignmentStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseProcedureStatement
+                            return (ProcedureStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseCompoundStatement
+                            return (CompoundStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseIfStatement
+                            return (IfStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseWhileStatement
+                            return (WhileStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseForStatement
+                            return (ForStatementDenoter x0)
+                        ),
+                    do
+                        parseEmptyStatement
+                        return EmptyStatementDenoter
+                ]
+
+type ASTNonPrimaryStatement = ASTStatement
+parseNonPrimaryStatement :: Parser ASTNonPrimaryStatement  
+parseNonPrimaryStatement =
+    trace
+        "parseNonPrimaryStatement"
+            try (
+                do
+                    parseTokenSemicolon
+                    x0 <-
+                        parseStatement
+                    return x0
+            )
+
+type ASTStatementSequence = [ASTStatement]
+parseStatementSequence :: Parser ASTStatementSequence 
+parseStatementSequence =
+    trace
+        "parseStatementSequence"
+            try (
+                do
+                    x0 <-
+                        parseStatement
+                    x1 <-
+                        many (
+                            try (
+                                parseNonPrimaryStatement
+                                )
+                            )
+                    return (x0:x1)
+            )
+
+type ASTCompoundStatement = [ASTStatement]
 parseCompoundStatement :: Parser ASTCompoundStatement
 parseCompoundStatement =
     trace
         "parseCompoundStatement"
         (
-            do
-                parseTokenBegin
-                many (
-                    try (
-                        parseSkipLexicalToken
-                        )
-                    )
-                parseTokenEnd
-            )
+            try (
+                do
+                    -- parseSkipLexicalToken
+                    parseTokenBegin
+                    x0 <-
+                        parseStatementSequence
+                    parseTokenEnd
+                    return x0
+                )
+        )
 
-type ASTSkipLexicalToken = ()
-parseSkipLexicalToken :: Parser ASTSkipLexicalToken
-parseSkipLexicalToken =
+type ASTElseClause = ASTStatement
+parseElseClause :: Parser ASTElseClause
+parseElseClause =
     trace
-        "parseSkipLexicalToken"
+        "parseElseClause"
+        (
+            try (
+                do
+                    parseTokenElse
+                    x0 <-
+                        parseStatement
+                    return x0
+                )
+        )
+
+type ASTIfStatement = (ASTExpression, ASTStatement, (Maybe ASTStatement))
+parseIfStatement :: Parser ASTIfStatement
+parseIfStatement =
+    trace
+        "parseIfStatement"
+        (
+            try (
+                do
+                    parseTokenIf
+                    x0 <-
+                        parseExpression
+                    parseTokenThen
+                    x1 <-
+                        parseStatement
+                    return x0
+                    x2 <-
+                        optionMaybe (
+                            try (
+                                parseElseClause
+                                )
+                            )
+                    return (x0, x1, x2)
+                )
+        )
+
+type ASTWhileStatement = (ASTExpression, ASTStatement)
+parseWhileStatement :: Parser ASTWhileStatement
+parseWhileStatement =
+    trace
+        "parseWhileStatement"
+        (
+            try (
+                do
+                    parseTokenWhile
+                    x0 <-
+                        parseExpression
+                    parseTokenDo
+                    x1 <-
+                        parseStatement
+                    return (x0, x1)
+                )
+        )
+
+type ASTToDownTo = ToDownToDenoter
+data ToDownToDenoter =
+    ToDenoter |
+    DownToDenoter
+    deriving(Show)
+parseToDownTo :: Parser ASTToDownTo
+parseToDownTo =
+    trace
+        "parseToDownTo"
         (
             choice
                 [
                     try (
-                        parseCompoundStatement
+                        do
+                            parseTokenTo
+                            return ToDenoter
                         ),
-                    void (
-                        satisfy (
-                            \x ->
-                                case x of
-                                    LTEnd -> False
-                                    _ -> True
-                            )
-                        )
-                    ]
-            )
+                    do
+                        parseTokenDownTo
+                        return DownToDenoter
+                ]
+        )
+
+type ASTForStatement = (ASTIdentifier, ASTExpression, ASTToDownTo, ASTExpression, ASTStatement)
+parseForStatement :: Parser ASTForStatement
+parseForStatement =
+    trace
+        "parseForStatement"
+        (
+            try (
+                do
+                    parseTokenFor
+                    x0 <-
+                        parseIdentifier
+                    parseTokenAssign
+                    x1 <-
+                        parseExpression
+                    x2 <-
+                        parseToDownTo
+                    x3 <-
+                        parseExpression
+                    parseTokenDo
+                    x4 <-
+                        parseStatement
+                    return (x0, x1, x2, x3, x4)
+                )
+        )
+
+type ASTEmptyStatement = ()
+parseEmptyStatement :: Parser ASTEmptyStatement
+parseEmptyStatement =
+    trace
+        "parseEmptyStatement"
+        (
+            return ()
+        )
+
+-- type ASTSkipLexicalToken = ()
+-- parseSkipLexicalToken :: Parser ASTSkipLexicalToken
+-- parseSkipLexicalToken =
+    -- trace
+        -- "parseSkipLexicalToken"
+        -- (
+            -- choice
+                -- [
+                    -- try (
+                        -- parseCompoundStatement
+                        -- ),
+                    -- void (
+                        -- satisfy (
+                            -- \x ->
+                                -- case x of
+                                    -- LTEnd -> False
+                                    -- _ -> True
+                            -- )
+                        -- )
+                    -- ]
+            -- )
 
 -- your code ends here
 
