@@ -1,0 +1,12 @@
+program rule3test2;
+
+procedure bell(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    
+end;
+
+begin
+    
+end.

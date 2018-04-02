@@ -1,0 +1,29 @@
+program rule3test3;
+
+var
+    n: integer;
+
+procedure bell2(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    
+end;
+
+procedure bell(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    
+end;
+
+procedure bell2(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    
+end;
+
+begin
+    
+end.

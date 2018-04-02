@@ -1,0 +1,20 @@
+program rule7;
+
+var
+    n: integer;
+    n2: integer;
+    n3: integer;
+
+procedure bell2(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+    a: integer;
+    a: integer;
+    a: integer;
+begin
+    
+end;
+
+begin
+    
+end.

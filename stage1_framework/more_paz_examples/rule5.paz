@@ -1,0 +1,27 @@
+{ keywords "program" and "procedure should be at start of line, no indentation }
+
+                            program rule5;
+
+  procedure bell2(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    
+end;
+
+
+                                  procedure bell(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    
+end; procedure bell2(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    
+end;
+
+begin
+    
+end.

@@ -1,5 +1,6 @@
 import subprocess
 import os
+import difflib
 
 with open(os.devnull, 'w') as devnull:
     for directory in ["more_paz_examples"]:
@@ -27,5 +28,8 @@ with open(os.devnull, 'w') as devnull:
                 print("=========START=========")
                 print(actual)
                 print("==========EOF==========")
+                print("Diff result:")
+                for i in difflib.ndiff(expected.splitlines(), actual.splitlines()):
+                    print(i)
                 print()
                 print()
