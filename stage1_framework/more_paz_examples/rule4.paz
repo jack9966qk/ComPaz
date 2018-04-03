@@ -1,0 +1,22 @@
+{ "There should be no...blank lines, except [exactly one after program identification, exactly one before `begin' of the main body and between variable and procedure definitions], except that it is acceptable to print an empty statement as a blank line." }
+
+
+program rule2;
+
+
+   var x: integer;
+procedure f(n: integer);
+begin
+
+ f := 1;
+
+
+
+end;
+
+
+
+begin
+
+
+end.
