@@ -1,0 +1,10 @@
+{ Uppercase and whitespace should be preserved inside strings,
+  and if single quotation marks inside strings were un-doubled
+  when reading the string, then they must be doubled again
+  when pretty-printing the string.}
+
+program rule15;
+
+begin
+    a := 'Hello            world!'
+end.

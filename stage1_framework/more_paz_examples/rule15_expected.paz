@@ -1,0 +1,5 @@
+program rule15;
+
+begin
+    a := 'Hello            world!'
+end.

@@ -7,6 +7,7 @@ with open(os.devnull, 'w') as devnull:
         filenames = os.listdir(f"./{directory}")
         input_filenames = [f for f in filenames
             if not f.split(".")[0].endswith("expected")]
+        input_filenames.sort()
         for f in input_filenames:
             result = subprocess.run(
                 ["./paz", "-f", f"{directory}/{f}"],
