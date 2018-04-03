@@ -239,7 +239,10 @@ pprintProcedureDeclaration obj = do
     pprintIdentifier $ replace obj id
     printMaybe maybeParamList (\l -> pprintFormalParameterList $ replace obj l)
     pprintTokenSemicolon e
-    pprintLineBreak e
+    -- line break only if var declaration part not empty
+    case var of
+        Nothing -> return ()
+        _       -> pprintLineBreak e
     pprintVariableDeclarationPart $ replace obj var
     pprintLineBreak e
     pprintCompondStatement $ replace obj com

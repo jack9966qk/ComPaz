@@ -1,0 +1,18 @@
+program rule9;
+
+procedure bell2(n: integer; m: integer; var out: integer);
+var
+    a: integer;
+begin
+    writeln('Hello World');
+    writeln('Hello World')
+end;
+
+begin
+    begin
+        writeln('Hello World');
+        begin
+            writeln('Hello World')
+        end
+    end
+end.

@@ -4,11 +4,10 @@ var
     x: integer;
 
 procedure f(n: integer);
-
 begin
-
+    
 end;
 
 begin
-
+    
 end.
