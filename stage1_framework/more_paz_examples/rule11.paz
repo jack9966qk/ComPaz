@@ -1,0 +1,25 @@
+{ "while ... do", "if ... then" and "for ... to ... do" should be printed in a single line }
+
+program rule11;
+
+begin
+    while (a > 0) and (b > 0) and (c > 0)
+and (e > 0) and
+(ffffffffffff < 348235845) or (fbgvuofjeia <>
+2398353101239)
+do
+        writeln('Hello World');
+    if (a > 0)
+    and (b > 0) and (c > 0)
+        and (e > 0) and (ffffffffffff < 348235845) or
+            (fbgvuofjeia <> 2398353101239) then
+        writeln('Hello World');
+    for n := 0
+    to
+    16
+    do
+        writeln('Hello World');
+    for n := 999 downto
+            16 do
+        writeln('Hello World')
+end.

@@ -613,7 +613,7 @@ pprintTokenDo :: PprintObj () -> IO ()
 pprintTokenDo _ = putStr "do"
 
 pprintTokenDownTo :: PprintObj () -> IO ()
-pprintTokenDownTo _ = putStr "down_to"
+pprintTokenDownTo _ = putStr "downto"
 
 pprintTokenElse :: PprintObj () -> IO ()
 pprintTokenElse _ = putStr "else"
