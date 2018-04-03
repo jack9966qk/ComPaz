@@ -1,0 +1,13 @@
+program rule13test2;
+
+var
+    x: array[3..4] of integer;
+    y: array[5..23] of integer;
+
+begin
+    a := x[3];
+    b := y[10];
+    x := (a + b) - (a - b) * (a - b - b);
+    y := (a > 0) or (b < 0) and (a < b);
+    fun(a, b)
+end.

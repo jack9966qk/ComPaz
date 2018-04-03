@@ -183,7 +183,6 @@ pprintArrayType :: PprintObj ASTArrayType -> IO ()
 pprintArrayType obj@(_, (subrangeType, typeId)) = do
     let e = empty obj
     pprintTokenArray e
-    printSpace
     pprintTokenLeftBracket e
     pprintSubrangeType $ replace obj subrangeType
     pprintTokenRightBracket e

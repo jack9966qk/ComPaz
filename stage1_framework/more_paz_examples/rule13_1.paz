@@ -1,0 +1,9 @@
+{ No whitespace before comma, colon or semicolon, no whitespace after unary "-" or "+" }
+
+program rule13test1                          ;
+
+begin
+    a := -    123+456 ;
+    b := + 456-123           ;
+    fun(a     , b)
+end.
