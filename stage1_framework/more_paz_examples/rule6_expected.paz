@@ -1,0 +1,15 @@
+program rule6;
+
+var
+    x: integer;
+
+procedure f(n: integer);
+var
+    y: real;
+begin
+    
+end;
+
+begin
+    
+end.
