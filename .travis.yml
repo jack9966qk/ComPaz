@@ -1,0 +1,13 @@
+matrix:
+  include:
+    - language: haskell
+      - install:
+        - cd stage1_framework
+        - make clean
+        - make
+    - language: python
+      python:
+        - "3.6"
+      script:
+        - cd stage1_framework
+        - make test

@@ -2,6 +2,7 @@ import subprocess
 import os
 import difflib
 
+passed = True
 with open(os.devnull, 'w') as devnull:
     for directory in ["more_paz_examples"]:
         filenames = os.listdir(f"./{directory}")
@@ -20,6 +21,7 @@ with open(os.devnull, 'w') as devnull:
             if expected == actual:
                 print(f"Test {f:15s} passed")
             else:
+                passed = False
                 print(f"Test {f:15s} failed")
                 print("Expected:")
                 print("=========START=========")
@@ -34,3 +36,5 @@ with open(os.devnull, 'w') as devnull:
                     print(i)
                 print()
                 print()
+
+exit(0 if passed else 1)
