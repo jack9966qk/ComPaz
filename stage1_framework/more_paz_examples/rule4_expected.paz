@@ -1,0 +1,15 @@
+program rule2;
+
+var
+    x: integer;
+
+procedure f(n: integer);
+
+begin
+    f := 1;
+
+end;
+
+begin
+    
+end.
