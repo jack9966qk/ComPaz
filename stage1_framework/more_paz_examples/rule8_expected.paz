@@ -1,0 +1,18 @@
+program rule8;
+
+var
+    x: integer;
+
+procedure f(n: integer);
+
+begin
+    y := 2;
+    z := 'a';
+    
+end;
+
+begin
+    ;
+    b[3] := 4.0;
+    
+end.
