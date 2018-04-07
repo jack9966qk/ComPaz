@@ -1,0 +1,8 @@
+program rule10_2;
+
+begin
+    if a then
+        while a do
+	    for i := 0 to 10 do
+	        i := i + 1
+end.
