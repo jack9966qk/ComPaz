@@ -1,0 +1,11 @@
+program rule12;
+
+begin
+    if a then
+        i := i + 1
+    else
+    begin
+        b[0] := '';
+	i := i * 2
+    end
+end.
