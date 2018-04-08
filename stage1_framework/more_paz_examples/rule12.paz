@@ -1,0 +1,6 @@
+{ "...`else' ’ should be printed on its own separate line, flush with the `if'..." }
+program rule12;
+
+begin
+    if a then i := i + 1 else begin b[0] := ''; i := i * 2 end
+end.

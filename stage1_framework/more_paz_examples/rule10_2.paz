@@ -1,6 +1,6 @@
 { "...a compound statement...should have the same indentation as the [keyword]; [a statement that] is not compound...should be indented four spaces beyond the [keyword]." }
-program rule10;
+program rule10test2;
 
 begin
-    if a then begin ; while a do begin ; for i := 0 to 10 do begin ; i := i + 1 end end end
+    if a then while a do for i := 0 to 10 do i := i + 1
 end.
