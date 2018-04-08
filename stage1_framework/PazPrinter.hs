@@ -111,8 +111,9 @@ pprintProgram :: ASTProgram -> IO ()
 pprintProgram prog = pprintProgram' (0, prog)
 
 pprintProgram' :: PprintObj ASTProgram -> IO ()
-pprintProgram' obj@(lvl, (id, var, pro, com)) = do
+pprintProgram' obj = do
     let e = empty obj
+    let (id, var, pro, com) = ast obj
     let lineBreak = pprintLineBreak e
     -- program identification part
     pprintTokenProgram e
@@ -138,17 +139,20 @@ pprintProgram' obj@(lvl, (id, var, pro, com)) = do
 -- Variable declaration part
 
 pprintVariableDeclarationPart :: PprintObj ASTVariableDeclarationPart -> IO ()
-pprintVariableDeclarationPart (_, Nothing) = return ()
-pprintVariableDeclarationPart obj@(lvl, Just (decl, moreDecl)) = do
-    let e = empty obj
-    let e2 = levelUp e
-    let decls = decl:moreDecl
-    let pprintDecl d = do
-        pprintVariableDeclaration $ replace e2 d
-        pprintTokenSemicolon e
-    pprintTokenVar e
-    pprintLineBreak e2
-    printSepBy (pprintLineBreak e2) (map pprintDecl decls)
+pprintVariableDeclarationPart obj =
+    case ast obj of
+        Nothing -> return ()
+        Just (decl, moreDecl) -> (do
+            let e = empty obj
+            let e2 = levelUp e
+            let decls = decl:moreDecl
+            let pprintDecl d = do
+                pprintVariableDeclaration $ replace e2 d
+                pprintTokenSemicolon e
+            pprintTokenVar e
+            pprintLineBreak e2
+            printSepBy (pprintLineBreak e2) (map pprintDecl decls)
+            )
 
 pprintVariableDeclaration :: PprintObj ASTVariableDeclaration -> IO ()
 pprintVariableDeclaration obj = do
@@ -159,17 +163,19 @@ pprintVariableDeclaration obj = do
     pprintTypeDenoter $ replace obj typeDenoter
     
 pprintIdentifierList :: PprintObj ASTIdentifierList -> IO ()
-pprintIdentifierList obj@(_, (id, moreId)) = do
+pprintIdentifierList obj = do
+    let (id, moreId) = ast obj
     let idList = id:moreId
     let pprintId x = pprintIdentifier $ replace obj x
     printSepBy (pprintTokenComma $ empty obj) (map pprintId idList)
 
 pprintTypeDenoter :: PprintObj ASTTypeDenoter -> IO ()
-pprintTypeDenoter obj@(_, OrdinaryTypeDenoter id) =
-    pprintTypeIdentifier $ replace obj id
-
-pprintTypeDenoter obj@(_, ArrayTypeDenoter arrayType) = do
-    pprintArrayType $ replace obj arrayType
+pprintTypeDenoter obj =
+    case ast obj of
+        OrdinaryTypeDenoter id ->
+            pprintTypeIdentifier $ replace obj id
+        ArrayTypeDenoter arrayType ->
+            pprintArrayType $ replace obj arrayType
 
 pprintTypeIdentifier :: PprintObj ASTTypeIdentifier -> IO ()
 pprintTypeIdentifier obj =
@@ -180,8 +186,9 @@ pprintTypeIdentifier obj =
             BooleanTypeIdentifier   -> pprintTokenBoolean e
 
 pprintArrayType :: PprintObj ASTArrayType -> IO ()
-pprintArrayType obj@(_, (subrangeType, typeId)) = do
+pprintArrayType obj = do
     let e = empty obj
+    let (subrangeType, typeId) = ast obj
     pprintTokenArray e
     pprintTokenLeftBracket e
     pprintSubrangeType $ replace obj subrangeType
@@ -192,29 +199,31 @@ pprintArrayType obj@(_, (subrangeType, typeId)) = do
     pprintTypeIdentifier $ replace obj typeId
 
 pprintSubrangeType :: PprintObj ASTSubrangeType -> IO ()
-pprintSubrangeType obj@(_, (c1, c2)) = do
+pprintSubrangeType obj = do
+    let (c1, c2) = ast obj
     pprintConstant $ replace obj c1
     pprintTokenEllipsis $ empty obj
     pprintConstant $ replace obj c2
 
 pprintConstant :: PprintObj ASTConstant -> IO ()
-pprintConstant obj@(_, (maybeSign, unsignedInt)) = do
+pprintConstant obj = do
+    let (maybeSign, unsignedInt) = ast obj
     printMaybe maybeSign (\s -> pprintParserSign $ replace obj s)
     pprintUnsignedInteger $ replace obj unsignedInt
 
 -- have to define two functions for ASTSign in PazParser and PazLexer
 pprintParserSign :: PprintObj PazParser.ASTSign -> IO ()
-pprintParserSign obj@(_, sign) = case sign of
+pprintParserSign obj = case ast obj of
     PazParser.SignPlus    -> pprintTokenPlus $ empty obj
     PazParser.SignMinus   -> pprintTokenMinus $ empty obj
 
 pprintLexerSign :: PprintObj PazLexer.ASTSign -> IO ()
-pprintLexerSign obj@(_, sign) = case sign of
+pprintLexerSign obj = case ast obj of
     PazLexer.SignPlus    -> pprintTokenPlus $ empty obj
     PazLexer.SignMinus   -> pprintTokenMinus $ empty obj
 
 pprintUnsignedInteger :: PprintObj ASTUnsignedInteger -> IO ()
-pprintUnsignedInteger (_, x) = putStr x
+pprintUnsignedInteger obj = putStr $ ast obj
 
 -- Procedure declaration part
 
@@ -247,7 +256,8 @@ pprintProcedureDeclaration obj = do
     pprintCompondStatement $ replace obj com
 
 pprintFormalParameterList :: PprintObj ASTFormalParameterList -> IO ()
-pprintFormalParameterList obj@(_, (p, ps)) = do
+pprintFormalParameterList obj = do
+    let (p, ps) = ast obj
     let e = empty obj
     let pList = p:ps
     let printParamSec p = pprintFormalParameterSection $ replace obj p
@@ -256,7 +266,8 @@ pprintFormalParameterList obj@(_, (p, ps)) = do
     pprintTokenRightParenthesis e
 
 pprintFormalParameterSection :: PprintObj ASTFormalParameterSection -> IO ()
-pprintFormalParameterSection obj@(_, (bool, idList, typeDenoter)) = do
+pprintFormalParameterSection obj = do
+    let (bool, idList, typeDenoter) = ast obj
     let e = empty obj
     case bool of
         True    -> (pprintTokenVar e >> printSpace)
@@ -269,7 +280,8 @@ pprintFormalParameterSection obj@(_, (bool, idList, typeDenoter)) = do
 -- Compound statement
 
 pprintCompondStatement :: PprintObj ASTCompoundStatement -> IO ()
-pprintCompondStatement obj@(_, terms) = do
+pprintCompondStatement obj = do
+    let terms = ast obj
     let e = empty obj
     let o2 = levelUp obj
     let e2 = levelUp e
@@ -284,8 +296,8 @@ pprintCompondStatement obj@(_, terms) = do
     pprintTokenEnd e
 
 pprintStatement :: PprintObj ASTStatement -> IO ()
-pprintStatement obj@(_, stmt) =
-    case stmt of
+pprintStatement obj =
+    case ast obj of
         AssignmentStatementDenoter s
             -> pprintAssignmentStatement $ replace obj s
         ProcedureStatementDenoter s
@@ -305,7 +317,8 @@ pprintEmptyStatement :: PprintObj () -> IO ()
 pprintEmptyStatement _ = return ()
 
 pprintIfStatement :: PprintObj ASTIfStatement -> IO ()
-pprintIfStatement obj@(_, (expr, stmt, maybeElse)) = do
+pprintIfStatement obj = do
+    let (expr, stmt, maybeElse) = ast obj
     let e = empty obj
     let e2 = levelUpIfNotCompound e stmt
     pprintTokenIf e
@@ -326,7 +339,8 @@ pprintIfStatement obj@(_, (expr, stmt, maybeElse)) = do
         )
 
 pprintWhileStatement :: PprintObj ASTWhileStatement -> IO ()
-pprintWhileStatement obj@(_, (expr, stmt)) = do
+pprintWhileStatement obj = do
+    let (expr, stmt) = ast obj
     let e = empty obj
     let e2 = levelUpIfNotCompound e stmt
     pprintTokenWhile e
@@ -338,7 +352,8 @@ pprintWhileStatement obj@(_, (expr, stmt)) = do
     pprintStatement $ replace e2 stmt
 
 pprintForStatement :: PprintObj ASTForStatement -> IO ()
-pprintForStatement obj@(_, (id, expr, toDownto, bodyExpr, stmt)) = do
+pprintForStatement obj = do
+    let (id, expr, toDownto, bodyExpr, stmt) = ast obj
     let e = empty obj
     let e2 = levelUpIfNotCompound e stmt
     pprintTokenFor e
@@ -361,13 +376,15 @@ pprintForStatement obj@(_, (id, expr, toDownto, bodyExpr, stmt)) = do
 
 
 pprintProcedureStatement :: PprintObj ASTProcedureStatement -> IO ()
-pprintProcedureStatement obj@(_, (id, maybeParamList)) = do
+pprintProcedureStatement obj = do
+    let (id, maybeParamList) = ast obj
     pprintIdentifier $ replace obj id
     printMaybe maybeParamList (\l ->
         pprintActualParameterList $ replace obj l)
 
 pprintActualParameterList :: PprintObj ASTActualParameterList -> IO ()
-pprintActualParameterList obj@(_, expressions) = do
+pprintActualParameterList obj = do
+    let expressions = ast obj
     let pprintExpr e = pprintExpression $ replace obj e
     let printSep = (do
         pprintTokenComma $ empty obj
@@ -377,7 +394,8 @@ pprintActualParameterList obj@(_, expressions) = do
     pprintTokenRightParenthesis $ empty obj
     
 pprintAssignmentStatement :: PprintObj ASTAssignmentStatement -> IO ()
-pprintAssignmentStatement obj@(_, (lval, expr)) = do
+pprintAssignmentStatement obj = do
+    let (lval, expr) = ast obj
     case lval of
         LvalueVariableAccessDenoter var
             -> pprintVariableAccess $ replace obj var
@@ -389,7 +407,8 @@ pprintAssignmentStatement obj@(_, (lval, expr)) = do
     pprintExpression $ replace obj expr
 
 pprintExpression :: PprintObj ASTExpression -> IO ()
-pprintExpression obj@(_, (simpleExp, maybeModifier)) = do
+pprintExpression obj = do
+    let (simpleExp, maybeModifier) = ast obj
     pprintSimpleExpression $ replace obj simpleExp
     printMaybe maybeModifier (\(op, simpleExp) -> do
         printSpace
@@ -399,8 +418,8 @@ pprintExpression obj@(_, (simpleExp, maybeModifier)) = do
         )
 
 pprintRelationalOperator :: PprintObj ASTRelationalOperator -> IO ()
-pprintRelationalOperator obj@(_, op) =
-    case op of
+pprintRelationalOperator obj =
+    case ast obj of
         EqualDenoter
             -> pprintTokenEqual $ empty obj
         NotEqualDenoter
@@ -415,7 +434,8 @@ pprintRelationalOperator obj@(_, op) =
             -> pprintTokenGreaterThanOrEqual $ empty obj
 
 pprintSimpleExpression :: PprintObj ASTSimpleExpression -> IO ()
-pprintSimpleExpression obj@(_, (maybeSign, term, modifiers)) = do
+pprintSimpleExpression obj = do
+    let (maybeSign, term, modifiers) = ast obj
     let printModifier (op, t) = (do
         printSpace
         pprintAddingOperator $ replace obj op
@@ -426,15 +446,15 @@ pprintSimpleExpression obj@(_, (maybeSign, term, modifiers)) = do
     printSepBy (return ()) (map printModifier modifiers)
 
 pprintAddingOperator :: PprintObj ASTAddingOperator -> IO ()
-pprintAddingOperator obj@(_, op) =
-    case op of
+pprintAddingOperator obj =
+    case ast obj of
         PlusDenoter    -> pprintTokenPlus $ empty obj
         MinusDenoter   -> pprintTokenMinus $ empty obj
         OrDenoter      -> pprintTokenOr $ empty obj
 
 pprintFactor :: PprintObj ASTFactor -> IO ()
-pprintFactor obj@(_, denoter) =
-    case denoter of
+pprintFactor obj =
+    case ast obj of
         UnsignedConstantDenoter c
             -> pprintUnsignedConstant $ replace obj c
         VariableAccessDenoter v
@@ -451,7 +471,8 @@ pprintFactor obj@(_, denoter) =
                 pprintFactor $ replace obj f)
 
 pprintTerm :: PprintObj ASTTerm -> IO ()
-pprintTerm obj@(_, (factor, modifiers)) = do
+pprintTerm obj = do
+    let (factor, modifiers) = ast obj
     let pprintModifier (mult, fac) = (do
         printSpace
         pprintMultiplyingOperator $ replace obj mult
@@ -461,46 +482,48 @@ pprintTerm obj@(_, (factor, modifiers)) = do
     printSepBy (return ()) (map pprintModifier modifiers)
 
 pprintMultiplyingOperator :: PprintObj ASTMultiplyingOperator -> IO ()
-pprintMultiplyingOperator obj@(_, denoter) =
-    case denoter of
+pprintMultiplyingOperator obj =
+    case ast obj of
         TimesDenoter    -> pprintTokenTimes $ empty obj
         DivideByDenoter -> pprintTokenDivideBy $ empty obj
         DivDenoter      -> pprintTokenDiv $ empty obj
         AndDenoter      -> pprintTokenAnd $ empty obj
 
 pprintVariableAccess :: PprintObj ASTVariableAccess -> IO ()
-pprintVariableAccess obj@(_, denoter) =
-    case denoter of
+pprintVariableAccess obj =
+    case ast obj of
         IndexedVariableDenoter i
             -> pprintIndexedVariable $ replace obj i
         IdentifierDenoter i
             -> pprintIdentifier $ replace obj i
 
 pprintIndexedVariable :: PprintObj ASTIndexedVariable -> IO ()
-pprintIndexedVariable obj@(_, (id, factor)) = do
+pprintIndexedVariable obj = do
+    let (id, factor) = ast obj
     pprintIdentifier $ replace obj id
     pprintTokenLeftBracket $ empty obj
     pprintFactor $ replace obj factor
     pprintTokenRightBracket $ empty obj
 
 pprintUnsignedConstant :: PprintObj ASTUnsignedConstant -> IO ()
-pprintUnsignedConstant obj@(_, denoter) =
-    case denoter of
+pprintUnsignedConstant obj =
+    case ast obj of
         UnsignedNumberDenoter n
             -> pprintUnsignedNumber $ replace obj n
         CharacterStringDenoter c
             -> pprintCharacterString $ replace obj c
 
 pprintUnsignedNumber :: PprintObj ASTUnsignedNumber -> IO ()
-pprintUnsignedNumber obj@(_, denoter) = 
-    case denoter of
+pprintUnsignedNumber obj = 
+    case ast obj of
         UnsignedIntegerDenoter i
             -> pprintUnsignedInteger $ replace obj i
         UnsignedRealDenoter r
             -> pprintUnsignedReal $ replace obj r
 
 pprintUnsignedReal :: PprintObj ASTUnsignedReal -> IO ()
-pprintUnsignedReal obj@(_, (seq, maybeSeq, maybeScale)) = do
+pprintUnsignedReal obj = do
+    let (seq, maybeSeq, maybeScale) = ast obj
     putStr seq
     printMaybe maybeSeq (\s -> do
         pprintTokenDot $ empty obj
@@ -510,12 +533,14 @@ pprintUnsignedReal obj@(_, (seq, maybeSeq, maybeScale)) = do
         pprintScaleFactor $ replace obj s)
 
 pprintScaleFactor :: PprintObj ASTScaleFactor -> IO ()
-pprintScaleFactor obj@(_, (maybeSign, seq)) = do
+pprintScaleFactor obj = do
+    let (maybeSign, seq) = ast obj
     printMaybe maybeSign (\s -> pprintLexerSign $ replace obj s)
     putStr seq
 
 pprintCharacterString :: PprintObj ASTCharacterString -> IO ()
-pprintCharacterString obj@(_, s) = do
+pprintCharacterString obj = do
+    let s = ast obj
     pprintTokenSingleQuote $ empty obj
     putStr s
     pprintTokenSingleQuote $ empty obj
