@@ -6,6 +6,6 @@ begin
     else
     begin
         b[0] := '';
-	i := i * 2
+        i := i * 2
     end
 end.
