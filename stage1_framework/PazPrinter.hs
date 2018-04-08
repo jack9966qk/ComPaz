@@ -60,22 +60,36 @@ import PazLexer (
     Sign(..)
     )
 
+import PazUtil(
+    Context(..),
+    exprChildContext,
+    simpExprChildContext,
+    termChildContext,
+    needParen
+    )
+
 type IndentationLvl = Int
-type PprintObj a = (IndentationLvl, a)
+type PprintObj a = (PazUtil.Context, IndentationLvl, a)
 
 -- Helper functions
 
 replace :: PprintObj a -> b -> PprintObj b
-replace (lvl, _) x = (lvl, x)
+replace (c, lvl, _) x = (c, lvl, x)
 
 empty :: PprintObj a -> PprintObj ()
-empty (lvl, _) = (lvl, ())
+empty (c, lvl, _) = (c, lvl, ())
 
 levelUp :: PprintObj a -> PprintObj a
-levelUp (lvl, x) = (lvl + 1, x)
+levelUp (c, lvl, x) = (c, lvl + 1, x)
 
 ast :: PprintObj a -> a
-ast (_, x) = x
+ast (_, _, x) = x
+
+context :: PprintObj a -> Context
+context (c, _, _) = c
+
+setContext :: PprintObj a -> Context -> PprintObj a
+setContext (_, lvl, x) c = (c, lvl, x)
 
 printSepBy :: IO () -> [IO ()] -> IO ()
 printSepBy _ [] = return ()
@@ -92,7 +106,7 @@ printIndentation 0 = return ()
 printIndentation n = (putStr "    ") >> (printIndentation (n-1))
 
 pprintLineBreak :: PprintObj () -> IO ()
-pprintLineBreak (lvl, _) = (putStr "\n") >> (printIndentation lvl)
+pprintLineBreak (_, lvl, _) = (putStr "\n") >> (printIndentation lvl)
 
 printSpace :: IO ()
 printSpace = putStr " "
@@ -108,7 +122,7 @@ levelUpIfNotCompound obj stmt =
 -- Program
 
 pprintProgram :: ASTProgram -> IO ()
-pprintProgram prog = pprintProgram' (0, prog)
+pprintProgram prog = pprintProgram' (Atomic, 0, prog)
 
 pprintProgram' :: PprintObj ASTProgram -> IO ()
 pprintProgram' obj = do
@@ -409,12 +423,13 @@ pprintAssignmentStatement obj = do
 pprintExpression :: PprintObj ASTExpression -> IO ()
 pprintExpression obj = do
     let (simpleExp, maybeModifier) = ast obj
-    pprintSimpleExpression $ replace obj simpleExp
+    let o2 = setContext obj (exprChildContext (ast obj) (context obj))
+    pprintSimpleExpression $ replace o2 simpleExp
     printMaybe maybeModifier (\(op, simpleExp) -> do
         printSpace
-        pprintRelationalOperator $ replace obj op
+        pprintRelationalOperator $ replace o2 op
         printSpace
-        pprintSimpleExpression $ replace obj simpleExp
+        pprintSimpleExpression $ replace o2 simpleExp
         )
 
 pprintRelationalOperator :: PprintObj ASTRelationalOperator -> IO ()
@@ -436,13 +451,14 @@ pprintRelationalOperator obj =
 pprintSimpleExpression :: PprintObj ASTSimpleExpression -> IO ()
 pprintSimpleExpression obj = do
     let (maybeSign, term, modifiers) = ast obj
+    let o2 = setContext obj (simpExprChildContext (ast obj) (context obj))
     let printModifier (op, t) = (do
         printSpace
-        pprintAddingOperator $ replace obj op
+        pprintAddingOperator $ replace o2 op
         printSpace
-        pprintTerm $ replace obj t)
-    printMaybe maybeSign (\s -> pprintParserSign $ replace obj s)
-    pprintTerm $ replace obj term
+        pprintTerm $ replace o2 t)
+    printMaybe maybeSign (\s -> pprintParserSign $ replace o2 s)
+    pprintTerm $ replace o2 term
     printSepBy (return ()) (map printModifier modifiers)
 
 pprintAddingOperator :: PprintObj ASTAddingOperator -> IO ()
@@ -452,18 +468,22 @@ pprintAddingOperator obj =
         MinusDenoter   -> pprintTokenMinus $ empty obj
         OrDenoter      -> pprintTokenOr $ empty obj
 
+pprintFactorExpr :: PprintObj ASTExpression -> Bool -> IO ()
+pprintFactorExpr obj False = pprintExpression obj
+pprintFactorExpr obj True = (do
+    pprintTokenLeftParenthesis $ empty obj
+    pprintExpression obj
+    pprintTokenRightParenthesis $ empty obj)
+
 pprintFactor :: PprintObj ASTFactor -> IO ()
-pprintFactor obj =
+pprintFactor obj = do
     case ast obj of
         UnsignedConstantDenoter c
             -> pprintUnsignedConstant $ replace obj c
         VariableAccessDenoter v
             -> pprintVariableAccess $ replace obj v
         ExpressionDenoter e
-            -> (do
-                pprintTokenLeftParenthesis $ empty obj
-                pprintExpression $ replace obj e
-                pprintTokenRightParenthesis $ empty obj)
+            -> pprintFactorExpr (replace obj e) (needParen e (context obj))
         NegatedFactorDenoter f
             -> (do
                 pprintTokenNot $ empty obj
@@ -473,12 +493,13 @@ pprintFactor obj =
 pprintTerm :: PprintObj ASTTerm -> IO ()
 pprintTerm obj = do
     let (factor, modifiers) = ast obj
+    let o2 = setContext obj (termChildContext (ast obj) (context obj))
     let pprintModifier (mult, fac) = (do
         printSpace
-        pprintMultiplyingOperator $ replace obj mult
+        pprintMultiplyingOperator $ replace o2 mult
         printSpace
-        pprintFactor $ replace obj fac)
-    pprintFactor $ replace obj factor
+        pprintFactor $ replace o2 fac)
+    pprintFactor $ replace o2 factor
     printSepBy (return ()) (map pprintModifier modifiers)
 
 pprintMultiplyingOperator :: PprintObj ASTMultiplyingOperator -> IO ()
@@ -548,7 +569,7 @@ pprintCharacterString obj = do
 -- Tokens
 
 pprintIdentifier :: PprintObj ASTIdentifier -> IO ()
-pprintIdentifier (_, s) = putStr s
+pprintIdentifier obj = putStr $ ast obj
 
 pprintTokenLeftParenthesis :: PprintObj () -> IO ()
 pprintTokenLeftParenthesis _ = putStr "("

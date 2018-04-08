@@ -54,7 +54,7 @@ data Context = Relational | Additive | Multiplicative | Atomic
                 deriving (Eq, Ord, Show)
 
 exprLoContext :: ASTExpression -> Context
-exprLoContext (_, modifier) = Relational
+exprLoContext (_, Just _) = Relational
 exprLoContext (simp, Nothing) = simpExprLoContext simp
 
 simpExprLoContext :: ASTSimpleExpression -> Context
@@ -71,3 +71,20 @@ needParen expr context = f context (exprLoContext expr)
         f Atomic _ = False
         f _ Atomic = False
         f context exprContext = context > exprContext
+
+exprChildContext :: ASTExpression -> Context -> Context
+exprChildContext (_, Just _) _ = Relational
+exprChildContext (_, Nothing) c = stronger Atomic c
+
+simpExprChildContext :: ASTSimpleExpression -> Context -> Context
+simpExprChildContext (_, _, _:_) _ = Additive
+simpExprChildContext (_, _, []) c = stronger Atomic c
+
+termChildContext :: ASTTerm -> Context -> Context
+termChildContext (_, _:_) _ = Multiplicative
+termChildContext (_, _) c = stronger Atomic c
+
+stronger :: Context -> Context -> Context
+stronger Atomic c = c
+stronger c Atomic = c
+stronger c1 c2 = max c1 c2
