@@ -82,9 +82,11 @@ empty (c, lvl, _) = (c, lvl, ())
 levelUp :: PprintObj a -> PprintObj a
 levelUp (c, lvl, x) = (c, lvl + 1, x)
 
+-- accessor function
 ast :: PprintObj a -> a
 ast (_, _, x) = x
 
+-- accessor function
 context :: PprintObj a -> Context
 context (c, _, _) = c
 
@@ -468,6 +470,8 @@ pprintAddingOperator obj =
         MinusDenoter   -> pprintTokenMinus $ empty obj
         OrDenoter      -> pprintTokenOr $ empty obj
 
+-- The passed expression may be part of a factor that uses parentheses. But
+-- don't print parentheses unless they are needed.
 pprintFactorExpr :: PprintObj ASTExpression -> Bool -> IO ()
 pprintFactorExpr obj False = pprintExpression obj
 pprintFactorExpr obj True = (do

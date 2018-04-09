@@ -50,6 +50,7 @@ import PazParser(
     ToDownToDenoter(..)
     )
 
+-- determines operator precedence and consequently, necessity of parentheses
 data Context = Relational | Additive | Multiplicative | Atomic
                 deriving (Eq, Ord, Show)
 
