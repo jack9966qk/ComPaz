@@ -31,6 +31,8 @@ with open(os.devnull, 'w') as devnull:
                 print("=========START=========")
                 print(actual)
                 print("==========EOF==========")
+                print("expected str: " + repr(expected))
+                print("  actual str: " + repr(actual))
                 print("Diff result:")
                 for i in difflib.ndiff(expected.splitlines(), actual.splitlines()):
                     print(i)
