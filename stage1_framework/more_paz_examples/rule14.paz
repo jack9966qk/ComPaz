@@ -1,0 +1,8 @@
+{ "[print parentheses] only when omission of parentheses would change the meaning of the expression." }
+program rule14;
+
+begin
+    a[2+ 3] := (2 + 3);
+    a[2 +(3 + 4) ] := 2 * (3 + 4);
+    a((-2) =  -2)
+end.

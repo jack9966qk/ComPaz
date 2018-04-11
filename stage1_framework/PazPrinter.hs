@@ -524,10 +524,10 @@ pprintVariableAccess obj =
 
 pprintIndexedVariable :: PprintObj ASTIndexedVariable -> IO ()
 pprintIndexedVariable obj = do
-    let (id, factor) = ast obj
+    let (id, expression) = ast obj
     pprintIdentifier $ replace obj id
     pprintTokenLeftBracket $ empty obj
-    pprintFactor $ replace obj factor
+    pprintExpression $ replace obj expression
     pprintTokenRightBracket $ empty obj
 
 pprintUnsignedConstant :: PprintObj ASTUnsignedConstant -> IO ()

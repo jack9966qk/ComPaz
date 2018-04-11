@@ -729,7 +729,7 @@ parseFactorDenoter =
                 ]
         )
 
-type ASTIndexedVariable = (ASTIdentifier, ASTFactor)
+type ASTIndexedVariable = (ASTIdentifier, ASTExpression)
 parseIndexedVariable :: Parser ASTIndexedVariable
 parseIndexedVariable =
     trace
@@ -741,7 +741,7 @@ parseIndexedVariable =
                         parseIdentifier
                     parseTokenLeftBracket
                     x1 <-
-                        parseFactorDenoter
+                        parseExpression
                     parseTokenRightBracket
                     return (x0, x1)
                 )
