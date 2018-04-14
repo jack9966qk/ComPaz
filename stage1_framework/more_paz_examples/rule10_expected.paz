@@ -3,7 +3,7 @@ program rule10;
 begin
     if a then
     begin
-
+        ;
 	while a do
 	begin
             ;
