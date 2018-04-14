@@ -40,7 +40,7 @@ main :: IO ()
 main = do
     args <- getArgs
     case args of
-        ["-f", filename] ->
+        ["-p", filename] ->
             (do
                 text <- readFile filename
                 parseResult <- fullParse text
