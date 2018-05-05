@@ -566,6 +566,28 @@ parseTokenWriteln =
             )
         )
 
+parseTokenFalse :: Parser ()
+parseTokenFalse =
+    void (
+        satisfy (
+            \x ->
+                case x of
+                    LTFalse -> True
+                    otherwise -> False
+            )
+        )
+
+parseTokenTrue :: Parser ()
+parseTokenTrue =
+    void (
+        satisfy (
+            \x ->
+                case x of
+                    LTTrue -> True
+                    otherwise -> False
+            )
+        )
+
 parseCharacterString :: Parser ASTCharacterString
 parseCharacterString =
     do
@@ -670,35 +692,34 @@ parseProcedureDeclarationPart =
             )
 
 -- your code starts here
-type ASTUnsignedNumber = UnsignedNumberDenoter
-data UnsignedNumberDenoter =
-    UnsignedIntegerDenoter ASTUnsignedInteger |
-    UnsignedRealDenoter ASTUnsignedReal
+type ASTBooleanConstant = BooleanConstantDenoter
+data BooleanConstantDenoter =
+    FalseDenoter |
+    TrueDenoter
     deriving(Show)
-parseUnsignedNumber :: Parser ASTUnsignedNumber
-parseUnsignedNumber =
+parseBooleanConstant :: Parser ASTBooleanConstant
+parseBooleanConstant =
     trace
-        "parseUnsignedNumber"
-    (
-        choice
-            [
-                try (
+        "parseBooleanConstant"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenFalse
+                            return FalseDenoter
+                        ),
                     do
-                        x <-
-                            parseUnsignedInteger
-                        return (UnsignedIntegerDenoter x)
-                    ),
-                do
-                    x <-
-                        parseUnsignedReal
-                    return (UnsignedRealDenoter x)
-            ]
-    )
+                        parseTokenTrue
+                        return TrueDenoter
+                ]
+        )
 
 type ASTUnsignedConstant = UnsignedConstantDenoter
 data UnsignedConstantDenoter =
-    UnsignedNumberDenoter ASTUnsignedNumber |
-    CharacterStringDenoter ASTCharacterString
+    BooleanConstantDenoter ASTBooleanConstant |
+    UnsignedIntegerDenoter ASTUnsignedInteger |
+    UnsignedRealDenoter ASTUnsignedReal
     deriving(Show)
 parseUnsignedConstantDenoter :: Parser ASTUnsignedConstant
 parseUnsignedConstantDenoter =
@@ -710,13 +731,19 @@ parseUnsignedConstantDenoter =
                     try (
                         do
                             x <-
-                                parseUnsignedNumber
-                            return (UnsignedNumberDenoter x)
+                                parseBooleanConstant
+                            return (BooleanConstantDenoter x)
+                        ),
+                    try (
+                        do
+                            x <-
+                                parseUnsignedInteger
+                            return (UnsignedIntegerDenoter x)
                         ),
                     do
                         x <-
-                            parseCharacterString
-                        return (CharacterStringDenoter x)
+                            parseUnsignedReal
+                        return (UnsignedRealDenoter x)
                 ]
         )
 

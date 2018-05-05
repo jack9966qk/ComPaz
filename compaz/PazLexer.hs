@@ -148,6 +148,7 @@ data LexicalToken =
     LTDownTo |
     LTElse |
     LTEnd |
+    LTFalse |
     LTFor |
     LTFunction |
     LTIf |
