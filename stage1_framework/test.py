@@ -11,7 +11,7 @@ with open(os.devnull, 'w') as devnull:
         input_filenames.sort()
         for f in input_filenames:
             result = subprocess.run(
-                ["./paz", "-f", f"{directory}/{f}"],
+                ["./paz", "-p", f"{directory}/{f}"],
                 stdout=subprocess.PIPE,
                 stderr=devnull)
             actual = result.stdout.decode("utf-8")

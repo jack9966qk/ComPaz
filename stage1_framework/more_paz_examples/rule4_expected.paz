@@ -1,4 +1,4 @@
-program rule2;
+program rule4;
 
 var
     x: integer;
@@ -6,7 +6,6 @@ var
 procedure f(n: integer);
 begin
     f := 1
-    ;
 end;
 
 begin

@@ -68,6 +68,8 @@ import PazUtil(
     needParen
     )
 
+-- PprintObj represents an AST element with additional
+-- information for printing, such as indentation level
 type IndentationLvl = Int
 type PprintObj a = (PazUtil.Context, IndentationLvl, a)
 
@@ -93,35 +95,43 @@ context (c, _, _) = c
 setContext :: PprintObj a -> Context -> PprintObj a
 setContext (_, lvl, x) c = (c, lvl, x)
 
+-- combine a list of print operation, using another
+-- print operation as separator
 printSepBy :: IO () -> [IO ()] -> IO ()
 printSepBy _ [] = return ()
 printSepBy _ [x] = x
 printSepBy sep (x:y:zs) =
     x >> sep >> (printSepBy sep (y:zs))
 
+-- print using function provided only if data exists
 printMaybe :: Maybe a -> (a -> IO ()) -> IO ()
 printMaybe Nothing _ = return ()
 printMaybe (Just a) f = f a
 
+-- print indentation given level, 4 spaces per level
 printIndentation :: IndentationLvl -> IO ()
 printIndentation 0 = return ()
 printIndentation n = (putStr "    ") >> (printIndentation (n-1))
 
+-- print a line break followed by appropriate indentation
 pprintLineBreak :: PprintObj () -> IO ()
 pprintLineBreak (_, lvl, _) = (putStr "\n") >> (printIndentation lvl)
 
+-- print whitespace
 printSpace :: IO ()
 printSpace = putStr " "
 
+-- check whether statement is compound
 isCompound :: ASTStatement -> Bool
 isCompound (CompoundStatementDenoter _)  = True
 isCompound _                             = False
 
+-- level up indentation only if statement is not compound
 levelUpIfNotCompound :: PprintObj a -> ASTStatement -> PprintObj a
 levelUpIfNotCompound obj stmt =
     if isCompound stmt then obj else levelUp obj
 
--- Program
+-- Pretty Print Program (entry point)
 
 pprintProgram :: ASTProgram -> IO ()
 pprintProgram prog = pprintProgram' (Atomic, 0, prog)
