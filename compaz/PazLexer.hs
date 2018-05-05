@@ -157,11 +157,15 @@ data LexicalToken =
     LTOr |
     LTProcedure |
     LTProgram |
+    LTRead |
     LTReal |
     LTThen |
     LTTo |
+    LTTrue |
     LTVar |
     LTWhile |
+    LTWrite |
+    LTWriteln |
     LTCharacterString ASTCharacterString |
     LTIdentifier ASTIdentifier |
     LTUnsignedReal ASTUnsignedReal |
@@ -189,11 +193,15 @@ keywordToLexicalToken =
             ("or", LTOr),
             ("procedure", LTProcedure),
             ("program", LTProgram),
+            ("read", LTRead),
             ("real", LTReal),
             ("then", LTThen),
             ("to", LTTo),
+            ("true", LTTrue),
             ("var", LTVar),
-            ("while", LTWhile)
+            ("while", LTWhile),
+            ("write", LTWrite),
+            ("writeln", LTWriteln)
         ]
 parseLexicalToken :: Parser ASTLexicalToken
 parseLexicalToken =
