@@ -21,8 +21,6 @@ import PazParser (
     ASTFormalParameterSection,
     ASTUnsignedConstant,
     UnsignedConstantDenoter(..),
-    ASTUnsignedNumber,
-    UnsignedNumberDenoter(..),
     ASTFactor,
     FactorDenoter(..),
     ASTVariableAccess,
@@ -38,8 +36,6 @@ import PazParser (
     ASTRelationalOperator,
     RelationalOperatorDenoter(..),
     ASTAssignmentStatement,
-    ASTLvalue,
-    LvalueDenoter(..),
     ASTStatement,
     ASTStatementDenoter(..),
     ASTProcedureStatement,
@@ -47,7 +43,10 @@ import PazParser (
     ASTIfStatement,
     ASTWhileStatement,
     ASTForStatement,
-    ToDownToDenoter(..)
+    ToDownToDenoter(..),
+    ASTBooleanConstant,
+    BooleanConstantDenoter(..),
+    ASTWriteStatement,
     )
 
 import PazLexer (
@@ -97,6 +96,17 @@ writeInstruction :: Instruction -> Codegen ()
 writeInstruction inst = 
     Codegen (\(State r code) -> ((), State r (code ++ [inst])))
 
+showReg :: Reg -> String
+showReg r = "r" ++ show r
+
+strJoin :: String -> [String] -> String
+strJoin _ [] = ""
+strJoin _ [x] = x
+strJoin sep (x:y:zs) = x ++ sep ++ (strJoin sep (y:zs))
+
+strJoinSpace :: [String] -> String
+strJoinSpace = strJoin " "
+
 printSepBy :: IO () -> [IO ()] -> IO ()
 printSepBy _ [] = return ()
 printSepBy _ [x] = x
@@ -125,18 +135,24 @@ cgCompoundStatement (x:xs) = do
 
 cgStatement :: ASTStatement -> Codegen ()
 cgStatement stmt = case stmt of
-    ProcedureStatementDenoter s -> cgProcedureStatement s
+    WriteStatementDenoter s -> cgWriteStatement s
+    -- ProcedureStatementDenoter s -> cgProcedureStatement s
     _ -> error ""
 
-cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
-cgProcedureStatement (id, maybeParams) = case id of
-    "writeln" -> case maybeParams of
-        Just [expr] -> (do
-            cgExpression expr regZero
-            writeInstruction "call_builtin print_string"
-            )
-        _ -> error ""
-    _ -> error ""
+cgWriteStatement :: ASTWriteStatement -> Codegen ()
+cgWriteStatement expr = do
+    cgExpression expr regZero
+    writeInstruction "call_builtin print_string"
+
+-- cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
+-- cgProcedureStatement (id, maybeParams) = case id of
+--     "writeln" -> case maybeParams of
+--         Just [expr] -> (do
+--             cgExpression expr regZero
+--             writeInstruction "call_builtin print_string"
+--             )
+--         _ -> error ""
+--     _ -> error ""
 
 cgExpression :: ASTExpression -> Reg -> Codegen ()
 cgExpression (simpExpr, _) dest =
@@ -151,17 +167,65 @@ cgTerm (factor, _) dest = cgFactor factor dest
 cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of
     UnsignedConstantDenoter c -> cgUnsignedConstant c dest
+    -- VariableAccessDenoter var -> 
+    -- ExpressionDenoter expr ->
+    -- NegatedFactorDenoter factor ->
     _ -> error ""
 
 cgUnsignedConstant :: ASTUnsignedConstant -> Reg -> Codegen ()
 cgUnsignedConstant const dest = case const of
-    CharacterStringDenoter str -> cgCharacterString str dest
-    _ -> error ""
+    BooleanConstantDenoter bool -> cgBooleanConstant bool dest
+    UnsignedIntegerDenoter int -> cgUnsignedInteger int dest
+    UnsignedRealDenoter real -> cgUnsignedReal real dest
+    -- CharacterStringDenoter str -> cgCharacterString str dest
+    -- UnsignedNumberDenoter num -> cgUnsignedNumber num dest
 
 cgCharacterString :: ASTCharacterString -> Reg -> Codegen ()
 cgCharacterString str dest =
     let
-        regPart = "r" ++ show dest
+        regPart = showReg dest
         strPart = "'" ++ str ++ "'"
     in
-        writeInstruction $ "string_const " ++ regPart ++ " " ++ strPart
+        writeInstruction $ strJoinSpace ["string_const", regPart, strPart]
+
+cgUnsignedNumber :: ASTUnsignedConstant -> Reg -> Codegen ()
+cgUnsignedNumber num dest = case num of
+    UnsignedIntegerDenoter i    -> cgUnsignedInteger i dest
+    UnsignedRealDenoter r       -> cgUnsignedReal r dest
+    BooleanConstantDenoter b    -> cgBooleanConstant b dest
+
+cgUnsignedInteger :: ASTUnsignedInteger -> Reg -> Codegen ()
+cgUnsignedInteger int dest =
+    writeInstruction $ strJoinSpace ["int_const", showReg dest, int]
+
+cgUnsignedReal :: ASTUnsignedReal -> Reg -> Codegen ()
+cgUnsignedReal (seq, maybeSeq, maybeScale) dest =
+    let 
+        f1 = read seq :: Float
+        f2 = case maybeSeq of
+            Just s  -> f1 + read ("0." ++ s) :: Float
+            Nothing -> f1
+        scale = case maybeScale of
+            Just (Nothing, s)
+                -> (read s :: Int)
+            Just (Just PazLexer.SignPlus, s
+                -> (read s :: Int)
+            Just (Just PazLexer.SignMinus, s)
+                -> -(read s :: Int)
+            Nothing -> 1
+        f3 = f2 * (10 ^ scale)
+        regPart = showReg dest
+        realPart = show f3
+    in
+        writeInstruction $ strJoinSpace ["real_const", regPart, realPart]
+
+cgBooleanConstant :: ASTBooleanConstant -> Reg -> Codegen ()
+cgBooleanConstant bool dest =
+    let
+        val = case bool of
+            FalseDenoter    -> 0
+            TrueDenoter     -> 1
+        regPart = showReg dest
+        boolPart = show val
+    in
+        writeInstruction $ strJoinSpace ["int_const", regPart, boolPart]

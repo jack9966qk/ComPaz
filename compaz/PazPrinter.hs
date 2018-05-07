@@ -21,8 +21,6 @@ import PazParser (
     ASTFormalParameterSection,
     ASTUnsignedConstant,
     UnsignedConstantDenoter(..),
-    ASTUnsignedNumber,
-    UnsignedNumberDenoter(..),
     ASTFactor,
     FactorDenoter(..),
     ASTVariableAccess,
@@ -38,8 +36,6 @@ import PazParser (
     ASTRelationalOperator,
     RelationalOperatorDenoter(..),
     ASTAssignmentStatement,
-    ASTLvalue,
-    LvalueDenoter(..),
     ASTStatement,
     ASTStatementDenoter(..),
     ASTProcedureStatement,
@@ -47,7 +43,9 @@ import PazParser (
     ASTIfStatement,
     ASTWhileStatement,
     ASTForStatement,
-    ToDownToDenoter(..)
+    ToDownToDenoter(..),
+    ASTBooleanConstant,
+    BooleanConstantDenoter(..)
     )
 
 import PazLexer (
@@ -421,11 +419,11 @@ pprintActualParameterList obj = do
     
 pprintAssignmentStatement :: PprintObj ASTAssignmentStatement -> IO ()
 pprintAssignmentStatement obj = do
-    let (lval, expr) = ast obj
-    case lval of
-        LvalueVariableAccessDenoter var
-            -> pprintVariableAccess $ replace obj var
-        LvalueIdentifierDenoter id
+    let (var, expr) = ast obj
+    case var of
+        IndexedVariableDenoter var
+            -> pprintIndexedVariable $ replace obj var
+        IdentifierDenoter id
             -> pprintIdentifier $ replace obj id
     printSpace
     pprintTokenAssign $ empty obj
@@ -543,18 +541,28 @@ pprintIndexedVariable obj = do
 pprintUnsignedConstant :: PprintObj ASTUnsignedConstant -> IO ()
 pprintUnsignedConstant obj =
     case ast obj of
-        UnsignedNumberDenoter n
-            -> pprintUnsignedNumber $ replace obj n
-        CharacterStringDenoter c
-            -> pprintCharacterString $ replace obj c
-
-pprintUnsignedNumber :: PprintObj ASTUnsignedNumber -> IO ()
-pprintUnsignedNumber obj = 
-    case ast obj of
         UnsignedIntegerDenoter i
             -> pprintUnsignedInteger $ replace obj i
         UnsignedRealDenoter r
             -> pprintUnsignedReal $ replace obj r
+        BooleanConstantDenoter b
+            -> pprintBooleanConstant $ replace obj b
+        -- CharacterStringDenoter c
+        --     -> pprintCharacterString $ replace obj c
+
+pprintBooleanConstant :: PprintObj ASTBooleanConstant -> IO ()
+pprintBooleanConstant obj =
+    case ast obj of
+        FalseDenoter    -> pprintTokenFalse $ empty obj
+        TrueDenoter     -> pprintTokenTrue $ empty obj
+    
+-- pprintUnsignedNumber :: PprintObj ASTUnsignedNumber -> IO ()
+-- pprintUnsignedNumber obj = 
+--     case ast obj of
+--         UnsignedIntegerDenoter i
+--             -> pprintUnsignedInteger $ replace obj i
+--         UnsignedRealDenoter r
+--             -> pprintUnsignedReal $ replace obj r
 
 pprintUnsignedReal :: PprintObj ASTUnsignedReal -> IO ()
 pprintUnsignedReal obj = do
@@ -721,3 +729,9 @@ pprintTokenVar _ = putStr "var"
 
 pprintTokenWhile :: PprintObj () -> IO ()
 pprintTokenWhile _ = putStr "while"
+
+pprintTokenFalse :: PprintObj () -> IO ()
+pprintTokenFalse _ = putStr "false"
+
+pprintTokenTrue :: PprintObj () -> IO ()
+pprintTokenTrue _ = putStr "true"
