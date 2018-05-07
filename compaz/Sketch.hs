@@ -59,13 +59,19 @@ import PazLexer (
     Sign(..)
     )
 
+import Symbol (
+    Symbols,
+    initSymbols
+    )
+
 import Control.Monad
 
 type Reg = Int
+type Label = Int
 type Code = [Instruction]
 type Instruction = String
 
-data State = State Reg Code
+data State = State Reg Code Symbols Label
 data Codegen a = Codegen (State -> (a, State))
 instance Monad Codegen where
     return x = Codegen (\s -> (x, s))
@@ -84,17 +90,22 @@ instance Applicative Codegen where
     (<*>) = ap
 
 initState :: State
-initState = State 1 []
+initState = State 1 [] initSymbols 0
 
 regZero :: Reg
 regZero = 0
 
 nextRegister :: Codegen Reg
-nextRegister = Codegen (\(State r c) -> (r + 1, State (r + 1) c))
+nextRegister = Codegen (\(State r c s l)
+    -> (r + 1, State (r + 1) c s l))
+
+nextLabel :: Codegen Label
+nextLabel = Codegen (\(State r c s l)
+    -> (l + 1, State r c s (l + 1)))
 
 writeInstruction :: Instruction -> Codegen ()
-writeInstruction inst = 
-    Codegen (\(State r code) -> ((), State r (code ++ [inst])))
+writeInstruction inst = Codegen (\(State r code s l)
+    -> ((), State r (code ++ [inst]) s l))
 
 showReg :: Reg -> String
 showReg r = "r" ++ show r
@@ -117,7 +128,7 @@ generateCode :: ASTProgram -> IO ()
 generateCode prog = do
     let Codegen fn = cgProgram prog
     let (_, finalState) = fn initState
-    let State _ instructions = finalState
+    let State _ instructions _ _ = finalState
     printSepBy (putStr "\n") (map putStr instructions)
 
 cgProgram :: ASTProgram -> Codegen ()
@@ -208,7 +219,7 @@ cgUnsignedReal (seq, maybeSeq, maybeScale) dest =
         scale = case maybeScale of
             Just (Nothing, s)
                 -> (read s :: Int)
-            Just (Just PazLexer.SignPlus, s
+            Just (Just PazLexer.SignPlus, s)
                 -> (read s :: Int)
             Just (Just PazLexer.SignMinus, s)
                 -> -(read s :: Int)
