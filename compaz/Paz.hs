@@ -9,6 +9,8 @@ import System.IO (hPutStrLn, stderr)
 import System.Exit (exitFailure)
 import System.Environment (getArgs)
 
+import Sketch
+
 die :: String -> IO ()
 die err = do
     hPutStrLn stderr err
@@ -51,5 +53,15 @@ main = do
                             "AST result:\n\n======================"
                             (pprintProgram ast)
             )
-        [_] -> putStrLn "Sorry, cannot generate code yet"
+        [filename] ->
+            (do
+                text <- readFile filename
+                parseResult <- fullParse text
+                case parseResult of
+                    Left _ -> return ()
+                    Right ast ->
+                        trace 
+                            "IR Code:\n\n======================"
+                            (generateCode ast)
+            )
         _   -> putStrLn "Usage: Paz [-p] source_file"
