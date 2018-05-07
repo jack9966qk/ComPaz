@@ -533,6 +533,61 @@ parseTokenWhile =
             )
         )
 
+parseTokenRead :: Parser ()
+parseTokenRead =
+    void (
+        satisfy (
+            \x ->
+                case x of
+                    LTRead -> True
+                    otherwise -> False
+            )
+        )
+
+parseTokenWrite :: Parser ()
+parseTokenWrite =
+    void (
+        satisfy (
+            \x ->
+                case x of
+                    LTWrite -> True
+                    otherwise -> False
+            )
+        )
+
+parseTokenWriteln :: Parser ()
+parseTokenWriteln =
+    void (
+        satisfy (
+            \x ->
+                case x of
+                    LTWriteln -> True
+                    otherwise -> False
+            )
+        )
+
+parseTokenFalse :: Parser ()
+parseTokenFalse =
+    void (
+        satisfy (
+            \x ->
+                case x of
+                    LTFalse -> True
+                    otherwise -> False
+            )
+        )
+
+parseTokenTrue :: Parser ()
+parseTokenTrue =
+    void (
+        satisfy (
+            \x ->
+                case x of
+                    LTTrue -> True
+                    otherwise -> False
+            )
+        )
+
 parseCharacterString :: Parser ASTCharacterString
 parseCharacterString =
     do
@@ -637,35 +692,34 @@ parseProcedureDeclarationPart =
             )
 
 -- your code starts here
-type ASTUnsignedNumber = UnsignedNumberDenoter
-data UnsignedNumberDenoter =
-    UnsignedIntegerDenoter ASTUnsignedInteger |
-    UnsignedRealDenoter ASTUnsignedReal
+type ASTBooleanConstant = BooleanConstantDenoter
+data BooleanConstantDenoter =
+    FalseDenoter |
+    TrueDenoter
     deriving(Show)
-parseUnsignedNumber :: Parser ASTUnsignedNumber
-parseUnsignedNumber =
+parseBooleanConstant :: Parser ASTBooleanConstant
+parseBooleanConstant =
     trace
-        "parseUnsignedNumber"
-    (
-        choice
-            [
-                try (
+        "parseBooleanConstant"
+        (
+            choice
+                [
+                    try (
+                        do
+                            parseTokenFalse
+                            return FalseDenoter
+                        ),
                     do
-                        x <-
-                            parseUnsignedInteger
-                        return (UnsignedIntegerDenoter x)
-                    ),
-                do
-                    x <-
-                        parseUnsignedReal
-                    return (UnsignedRealDenoter x)
-            ]
-    )
+                        parseTokenTrue
+                        return TrueDenoter
+                ]
+        )
 
 type ASTUnsignedConstant = UnsignedConstantDenoter
 data UnsignedConstantDenoter =
-    UnsignedNumberDenoter ASTUnsignedNumber |
-    CharacterStringDenoter ASTCharacterString
+    BooleanConstantDenoter ASTBooleanConstant |
+    UnsignedIntegerDenoter ASTUnsignedInteger |
+    UnsignedRealDenoter ASTUnsignedReal
     deriving(Show)
 parseUnsignedConstantDenoter :: Parser ASTUnsignedConstant
 parseUnsignedConstantDenoter =
@@ -677,13 +731,19 @@ parseUnsignedConstantDenoter =
                     try (
                         do
                             x <-
-                                parseUnsignedNumber
-                            return (UnsignedNumberDenoter x)
+                                parseBooleanConstant
+                            return (BooleanConstantDenoter x)
+                        ),
+                    try (
+                        do
+                            x <-
+                                parseUnsignedInteger
+                            return (UnsignedIntegerDenoter x)
                         ),
                     do
                         x <-
-                            parseCharacterString
-                        return (CharacterStringDenoter x)
+                            parseUnsignedReal
+                        return (UnsignedRealDenoter x)
                 ]
         )
 
@@ -985,30 +1045,7 @@ parseExpression =
                     return (x0, x1)
             )
 
-type ASTLvalue = LvalueDenoter
-data LvalueDenoter =
-    LvalueVariableAccessDenoter VariableAccessDenoter |
-    LvalueIdentifierDenoter ASTIdentifier
-    deriving(Show)
-parseLvalueDenoter  :: Parser ASTLvalue
-parseLvalueDenoter =
-    trace
-        "parseLvalueDenoter"
-            choice
-                [
-                    try (
-                        do
-                            x0 <-
-                                parseVariableAccessDenoter
-                            return (LvalueVariableAccessDenoter x0)
-                        ),
-                    do
-                        x0 <-
-                            parseIdentifier
-                        return (LvalueIdentifierDenoter x0)
-                ]
-
-type ASTAssignmentStatement = (ASTLvalue, ASTExpression)
+type ASTAssignmentStatement = (VariableAccessDenoter, ASTExpression)
 parseAssignmentStatement  :: Parser ASTAssignmentStatement
 parseAssignmentStatement =
     trace
@@ -1016,11 +1053,67 @@ parseAssignmentStatement =
             try (
                 do
                     x0 <-
-                        parseLvalueDenoter
+                        parseVariableAccessDenoter
                     parseTokenAssign
                     x1 <-
                         parseExpression
                     return (x0, x1)
+            )
+
+type ASTReadStatement = ASTVariableAccess
+parseReadStatement  :: Parser ASTReadStatement
+parseReadStatement =
+    trace
+        "parseReadStatement"
+            try (
+                do
+                    parseTokenRead
+                    parseTokenLeftParenthesis
+                    x0 <-
+                        parseVariableAccessDenoter
+                    parseTokenRightParenthesis
+                    return x0
+            )
+
+type ASTWriteStatement = ASTExpression
+parseWriteStatement :: Parser ASTWriteStatement
+parseWriteStatement =
+    trace
+        "parseWriteStatement"
+            try (
+                do
+                    parseTokenWrite
+                    parseTokenLeftParenthesis
+                    x0 <-
+                        parseExpression
+                    parseTokenRightParenthesis
+                    return x0
+            )
+
+type ASTWriteStringStatement = ASTCharacterString
+parseWriteStringStatement :: Parser ASTWriteStringStatement
+parseWriteStringStatement =
+    trace
+        "parseWriteStringStatement"
+            try (
+                do
+                    parseTokenWrite
+                    parseTokenLeftParenthesis
+                    x0 <-
+                        parseCharacterString
+                    parseTokenRightParenthesis
+                    return x0
+            )
+
+type ASTWritelnStatement = ()
+parseWritelnStatement :: Parser ASTWritelnStatement
+parseWritelnStatement =
+    trace
+        "parseWritelnStatement"
+            try (
+                do
+                    parseTokenWriteln
+                    return ()
             )
 
 parseNonPrimaryParameter :: Parser ASTExpression
@@ -1076,6 +1169,10 @@ parseProcedureStatement =
 type ASTStatement = ASTStatementDenoter
 data ASTStatementDenoter =
     AssignmentStatementDenoter ASTAssignmentStatement |
+    ReadStatementDenoter ASTReadStatement |
+    WriteStatementDenoter ASTWriteStatement |
+    WriteStringStatementDenoter ASTWriteStringStatement |
+    WritelnStatementDenoter ASTWritelnStatement |
     ProcedureStatementDenoter ASTProcedureStatement |
     CompoundStatementDenoter ASTCompoundStatement |
     IfStatementDenoter ASTIfStatement |
@@ -1094,6 +1191,30 @@ parseStatement =
                             x0 <-
                                 parseAssignmentStatement
                             return (AssignmentStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseReadStatement
+                            return (ReadStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseWriteStatement
+                            return (WriteStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseWriteStringStatement
+                            return (WriteStringStatementDenoter x0)
+                        ),
+                    try (
+                        do
+                            x0 <-
+                                parseWritelnStatement
+                            return (WritelnStatementDenoter x0)
                         ),
                     try (
                         do
