@@ -233,33 +233,63 @@ cgIntToReal r = do
     writeInstruction "int_to_real" [showReg r, showReg r]
     putRegType r (OrdinaryTypeDenoter RealTypeIdentifier)
 
+data OperatorType = IntOp | RealOp
+
 -- check types of both operands, do type casting if necessary, report final type
-cgPrepareNumOp :: Reg -> Reg -> Codegen (ASTTypeDenoter)
-cgPrepareNumOp r1 r2 = do
+cgPrepareArithmetic :: Reg -> Reg -> Codegen (OperatorType)
+cgPrepareArithmetic r1 r2 = do
     t1 <- getRegType r1
     t2 <- getRegType r2
     case (t1, t2) of
         (
             OrdinaryTypeDenoter RealTypeIdentifier,
             OrdinaryTypeDenoter RealTypeIdentifier
-            ) -> return astTypeReal
+            ) -> return RealOp
         (
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter RealTypeIdentifier
             ) -> do
                 cgIntToReal r1
-                return astTypeReal
+                return RealOp
         (
             OrdinaryTypeDenoter RealTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
             ) -> do
                 cgIntToReal r2
-                return astTypeReal
+                return RealOp
         (
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
-            ) -> return astTypeInt
+            ) -> return IntOp
         _   -> error ""
+
+cgPrepareLogical :: Reg -> Reg -> Codegen ()
+cgPrepareLogical r1 r2 = do
+    t1 <- getRegType r1
+    t2 <- getRegType r2
+    case (t1, t2) of
+        (
+            OrdinaryTypeDenoter BooleanTypeIdentifier,
+            OrdinaryTypeDenoter BooleanTypeIdentifier
+            ) -> return ()
+        _   -> error ""
+
+cgPrepareComparison :: Reg -> Reg -> Codegen (OperatorType)
+cgPrepareComparison = cgPrepareArithmetic
+
+cgPrepareDiv :: Reg -> Reg -> Codegen ()
+cgPrepareDiv r1 r2 = do
+    t1 <- getRegType r1
+    t2 <- getRegType r2
+    case (t1, t2) of
+        (
+            OrdinaryTypeDenoter IntegerTypeIdentifier,
+            OrdinaryTypeDenoter IntegerTypeIdentifier
+            ) -> return ()
+        _   -> error ""
+
+cgPrepareDivideBy :: Reg -> Reg -> Codegen (OperatorType)
+cgPrepareDivideBy = cgPrepareArithmetic
 
 cgExpression :: ASTExpression -> Reg -> Codegen ()
 cgExpression (simpExpr, Nothing) dest =
@@ -269,7 +299,7 @@ cgExpression (e1, Just (relOp, e2)) dest = do
     r2 <- nextRegister
     cgSimpleExpression e1 r1
     cgSimpleExpression e2 r2
-    ot <- cgPrepareNumOp r1 r2
+    ot <- cgPrepareComparison r1 r2
     let a = case relOp of
             EqualDenoter -> "cmp_eq"
             NotEqualDenoter -> "cmp_ne"
@@ -278,9 +308,8 @@ cgExpression (e1, Just (relOp, e2)) dest = do
             LessThanOrEqualDenoter -> "cmp_le"
             GreaterThanOrEqualDenoter -> "cmp_ge"
     let b = case ot of
-            OrdinaryTypeDenoter RealTypeIdentifier -> "real"
-            OrdinaryTypeDenoter IntegerTypeIdentifier -> "int"
-            _ -> error ""
+            RealOp -> "real"
+            IntOp -> "int"
     let cmd = a ++ "_" ++ b
     writeInstruction cmd [showReg dest, showReg r1, showReg r2]
     putRegType dest astTypeBool
@@ -291,6 +320,29 @@ cgMove to from = do
     writeInstruction "move" [showReg from, showReg to]
     t <- getRegType from
     putRegType to t
+
+
+cgArithmetic :: Reg -> Reg -> String -> Codegen ()
+cgArithmetic dest r a = do
+    ot <- cgPrepareArithmetic dest r
+    let (b, t) = case ot of
+            IntOp -> ("int", astTypeInt)
+            RealOp -> ("real", astTypeReal)
+    let cmd = a ++ "_" ++ b
+    writeInstruction cmd [showReg dest, showReg dest, showReg r]
+    putRegType dest t
+
+cgLogical :: Reg -> Reg -> String -> Codegen ()
+cgLogical dest r cmd = do
+    cgPrepareLogical dest r
+    writeInstruction cmd [showReg dest, showReg dest, showReg r]
+    putRegType dest astTypeBool
+
+cgDiv :: Reg -> Reg -> Codegen ()
+cgDiv dest r = do
+    cgPrepareDiv dest r
+    writeInstruction "div_int" [showReg dest, showReg dest, showReg r]
+    putRegType dest astTypeInt
 
 cgSimpleExpression :: ASTSimpleExpression -> Reg -> Codegen ()
 cgSimpleExpression expr dest = do
@@ -313,18 +365,10 @@ cgSimpleExpression' (ms, t1, x:xs) dest = do
     cgTerm t1 dest
     r <- nextRegister
     cgTerm t2 r
-    ot <- cgPrepareNumOp dest r
-    let a = case addOp of
-            PlusDenoter -> "add"
-            MinusDenoter -> "sub"
-            OrDenoter -> error "" -- TODO
-    let b = case ot of
-            OrdinaryTypeDenoter IntegerTypeIdentifier -> "int"
-            OrdinaryTypeDenoter RealTypeIdentifier -> "real"
-            _ ->  error ""
-    let cmd = a ++ "_" ++ b
-    writeInstruction cmd [showReg dest, showReg dest, showReg r]
-    putRegType dest ot
+    case addOp of
+        PlusDenoter -> cgArithmetic dest r "add"
+        MinusDenoter -> cgArithmetic dest r "sub"
+        OrDenoter -> cgLogical dest r "or"
 
 cgTerm :: ASTTerm -> Reg -> Codegen ()
 cgTerm term dest = do
@@ -338,18 +382,11 @@ cgTerm' (f1, x:xs) dest = do
     cgFactor f1 dest
     r <- nextRegister
     cgFactor f2 r
-    ot <- cgPrepareNumOp dest r
-    let a = case mulOp of
-            TimesDenoter -> "mul"
-            DivideByDenoter -> "div"
-            DivDenoter -> error "" -- TODO
-            AndDenoter -> error "" -- TODO
-    let b = case ot of
-            OrdinaryTypeDenoter IntegerTypeIdentifier -> "int"
-            OrdinaryTypeDenoter RealTypeIdentifier -> "real"
-    let cmd = a ++ "_" ++ b
-    writeInstruction cmd [showReg dest, showReg dest, showReg r]
-    putRegType dest ot
+    case mulOp of
+            TimesDenoter -> cgArithmetic dest r "mul"
+            DivideByDenoter -> error ""
+            DivDenoter -> cgDiv dest r
+            AndDenoter -> cgLogical dest r "or"
 
 cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of

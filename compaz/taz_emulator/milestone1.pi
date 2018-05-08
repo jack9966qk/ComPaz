@@ -1,0 +1,41 @@
+# program
+call main
+halt
+main:
+# compound statement
+string_const r0, '     Hello darlings!'
+call_builtin print_string
+call_builtin print_newline
+string_const r0, ' '
+call_builtin print_string
+call_builtin print_newline
+string_const r0, 'QUIZ: When real, nine is: '
+call_builtin print_string
+# SimpleExpression
+# term
+real_const r0, 3.0
+# term
+int_const r1, 3
+int_const r2, 2
+mul_int r1, r1, r2
+int_to_real r1, r1
+add_real r0, r0, r1
+call_builtin print_real
+call_builtin print_newline
+# SimpleExpression
+# term
+# SimpleExpression
+# term
+int_const r3, 9
+# SimpleExpression
+# term
+int_const r4, 4
+# term
+int_const r5, 5
+add_int r4, r4, r5
+cmp_eq_int r0, r3, r4
+int_const r6, 1
+or r0, r0, r6
+call_builtin print_bool
+call_builtin print_newline
+return
