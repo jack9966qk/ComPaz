@@ -185,6 +185,7 @@ keywordToLexicalToken =
             ("downto", LTDownTo),
             ("else", LTElse),
             ("end", LTEnd),
+            ("false", LTFalse),
             ("for", LTFor),
             ("function", LTFunction),
             ("if", LTIf),
