@@ -9,7 +9,7 @@ import System.IO (hPutStrLn, stderr)
 import System.Exit (exitFailure)
 import System.Environment (getArgs)
 
-import Sketch
+import Codegen
 
 die :: String -> IO ()
 die err = do

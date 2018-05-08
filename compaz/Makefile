@@ -1,6 +1,6 @@
 EXE = PazLexerTest PazParserTest Paz
 
-paz: Paz.hs PazLexer.hs PazParser.hs PazPrinter.hs Sketch.hs
+paz: Paz.hs PazLexer.hs PazParser.hs PazPrinter.hs Codegen.hs Symbol.hs
 	ghc -dynamic Paz.hs
 
 test:
