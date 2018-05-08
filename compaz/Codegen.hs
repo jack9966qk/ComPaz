@@ -1,5 +1,7 @@
 module Codegen where
 
+import Debug.Trace (trace)
+
 import PazParser (
     ASTProgram,
     ASTVariableDeclarationPart,
@@ -63,19 +65,17 @@ import PazLexer (
     )
 
 import Symbol (
+    Reg,
     Symbols,
-    initSymbols
+    initSymbols,
+    insertRegType,
+    lookupRegType
     )
 
-import Data.Map (
-    Map,
-    (!),
-    insert)
 import qualified Data.Map as Map
 
 import Control.Monad
 
-type Reg = Int
 type Label = Int
 type Code = [Instruction]
 type Instruction = String
@@ -99,7 +99,7 @@ instance Applicative Codegen where
     (<*>) = ap
 
 initState :: State
-initState = State 1 [] initSymbols 0
+initState = State 0 [] initSymbols 0
 
 regZero :: Reg
 regZero = 0
@@ -115,6 +115,7 @@ nextLabel = Codegen (\(State r c s l)
 writeCode :: Instruction -> Codegen ()
 writeCode inst = Codegen (\(State r code s l)
     -> ((), State r (code ++ [inst]) s l))
+    
 
 writeInstruction :: String -> [String] -> Codegen ()
 writeInstruction name [] = writeCode name
@@ -125,22 +126,12 @@ showReg :: Reg -> String
 showReg r = "r" ++ show r
 
 getRegType :: Reg -> Codegen (ASTTypeDenoter)
-getRegType r = Codegen (\(State r c symbols l) ->
-    let
-        (_, _, regMap) = symbols
-        t = regMap ! r
-    in
-        (t, State r c symbols l)
-    )
+getRegType reg = Codegen (\(State r c symbols l) ->
+    (lookupRegType reg symbols, State r c symbols l))
 
 putRegType :: Reg -> ASTTypeDenoter -> Codegen ()
-putRegType r t = Codegen (\(State r c symbols l) ->
-    let
-        (a, b, regMap) = symbols
-        s' = (a, b, insert r t regMap)
-    in
-        ((), State r c s' l)
-    )
+putRegType reg typ = Codegen (\(State r c symbols l) ->
+    ((), State r c (insertRegType reg typ symbols) l))
 
 strJoin :: String -> [String] -> String
 strJoin _ [] = ""
@@ -165,6 +156,7 @@ generateCode prog = do
 
 cgProgram :: ASTProgram -> Codegen ()
 cgProgram (_, _, _, com) = do
+    writeCode "# program"
     writeCode "call main"
     writeCode "halt"
     writeCode "main:"
@@ -172,10 +164,15 @@ cgProgram (_, _, _, com) = do
     writeCode "return"
 
 cgCompoundStatement :: ASTCompoundStatement -> Codegen ()
-cgCompoundStatement [] = return ()
-cgCompoundStatement (x:xs) = do
+cgCompoundStatement stmt = do
+    writeCode "# compound statement"
+    cgCompoundStatement' stmt
+
+cgCompoundStatement' :: ASTCompoundStatement -> Codegen ()
+cgCompoundStatement' [] = return ()
+cgCompoundStatement' (x:xs) = do
     cgStatement x
-    cgCompoundStatement xs
+    cgCompoundStatement' xs
 
 cgStatement :: ASTStatement -> Codegen ()
 cgStatement stmt = case stmt of
@@ -204,7 +201,13 @@ cgWriteStringStatement str = do
 cgWriteStatement :: ASTExpression -> Codegen ()
 cgWriteStatement expr = do
     cgExpression expr regZero
-    writeInstruction "call_builtin" ["print_string"]
+    t <- getRegType regZero
+    let name = case t of
+            ArrayTypeDenoter _ -> error ""
+            OrdinaryTypeDenoter IntegerTypeIdentifier -> "print_int"
+            OrdinaryTypeDenoter RealTypeIdentifier -> "print_real"
+            OrdinaryTypeDenoter BooleanTypeIdentifier -> "print_bool"
+    writeInstruction "call_builtin" [name]
 
 -- cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
 -- cgProcedureStatement (id, maybeParams) = case id of
@@ -216,32 +219,47 @@ cgWriteStatement expr = do
 --         _ -> error ""
 --     _ -> error ""
 
-data NumTypeDenoter = IntegerOp | RealOp
+astTypeInt :: ASTTypeDenoter
+astTypeInt = OrdinaryTypeDenoter IntegerTypeIdentifier
 
-getNumType :: ASTTypeDenoter -> NumTypeDenoter
-getNumType (OrdinaryTypeDenoter ot) = case ot of
-    BooleanTypeIdentifier   -> error "unexpected bool"
-    IntegerTypeIdentifier   -> IntegerOp
-    RealTypeIdentifier      -> RealOp
-getNumType (ArrayTypeDenoter _) = error "unexpected array type"
+astTypeReal :: ASTTypeDenoter
+astTypeReal = OrdinaryTypeDenoter RealTypeIdentifier
+
+astTypeBool :: ASTTypeDenoter
+astTypeBool = OrdinaryTypeDenoter BooleanTypeIdentifier
 
 cgIntToReal :: Reg -> Codegen ()
-cgIntToReal r = writeInstruction "int_to_real" [showReg r, showReg r]
+cgIntToReal r = do
+    writeInstruction "int_to_real" [showReg r, showReg r]
+    putRegType r (OrdinaryTypeDenoter RealTypeIdentifier)
 
 -- check types of both operands, do type casting if necessary, report final type
-cgPrepareNumOp :: Reg -> Reg -> Codegen (NumTypeDenoter)
+cgPrepareNumOp :: Reg -> Reg -> Codegen (ASTTypeDenoter)
 cgPrepareNumOp r1 r2 = do
     t1 <- getRegType r1
     t2 <- getRegType r2
-    case (getNumType t1, getNumType t2) of
-        (RealOp, RealOp) -> return RealOp
-        (IntegerOp, RealOp) -> do
-            cgIntToReal r1
-            return RealOp
-        (RealOp, IntegerOp) -> do
-            cgIntToReal r2
-            return RealOp
-        (IntegerOp, IntegerOp) -> return IntegerOp
+    case (t1, t2) of
+        (
+            OrdinaryTypeDenoter RealTypeIdentifier,
+            OrdinaryTypeDenoter RealTypeIdentifier
+            ) -> return astTypeReal
+        (
+            OrdinaryTypeDenoter IntegerTypeIdentifier,
+            OrdinaryTypeDenoter RealTypeIdentifier
+            ) -> do
+                cgIntToReal r1
+                return astTypeReal
+        (
+            OrdinaryTypeDenoter RealTypeIdentifier,
+            OrdinaryTypeDenoter IntegerTypeIdentifier
+            ) -> do
+                cgIntToReal r2
+                return astTypeReal
+        (
+            OrdinaryTypeDenoter IntegerTypeIdentifier,
+            OrdinaryTypeDenoter IntegerTypeIdentifier
+            ) -> return astTypeInt
+        _   -> error ""
 
 cgExpression :: ASTExpression -> Reg -> Codegen ()
 cgExpression (simpExpr, Nothing) dest =
@@ -260,68 +278,78 @@ cgExpression (e1, Just (relOp, e2)) dest = do
             LessThanOrEqualDenoter -> "cmp_le"
             GreaterThanOrEqualDenoter -> "cmp_ge"
     let b = case ot of
-            RealOp -> "real"
-            IntegerOp -> "int"
+            OrdinaryTypeDenoter RealTypeIdentifier -> "real"
+            OrdinaryTypeDenoter IntegerTypeIdentifier -> "int"
+            _ -> error ""
     let cmd = a ++ "_" ++ b
     writeInstruction cmd [showReg dest, showReg r1, showReg r2]
+    putRegType dest astTypeBool
+
+
+cgMove :: Reg -> Reg -> Codegen ()
+cgMove to from = do
+    writeInstruction "move" [showReg from, showReg to]
+    t <- getRegType from
+    putRegType to t
 
 cgSimpleExpression :: ASTSimpleExpression -> Reg -> Codegen ()
-cgSimpleExpression (ms, t, post) dest = do
-    r <- nextRegister
-    cgTerm t r
-    cgSimpleExpression' (ms, r, post) dest
+cgSimpleExpression expr dest = do
+    writeCode "# SimpleExpression"
+    cgSimpleExpression' expr dest
 
-cgSimpleExpression'
-    :: (Maybe PazParser.ASTSign, Reg, [ASTPostTermModifier]) -> Reg -> Codegen ()
-cgSimpleExpression' (Just PazParser.SignMinus, r, []) dest = do
-    t <- getRegType r
-    let cmd = case getNumType t of
-            RealOp -> "neg_real"
-            IntegerOp -> "neg_int"
-    writeInstruction cmd [showReg r]
-cgSimpleExpression' (_, r, []) dest =
-    writeInstruction "move" [showReg dest, showReg r]
-cgSimpleExpression' (ms, r1, ((addOp, t2):xs)) dest = do
-    r2 <- nextRegister
-    cgTerm t2 r2
-    ot <- cgPrepareNumOp r1 r2
+cgSimpleExpression' :: ASTSimpleExpression -> Reg -> Codegen ()
+cgSimpleExpression' (Just PazParser.SignMinus, term, []) dest = do
+    cgTerm term dest
+    t <- getRegType dest
+    let cmd = case t of
+            OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
+            OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
+            _ -> error ""
+    writeInstruction cmd [showReg dest]
+cgSimpleExpression' (_, term, []) dest =
+    cgTerm term dest
+cgSimpleExpression' (ms, t1, x:xs) dest = do
+    let (addOp, t2) = x
+    cgTerm t1 dest
+    r <- nextRegister
+    cgTerm t2 r
+    ot <- cgPrepareNumOp dest r
     let a = case addOp of
             PlusDenoter -> "add"
             MinusDenoter -> "sub"
             OrDenoter -> error "" -- TODO
     let b = case ot of
-            IntegerOp -> "int"
-            RealOp -> "real"
+            OrdinaryTypeDenoter IntegerTypeIdentifier -> "int"
+            OrdinaryTypeDenoter RealTypeIdentifier -> "real"
+            _ ->  error ""
     let cmd = a ++ "_" ++ b
-    r3 <- nextRegister
-    writeInstruction cmd [showReg r3, showReg r1, showReg r2]
-    cgSimpleExpression' (ms, r3, xs) dest
-
+    writeInstruction cmd [showReg dest, showReg dest, showReg r]
+    putRegType dest ot
 
 cgTerm :: ASTTerm -> Reg -> Codegen ()
-cgTerm (factor, post) dest = do
-    r <- nextRegister
-    cgFactor factor r
-    cgTerm' (r, post) dest
+cgTerm term dest = do
+    writeCode "# term"
+    cgTerm' term dest
 
-cgTerm' :: (Reg, [ASTPostFactorModifier]) -> Reg -> Codegen ()
-cgTerm' (r, []) dest = writeInstruction "move" [showReg dest, showReg r]
-cgTerm' (r1, (mulOp, f2):xs) dest = do
-    r2 <- nextRegister
-    cgFactor f2 r2
+cgTerm' :: ASTTerm -> Reg -> Codegen ()
+cgTerm' (factor, []) dest = cgFactor factor dest
+cgTerm' (f1, x:xs) dest = do
+    let (mulOp, f2) = x
+    cgFactor f1 dest
+    r <- nextRegister
+    cgFactor f2 r
+    ot <- cgPrepareNumOp dest r
     let a = case mulOp of
             TimesDenoter -> "mul"
             DivideByDenoter -> "div"
             DivDenoter -> error "" -- TODO
             AndDenoter -> error "" -- TODO
-    ot <- cgPrepareNumOp r1 r2
     let b = case ot of
-            IntegerOp -> "int"
-            RealOp -> "real"
+            OrdinaryTypeDenoter IntegerTypeIdentifier -> "int"
+            OrdinaryTypeDenoter RealTypeIdentifier -> "real"
     let cmd = a ++ "_" ++ b
-    r3 <- nextRegister
-    writeInstruction cmd [showReg r3, showReg r1, showReg r2]
-    cgTerm' (r1, xs) dest
+    writeInstruction cmd [showReg dest, showReg dest, showReg r]
+    putRegType dest ot
 
 cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of
@@ -331,10 +359,12 @@ cgFactor factor dest = case factor of
     NegatedFactorDenoter factor -> do
         cgFactor factor dest
         t <- getRegType dest
-        let cmd = case getNumType t of
-                RealOp -> "neg_real"
-                IntegerOp -> "neg_int"
+        let cmd = case t of
+                OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
+                OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
+                _ -> error ""
         writeInstruction cmd [showReg dest]
+        putRegType dest t
 
 cgVariableAccess :: ASTVariableAccess -> Reg -> Codegen ()
 cgVariableAccess var dest = error ""
@@ -362,37 +392,36 @@ cgUnsignedNumber num dest = case num of
     BooleanConstantDenoter b    -> cgBooleanConstant b dest
 
 cgUnsignedInteger :: ASTUnsignedInteger -> Reg -> Codegen ()
-cgUnsignedInteger int dest =
+cgUnsignedInteger int dest = do
     writeInstruction "int_const" [showReg dest, int]
+    putRegType dest (OrdinaryTypeDenoter IntegerTypeIdentifier)
 
 cgUnsignedReal :: ASTUnsignedReal -> Reg -> Codegen ()
-cgUnsignedReal (seq, maybeSeq, maybeScale) dest =
-    let
-        f1 = read seq :: Float
-        f2 = case maybeSeq of
+cgUnsignedReal (seq, maybeSeq, maybeScale) dest = do
+    let f1 = read seq :: Float
+    let f2 = case maybeSeq of
             Just s  -> f1 + read ("0." ++ s) :: Float
             Nothing -> f1
-        scale = case maybeScale of
+    let scale = case maybeScale of
             Just (Nothing, s)
                 -> (read s :: Int)
             Just (Just PazLexer.SignPlus, s)
                 -> (read s :: Int)
             Just (Just PazLexer.SignMinus, s)
                 -> -(read s :: Int)
-            Nothing -> 1
-        f3 = f2 * (10 ^ scale)
-        regPart = showReg dest
-        realPart = show f3
-    in
-        writeInstruction "real_const" [regPart, realPart]
+            Nothing -> 0
+    let f3 = f2 * (10 ^ scale)
+    let regPart = showReg dest
+    let realPart = show f3
+    writeInstruction "real_const" [regPart, realPart]
+    putRegType dest (OrdinaryTypeDenoter RealTypeIdentifier)
 
 cgBooleanConstant :: ASTBooleanConstant -> Reg -> Codegen ()
-cgBooleanConstant bool dest =
-    let
-        val = case bool of
+cgBooleanConstant bool dest = do
+    let val = case bool of
             FalseDenoter    -> 0
             TrueDenoter     -> 1
-        regPart = showReg dest
-        boolPart = show val
-    in
-        writeInstruction "int_const" [regPart, boolPart]
+    let regPart = showReg dest
+    let boolPart = show val
+    writeInstruction "int_const" [regPart, boolPart]
+    putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)

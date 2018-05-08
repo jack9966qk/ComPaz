@@ -1,6 +1,14 @@
+# program
 call main
 halt
 main:
-string_const r0, 'Hello, world!'
-call_builtin print_string
+# compound statement
+# SimpleExpression
+# term
+int_const r1, 2
+# SimpleExpression
+# term
+int_const r2, 3
+cmp_eq_int r0, r1, r2
+call_builtin print_bool
 return

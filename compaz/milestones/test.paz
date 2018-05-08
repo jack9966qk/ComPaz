@@ -1,0 +1,8 @@
+program milestone1;
+
+{ Phase 1 test case
+  Tests expressions and the write statement }
+
+begin
+    write(2 = 3)
+end.
