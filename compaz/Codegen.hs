@@ -69,7 +69,9 @@ import Symbol (
     Symbols,
     initSymbols,
     insertRegType,
-    lookupRegType
+    lookupRegType,
+    insertVariable,
+    lookupVariable
     )
 
 import qualified Data.Map as Map
@@ -115,7 +117,6 @@ nextLabel = Codegen (\(State r c s l)
 writeCode :: Instruction -> Codegen ()
 writeCode inst = Codegen (\(State r code s l)
     -> ((), State r (code ++ [inst]) s l))
-    
 
 writeInstruction :: String -> [String] -> Codegen ()
 writeInstruction name [] = writeCode name
@@ -132,6 +133,14 @@ getRegType reg = Codegen (\(State r c symbols l) ->
 putRegType :: Reg -> ASTTypeDenoter -> Codegen ()
 putRegType reg typ = Codegen (\(State r c symbols l) ->
     ((), State r c (insertRegType reg typ symbols) l))
+
+getVariable :: String -> Codegen (Bool, ASTTypeDenoter, Int)
+getVariable name = Codegen (\(State r c symbols l) ->
+    (lookupVariable name symbols, State r c symbols l))
+
+putVariable :: String -> (Bool, ASTTypeDenoter, Int) -> Codegen ()
+putVariable name val = Codegen (\(State r c symbols l) ->
+    ((), State r c (insertVariable name val symbols) l))
 
 strJoin :: String -> [String] -> String
 strJoin _ [] = ""
@@ -231,7 +240,7 @@ astTypeBool = OrdinaryTypeDenoter BooleanTypeIdentifier
 cgIntToReal :: Reg -> Codegen ()
 cgIntToReal r = do
     writeInstruction "int_to_real" [showReg r, showReg r]
-    putRegType r (OrdinaryTypeDenoter RealTypeIdentifier)
+    putRegType r astTypeReal
 
 data OperatorType = IntOp | RealOp
 
@@ -288,8 +297,10 @@ cgPrepareDiv r1 r2 = do
             ) -> return ()
         _   -> error ""
 
-cgPrepareDivideBy :: Reg -> Reg -> Codegen (OperatorType)
-cgPrepareDivideBy = cgPrepareArithmetic
+cgPrepareDivideBy :: Reg -> Reg -> Codegen ()
+cgPrepareDivideBy dest r = do
+    cgPrepareArithmetic dest r
+    return ()
 
 cgExpression :: ASTExpression -> Reg -> Codegen ()
 cgExpression (simpExpr, Nothing) dest =
@@ -344,6 +355,12 @@ cgDiv dest r = do
     writeInstruction "div_int" [showReg dest, showReg dest, showReg r]
     putRegType dest astTypeInt
 
+cgDivideBy :: Reg -> Reg -> Codegen ()
+cgDivideBy dest r = do
+    cgPrepareDivideBy dest r
+    writeInstruction "div_real" [showReg dest, showReg dest, showReg r]
+    putRegType dest astTypeReal
+
 cgSimpleExpression :: ASTSimpleExpression -> Reg -> Codegen ()
 cgSimpleExpression expr dest = do
     writeCode "# SimpleExpression"
@@ -384,7 +401,7 @@ cgTerm' (f1, x:xs) dest = do
     cgFactor f2 r
     case mulOp of
             TimesDenoter -> cgArithmetic dest r "mul"
-            DivideByDenoter -> error ""
+            DivideByDenoter -> cgDivideBy dest r
             DivDenoter -> cgDiv dest r
             AndDenoter -> cgLogical dest r "or"
 

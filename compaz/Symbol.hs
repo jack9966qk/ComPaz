@@ -37,3 +37,10 @@ insertRegType r t (a, b, map) = -- trace (show $ insert r t map)
 lookupRegType :: Reg -> Symbols -> ASTTypeDenoter
 lookupRegType r (_, _, map) = -- trace ( (show map) ++ " get " ++ (show r) )
     (map ! r)
+
+insertVariable :: String -> (Bool, ASTTypeDenoter, Int) -> Symbols -> Symbols
+insertVariable name val (a, map, c) =
+    (a, insert name val map, c)
+
+lookupVariable :: String -> Symbols -> (Bool, ASTTypeDenoter, Int)
+lookupVariable name (_, map, _) = (map ! name)
