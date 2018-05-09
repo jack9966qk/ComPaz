@@ -78,12 +78,14 @@ import qualified Data.Map as Map
 
 import Control.Monad
 
-type Label = Int
+type StackSlot = Int
+type Label = String
+type LabelCounter = Int
 type MemSize = Int
 type Code = [Instruction]
 type Instruction = String
 
-data State = State Reg Code Symbols Label
+data State = State Reg Code Symbols StackSlot LabelCounter
 data Codegen a = Codegen (State -> (a, State))
 instance Monad Codegen where
     return x = Codegen (\s -> (x, s))
@@ -102,27 +104,34 @@ instance Applicative Codegen where
     (<*>) = ap
 
 initState :: State
-initState = State 0 [] initSymbols (-1)
+initState = State 0 [] initSymbols (-1) (-1)
 
 regZero :: Reg
 regZero = 0
 
 nextRegister :: Codegen Reg
-nextRegister = Codegen (\(State r c s l)
-    -> (r + 1, State (r + 1) c s l))
+nextRegister = Codegen (\(State r c s sl l)
+    -> (r + 1, State (r + 1) c s sl l))
+
+nextSlot :: Codegen StackSlot
+nextSlot = Codegen (\(State r c s sl l)
+    -> (sl + 1, State r c s (sl + 1) l))
+
+nextLabelCounter :: Codegen LabelCounter
+nextLabelCounter = Codegen (\(State r c s sl l)
+    -> (l + 1, State r c s sl (l + 1)))
 
 nextLabel :: Codegen Label
-nextLabel = Codegen (\(State r c s l)
-    -> (l + 1, State r c s (l + 1)))
+nextLabel = nextLabelCounter >>= (\l -> return ("label" ++ show l))
 
 writeCode :: Instruction -> Codegen ()
-writeCode inst = Codegen (\(State r code s l)
-    -> ((), State r (code ++ [inst]) s l))
+writeCode inst = Codegen (\(State r code s sl l)
+    -> ((), State r (code ++ [inst]) s sl l))
 
 writeComment :: String -> Codegen ()
-writeComment str = writeCode $ "    " ++ str
+writeComment str = writeCode $ "    # " ++ str
 
-writeLabel :: String -> Codegen ()
+writeLabel :: Label -> Codegen ()
 writeLabel str = writeCode $ str ++ ":"
 
 writeInstruction :: String -> [String] -> Codegen ()
@@ -134,20 +143,20 @@ showReg :: Reg -> String
 showReg r = "r" ++ show r
 
 getRegType :: Reg -> Codegen (ASTTypeDenoter)
-getRegType reg = Codegen (\(State r c symbols l) ->
-    (lookupRegType reg symbols, State r c symbols l))
+getRegType reg = Codegen (\(State r c symbols sl l) ->
+    (lookupRegType reg symbols, State r c symbols sl l))
 
 putRegType :: Reg -> ASTTypeDenoter -> Codegen ()
-putRegType reg typ = Codegen (\(State r c symbols l) ->
-    ((), State r c (insertRegType reg typ symbols) l))
+putRegType reg typ = Codegen (\(State r c symbols sl l) ->
+    ((), State r c (insertRegType reg typ symbols) sl l))
 
 getVariable :: String -> Codegen (Bool, ASTTypeDenoter, Int)
-getVariable name = Codegen (\(State r c symbols l) ->
-    (lookupVariable name symbols, State r c symbols l))
+getVariable name = Codegen (\(State r c symbols sl l) ->
+    (lookupVariable name symbols, State r c symbols sl l))
 
 putVariable :: String -> (Bool, ASTTypeDenoter, Int) -> Codegen ()
-putVariable name val = Codegen (\(State r c symbols l) ->
-    ((), State r c (insertVariable name val symbols) l))
+putVariable name val = Codegen (\(State r c symbols sl l) ->
+    ((), State r c (insertVariable name val symbols) sl l))
 
 strJoin :: String -> [String] -> String
 strJoin _ [] = ""
@@ -178,12 +187,12 @@ generateCode :: ASTProgram -> IO ()
 generateCode prog = do
     let Codegen fn = cgProgram prog
     let (_, finalState) = fn initState
-    let State _ instructions _ _ = finalState
+    let State _ instructions _ _ _ = finalState
     printSepBy (putStr "\n") (map putStr instructions)
 
 cgProgram :: ASTProgram -> Codegen ()
 cgProgram (_, var, _, com) = do
-    writeComment "# program"
+    writeComment "program"
     size <- cgVariableDeclarationPart var
     writeCode "    call main"
     writeCode "    halt"
@@ -203,7 +212,7 @@ cgPopStackFrame size =
     
 cgVariableDeclarationPart :: ASTVariableDeclarationPart -> Codegen (MemSize)
 cgVariableDeclarationPart var = do
-    writeComment "# variable declaration part"
+    writeComment "variable declaration part"
     cgVariableDeclarationPart' var
 
 cgVariableDeclarationPart' :: ASTVariableDeclarationPart -> Codegen (MemSize)
@@ -213,9 +222,9 @@ cgVariableDeclarationPart' (Just (decl, more)) = do
 
 cgVariableDeclaration :: ASTVariableDeclaration -> Codegen (MemSize)
 cgVariableDeclaration ((ident, moreIdent), typ) = do
-    writeComment "# variable declaration"
+    writeComment "variable declaration"
     let cgDecl i = do
-        sl <- nextLabel
+        sl <- nextSlot
         case typ of
             ArrayTypeDenoter _ -> error "" -- TODO
             _ -> do
@@ -225,7 +234,7 @@ cgVariableDeclaration ((ident, moreIdent), typ) = do
 
 cgCompoundStatement :: ASTCompoundStatement -> Codegen ()
 cgCompoundStatement stmt = do
-    writeComment "# compound statement"
+    writeComment "compound statement"
     cgCompoundStatement' stmt
 
 cgCompoundStatement' :: ASTCompoundStatement -> Codegen ()
@@ -242,13 +251,39 @@ cgStatement stmt = case stmt of
     WriteStringStatementDenoter s -> cgWriteStringStatement s
     WritelnStatementDenoter _ -> cgWriteln
     -- ProcedureStatementDenoter s -> cgProcedureStatement s
-    -- CompoundStatementDenoter s -> cgCompoundStatement s
-    -- IfStatementDenoter s -> cgIfStatement s
-    -- WhileStatementDenoter s -> cgWhileStatement s
+    CompoundStatementDenoter s -> cgCompoundStatement s
+    IfStatementDenoter s -> cgIfStatement s
+    WhileStatementDenoter s -> cgWhileStatement s
     -- ForStatementDenoter s -> cgForStatement s
     -- ProcedureStatementDenoter s -> cgProcedureStatement s
     EmptyStatementDenoter -> return ()
     _ -> error ""
+
+cgIfStatement :: ASTIfStatement -> Codegen ()
+cgIfStatement (expr, ifStmt, maybeElse) = do
+    writeComment "if statement"
+    elseLabel <- nextLabel
+    r <- nextRegister
+    cgExpression expr r
+    writeInstruction "branch_on_false" [showReg r, elseLabel]
+    cgStatement ifStmt
+    writeLabel elseLabel
+    case maybeElse of
+        Nothing -> return ()
+        Just elseStmt -> cgStatement elseStmt
+
+cgWhileStatement :: ASTWhileStatement -> Codegen ()
+cgWhileStatement (expr, stmt) = do
+    writeComment "while statement"
+    beginLabel <- nextLabel
+    afterLabel <- nextLabel
+    writeLabel beginLabel
+    r <- nextRegister
+    cgExpression expr r
+    writeInstruction "branch_on_false" [showReg r, afterLabel]
+    cgStatement stmt
+    writeInstruction "branch_uncond" [beginLabel]
+    writeLabel afterLabel
 
 cgPrepareAssignment :: (Int, ASTTypeDenoter) -> (Reg, ASTTypeDenoter) -> Codegen ()
 cgPrepareAssignment
@@ -447,7 +482,7 @@ cgDivideBy dest r = do
 
 cgSimpleExpression :: ASTSimpleExpression -> Reg -> Codegen ()
 cgSimpleExpression expr dest = do
-    writeComment "# SimpleExpression"
+    writeComment "SimpleExpression"
     cgSimpleExpression' expr dest
 
 cgSimpleExpression' :: ASTSimpleExpression -> Reg -> Codegen ()
@@ -473,7 +508,7 @@ cgSimpleExpression' (ms, t1, x:xs) dest = do
 
 cgTerm :: ASTTerm -> Reg -> Codegen ()
 cgTerm term dest = do
-    writeComment "# term"
+    writeComment "term"
     cgTerm' term dest
 
 cgTerm' :: ASTTerm -> Reg -> Codegen ()
