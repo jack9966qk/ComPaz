@@ -79,6 +79,7 @@ import qualified Data.Map as Map
 import Control.Monad
 
 type Label = Int
+type MemSize = Int
 type Code = [Instruction]
 type Instruction = String
 
@@ -101,7 +102,7 @@ instance Applicative Codegen where
     (<*>) = ap
 
 initState :: State
-initState = State 0 [] initSymbols 0
+initState = State 0 [] initSymbols (-1)
 
 regZero :: Reg
 regZero = 0
@@ -118,10 +119,16 @@ writeCode :: Instruction -> Codegen ()
 writeCode inst = Codegen (\(State r code s l)
     -> ((), State r (code ++ [inst]) s l))
 
+writeComment :: String -> Codegen ()
+writeComment str = writeCode $ "    " ++ str
+
+writeLabel :: String -> Codegen ()
+writeLabel str = writeCode $ str ++ ":"
+
 writeInstruction :: String -> [String] -> Codegen ()
 writeInstruction name [] = writeCode name
 writeInstruction name args =
-    writeCode $ name ++ " " ++ (strJoin ", " args)
+    writeCode $ "    " ++ name ++ " " ++ (strJoin ", " args)
 
 showReg :: Reg -> String
 showReg r = "r" ++ show r
@@ -147,6 +154,17 @@ strJoin _ [] = ""
 strJoin _ [x] = x
 strJoin sep (x:y:zs) = x ++ sep ++ (strJoin sep (y:zs))
 
+cgJoin :: [Codegen ()] -> Codegen ()
+cgJoin [] = return ()
+cgJoin (x:xs) = x >> (cgJoin xs)
+
+cgFoldr :: (a -> b -> b) -> b -> [Codegen (a)] -> Codegen (b)
+cgFoldr _ val [] = return val
+cgFoldr fn val (x:xs) = do
+    v <- x
+    let val' = fn v val
+    cgFoldr fn val' xs
+
 strJoinSpace :: [String] -> String
 strJoinSpace = strJoin " "
 
@@ -164,17 +182,50 @@ generateCode prog = do
     printSepBy (putStr "\n") (map putStr instructions)
 
 cgProgram :: ASTProgram -> Codegen ()
-cgProgram (_, _, _, com) = do
-    writeCode "# program"
-    writeCode "call main"
-    writeCode "halt"
-    writeCode "main:"
+cgProgram (_, var, _, com) = do
+    writeComment "# program"
+    size <- cgVariableDeclarationPart var
+    writeCode "    call main"
+    writeCode "    halt"
+    writeLabel "main"
+    cgPushStackFrame size
     cgCompoundStatement com
-    writeCode "return"
+    cgPopStackFrame size
+    writeCode "    return"
+
+cgPushStackFrame :: MemSize -> Codegen ()
+cgPushStackFrame size =
+    writeInstruction "push_stack_frame" [show size]
+
+cgPopStackFrame :: MemSize -> Codegen ()
+cgPopStackFrame size =
+    writeInstruction "pop_stack_frame" [show size]
+    
+cgVariableDeclarationPart :: ASTVariableDeclarationPart -> Codegen (MemSize)
+cgVariableDeclarationPart var = do
+    writeComment "# variable declaration part"
+    cgVariableDeclarationPart' var
+
+cgVariableDeclarationPart' :: ASTVariableDeclarationPart -> Codegen (MemSize)
+cgVariableDeclarationPart' Nothing = return 0
+cgVariableDeclarationPart' (Just (decl, more)) = do
+    cgFoldr (+) 0 $ map cgVariableDeclaration (decl:more)
+
+cgVariableDeclaration :: ASTVariableDeclaration -> Codegen (MemSize)
+cgVariableDeclaration ((ident, moreIdent), typ) = do
+    writeComment "# variable declaration"
+    let cgDecl i = do
+        sl <- nextLabel
+        case typ of
+            ArrayTypeDenoter _ -> error "" -- TODO
+            _ -> do
+                putVariable i (True, typ, sl)
+                return 1
+    cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
 
 cgCompoundStatement :: ASTCompoundStatement -> Codegen ()
 cgCompoundStatement stmt = do
-    writeCode "# compound statement"
+    writeComment "# compound statement"
     cgCompoundStatement' stmt
 
 cgCompoundStatement' :: ASTCompoundStatement -> Codegen ()
@@ -185,8 +236,8 @@ cgCompoundStatement' (x:xs) = do
 
 cgStatement :: ASTStatement -> Codegen ()
 cgStatement stmt = case stmt of
-    -- AssignmentStatementDenoter s -> cgAssignmentStatement s
-    -- ReadStatementDenoter s -> cgReadStatement s
+    AssignmentStatementDenoter s -> cgAssignmentStatement s
+    ReadStatementDenoter s -> cgReadStatement s
     WriteStatementDenoter e -> cgWriteStatement e
     WriteStringStatementDenoter s -> cgWriteStringStatement s
     WritelnStatementDenoter _ -> cgWriteln
@@ -198,6 +249,39 @@ cgStatement stmt = case stmt of
     -- ProcedureStatementDenoter s -> cgProcedureStatement s
     EmptyStatementDenoter -> return ()
     _ -> error ""
+
+cgPrepareAssignment :: (Int, ASTTypeDenoter) -> (Reg, ASTTypeDenoter) -> Codegen ()
+cgPrepareAssignment
+    (sl, OrdinaryTypeDenoter RealTypeIdentifier)
+    (r, OrdinaryTypeDenoter IntegerTypeIdentifier) =
+        cgIntToReal r
+cgPrepareAssignment (sl, vt) (r, et)
+    | vt == et  = return ()
+    | otherwise = error ""
+
+cgAssignmentStatement :: ASTAssignmentStatement -> Codegen ()
+cgAssignmentStatement (var, expr) = do
+    r <- nextRegister
+    cgExpression expr r
+    et <- getRegType r
+    (_, vt, sl) <- cgVariableAccess var
+    cgPrepareAssignment (sl, vt) (r, et)
+    writeInstruction "store" [show sl, showReg r]
+
+cgReadStatement :: ASTVariableAccess -> Codegen ()
+cgReadStatement var = do
+    (_, t, sl) <- cgVariableAccess var
+    let name = case t of
+            ArrayTypeDenoter _ -> error ""
+            OrdinaryTypeDenoter IntegerTypeIdentifier -> "read_int"
+            OrdinaryTypeDenoter RealTypeIdentifier -> "read_real"
+            OrdinaryTypeDenoter BooleanTypeIdentifier -> "read_bool"
+    writeInstruction "call_builtin" [name]
+    writeInstruction "store" [show sl, showReg regZero]
+
+cgVariableAccess :: ASTVariableAccess -> Codegen (Bool, ASTTypeDenoter, Int)
+cgVariableAccess (IndexedVariableDenoter (ident, expr)) = error ""
+cgVariableAccess (IdentifierDenoter ident) = getVariable ident
 
 cgWriteln :: Codegen ()
 cgWriteln = writeInstruction "call_builtin" ["print_newline"]
@@ -363,7 +447,7 @@ cgDivideBy dest r = do
 
 cgSimpleExpression :: ASTSimpleExpression -> Reg -> Codegen ()
 cgSimpleExpression expr dest = do
-    writeCode "# SimpleExpression"
+    writeComment "# SimpleExpression"
     cgSimpleExpression' expr dest
 
 cgSimpleExpression' :: ASTSimpleExpression -> Reg -> Codegen ()
@@ -389,7 +473,7 @@ cgSimpleExpression' (ms, t1, x:xs) dest = do
 
 cgTerm :: ASTTerm -> Reg -> Codegen ()
 cgTerm term dest = do
-    writeCode "# term"
+    writeComment "# term"
     cgTerm' term dest
 
 cgTerm' :: ASTTerm -> Reg -> Codegen ()
@@ -408,7 +492,10 @@ cgTerm' (f1, x:xs) dest = do
 cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of
     UnsignedConstantDenoter c -> cgUnsignedConstant c dest
-    VariableAccessDenoter var -> cgVariableAccess var dest
+    VariableAccessDenoter var -> do
+        (_, t, sl) <- cgVariableAccess var
+        writeInstruction "load" [showReg dest, show sl]
+        putRegType dest t
     ExpressionDenoter expr -> cgExpression expr dest
     NegatedFactorDenoter factor -> do
         cgFactor factor dest
@@ -419,9 +506,6 @@ cgFactor factor dest = case factor of
                 _ -> error ""
         writeInstruction cmd [showReg dest]
         putRegType dest t
-
-cgVariableAccess :: ASTVariableAccess -> Reg -> Codegen ()
-cgVariableAccess var dest = error ""
 
 cgUnsignedConstant :: ASTUnsignedConstant -> Reg -> Codegen ()
 cgUnsignedConstant const dest = case const of
