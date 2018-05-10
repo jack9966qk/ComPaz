@@ -81,7 +81,9 @@ import Control.Monad
 type Label = Int
 type Code = [Instruction]
 type Instruction = String
+type Stack = [Int]
 
+-- data State = State Reg Stack Code Symbols Label
 data State = State Reg Code Symbols Label
 data Codegen a = Codegen (State -> (a, State))
 instance Monad Codegen where
@@ -479,3 +481,18 @@ cgBooleanConstant bool dest = do
     let boolPart = show val
     writeInstruction "int_const" [regPart, boolPart]
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
+
+{-cgProcedure :: ASTProcedureStatement -> Slot -> Reg -> Codegen ()
+cgProcedure p dest src =
+  do
+    let slotPart = showSlot dest
+    let regPart = showReg src
+    writeInstruction "store" [slotPart, regPart]-}
+{-storeRegisters :: Slot -> Reg -> Codegen ()
+storeRegisters dest src =
+  do
+    let slotPart = showSlot dest
+    let regPart = showReg src
+    writeInstruction "store" [slotPart, regPart]
+    return Codegen (\(State r st c s l) ->
+      ((), State r ([regPart] ++ s) c  s l))-}
