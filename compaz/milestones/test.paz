@@ -1,8 +1,19 @@
-program milestone1;
+program milestone3;
 
-{ Phase 1 test case
-  Tests expressions and the write statement }
+{ Phase 3 test case
+  If and while statements }
+
+var x: integer;
 
 begin
-    write(2 = 3)
+    read(x);
+    while (x > 10) and (x < 100) do
+    begin
+        if x < 50 then
+            x := x - 1
+        else
+            x := x + 1;
+        write(x);
+        writeln
+    end
 end.

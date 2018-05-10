@@ -263,14 +263,17 @@ cgIfStatement :: ASTIfStatement -> Codegen ()
 cgIfStatement (expr, ifStmt, maybeElse) = do
     writeComment "if statement"
     elseLabel <- nextLabel
+    afterLabel <- nextLabel
     r <- nextRegister
     cgExpression expr r
     writeInstruction "branch_on_false" [showReg r, elseLabel]
     cgStatement ifStmt
+    writeInstruction "branch_uncond" [afterLabel]
     writeLabel elseLabel
     case maybeElse of
         Nothing -> return ()
         Just elseStmt -> cgStatement elseStmt
+    writeLabel afterLabel
 
 cgWhileStatement :: ASTWhileStatement -> Codegen ()
 cgWhileStatement (expr, stmt) = do
@@ -522,7 +525,7 @@ cgTerm' (f1, x:xs) dest = do
             TimesDenoter -> cgArithmetic dest r "mul"
             DivideByDenoter -> cgDivideBy dest r
             DivDenoter -> cgDiv dest r
-            AndDenoter -> cgLogical dest r "or"
+            AndDenoter -> cgLogical dest r "and"
 
 cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of
