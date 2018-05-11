@@ -1,0 +1,56 @@
+    # program
+    # variable declaration part
+    # variable declaration
+    # variable declaration
+    # variable declaration
+    call main
+    halt
+main:
+    push_stack_frame 6
+    # compound statement
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 1
+    int_const r3, 3
+    int_const r4, 0
+    sub_int r2, r2, r4
+    add_int r2, r2, r3
+    store_indirect r2, r1
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    int_const r6, 3
+    int_const r7, 0
+    sub_int r5, r5, r7
+    add_int r5, r5, r6
+    call_builtin read_int
+    store_indirect r5, r0
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 1
+    int_const r9, 3
+    int_const r10, 0
+    sub_int r8, r8, r10
+    add_int r8, r8, r9
+    load_indirect r0, r8
+    call_builtin print_int
+    call_builtin print_newline
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r11, 0
+    int_const r12, 3
+    int_const r13, 0
+    sub_int r11, r11, r13
+    add_int r11, r11, r12
+    load_indirect r0, r11
+    call_builtin print_int
+    call_builtin print_newline
+    pop_stack_frame 6
+    return
