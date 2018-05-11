@@ -379,11 +379,11 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 (lo, _) <- getArrayBounds ident
                 r1 <- nextRegister
                 r2 <- nextRegister
-                writeInstruction "int_const" [showReg r1, show start]
+                writeInstruction "load_address" [showReg r1, show start]
                 writeInstruction "int_const" [showReg r2, show lo]
                 writeInstruction "sub_int" [showReg r, showReg r, showReg r2]
-                writeInstruction "add_int" [showReg r, showReg r, showReg r1]
-                return (varness, OrdinaryTypeDenoter t, Indirect r)
+                writeInstruction "add_offset" [showReg r1, showReg r1, showReg r]
+                return (varness, OrdinaryTypeDenoter t, Indirect r1)
         _ -> error ""
 cgVariableAccess (IdentifierDenoter ident) = do
     (varness, typ, slot) <- getVariable ident
