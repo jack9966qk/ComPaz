@@ -119,9 +119,12 @@ nextSlot :: Codegen StackSlot
 nextSlot = Codegen (\(State r c s sl l)
     -> (sl + 1, State r c s (sl + 1) l))
 
+-- currentSlot :: Codegen StackSlot
+-- currentSlot = Codegen (\(State r c s sl l)
+--     -> (sl, State r c s (sl) l))
 
 -- "allocate" a chunk of stackslots given size
--- return the starting stack slot position
+-- return the final stack slot position
 nextSlotMulti :: MemSize -> Codegen StackSlot
 nextSlotMulti n
     | n <= 0 = error ""
@@ -246,10 +249,10 @@ cgVariableDeclaration :: ASTVariableDeclaration -> Codegen (MemSize)
 cgVariableDeclaration ((ident, moreIdent), typ) = do
     writeComment "variable declaration"
     let cgDecl i = do
-        sl <- nextSlot
         case typ of
             ArrayTypeDenoter arrayType -> cgArrayType i arrayType
             _ -> do
+                sl <- nextSlot
                 putVariable i (True, typ, sl)
                 return 1 -- all primitives have size 1
     cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
@@ -382,7 +385,7 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 writeInstruction "load_address" [showReg r1, show start]
                 writeInstruction "int_const" [showReg r2, show lo]
                 writeInstruction "sub_int" [showReg r, showReg r, showReg r2]
-                writeInstruction "add_offset" [showReg r1, showReg r1, showReg r]
+                writeInstruction "sub_offset" [showReg r1, showReg r1, showReg r]
                 return (varness, OrdinaryTypeDenoter t, Indirect r1)
         _ -> error ""
 cgVariableAccess (IdentifierDenoter ident) = do
