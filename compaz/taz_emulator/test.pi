@@ -1,14 +1,66 @@
-# program
-call main
-halt
+    # program
+    # variable declaration part
+    # variable declaration
+    call main
+    halt
 main:
-# compound statement
-# SimpleExpression
-# term
-int_const r1, 2
-# SimpleExpression
-# term
-int_const r2, 3
-cmp_eq_int r0, r1, r2
-call_builtin print_bool
-return
+    push_stack_frame 1
+    # compound statement
+    call_builtin read_int
+    store 0, r0
+    # while statement
+label0:
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r2, 0
+    # SimpleExpression
+    # term
+    int_const r3, 10
+    cmp_gt_int r1, r2, r3
+    # SimpleExpression
+    # term
+    load r5, 0
+    # SimpleExpression
+    # term
+    int_const r6, 100
+    cmp_lt_int r4, r5, r6
+    and r1, r1, r4
+    branch_on_false r1, label1
+    # compound statement
+    # if statement
+    # SimpleExpression
+    # term
+    load r8, 0
+    # SimpleExpression
+    # term
+    int_const r9, 50
+    cmp_lt_int r7, r8, r9
+    branch_on_false r7, label2
+    # SimpleExpression
+    # term
+    load r10, 0
+    # term
+    int_const r11, 1
+    sub_int r10, r10, r11
+    store 0, r10
+    branch_uncond label3
+label2:
+    # SimpleExpression
+    # term
+    load r12, 0
+    # term
+    int_const r13, 1
+    add_int r12, r12, r13
+    store 0, r12
+label3:
+    # SimpleExpression
+    # term
+    load r0, 0
+    call_builtin print_int
+    call_builtin print_newline
+    branch_uncond label0
+label1:
+    pop_stack_frame 1
+    return

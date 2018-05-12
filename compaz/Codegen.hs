@@ -71,7 +71,9 @@ import Symbol (
     insertRegType,
     lookupRegType,
     insertVariable,
-    lookupVariable
+    lookupVariable,
+    insertArrayBounds,
+    lookupArrayBounds
     )
 
 import qualified Data.Map as Map
@@ -118,6 +120,18 @@ nextSlot :: Codegen StackSlot
 nextSlot = Codegen (\(State r c s sl l)
     -> (sl + 1, State r c s (sl + 1) l))
 
+
+-- "allocate" a chunk of stackslots given size
+-- return the starting stack slot position
+nextSlotMulti :: MemSize -> Codegen StackSlot
+nextSlotMulti n
+    | n <= 0 = error ""
+    | n == 1 = nextSlot
+    | n > 1 = do
+        sl <- nextSlot
+        nextSlotMulti $ n - 1
+        return sl
+    
 nextLabelCounter :: Codegen LabelCounter
 nextLabelCounter = Codegen (\(State r c s sl l)
     -> (l + 1, State r c s sl (l + 1)))
@@ -158,6 +172,14 @@ getVariable name = Codegen (\(State r c symbols sl l) ->
 putVariable :: String -> (Bool, ASTTypeDenoter, Int) -> Codegen ()
 putVariable name val = Codegen (\(State r c symbols sl l) ->
     ((), State r c (insertVariable name val symbols) sl l))
+
+getArrayBounds :: String -> Codegen (Int, Int)
+getArrayBounds name = Codegen (\(State r c symbols sl l) ->
+    (lookupArrayBounds name symbols, State r c symbols sl l))
+
+putArrayBounds :: String -> (Int, Int) -> Codegen ()
+putArrayBounds name val = Codegen (\(State r c symbols sl l) ->
+    ((), State r c (insertArrayBounds name val symbols) sl l))
 
 strJoin :: String -> [String] -> String
 strJoin _ [] = ""
@@ -227,11 +249,24 @@ cgVariableDeclaration ((ident, moreIdent), typ) = do
     let cgDecl i = do
         sl <- nextSlot
         case typ of
-            ArrayTypeDenoter _ -> error "" -- TODO
+            ArrayTypeDenoter arrayType -> cgArrayType i arrayType
             _ -> do
                 putVariable i (True, typ, sl)
-                return 1
+                return 1 -- all primitives have size 1
     cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
+
+cgArrayType :: ASTIdentifier -> ASTArrayType -> Codegen (MemSize)
+cgArrayType ident arrayType@((lo, hi), typeId) = do
+    let readConst (maybeSign, uint) = case maybeSign of
+            Just PazParser.SignMinus -> -(read uint :: Int)
+            _ -> read uint :: Int
+    let boundLo = readConst lo
+    let boundHi = readConst hi
+    let size = boundHi - boundLo + 1
+    sl <- nextSlotMulti size
+    putVariable ident (True, ArrayTypeDenoter arrayType, sl)
+    putArrayBounds ident (boundLo, boundHi)
+    return (size * 1)
 
 cgCompoundStatement :: ASTCompoundStatement -> Codegen ()
 cgCompoundStatement stmt = do
@@ -264,14 +299,17 @@ cgIfStatement :: ASTIfStatement -> Codegen ()
 cgIfStatement (expr, ifStmt, maybeElse) = do
     writeComment "if statement"
     elseLabel <- nextLabel
+    afterLabel <- nextLabel
     r <- nextRegister
     cgExpression expr r
     writeInstruction "branch_on_false" [showReg r, elseLabel]
     cgStatement ifStmt
+    writeInstruction "branch_uncond" [afterLabel]
     writeLabel elseLabel
     case maybeElse of
         Nothing -> return ()
         Just elseStmt -> cgStatement elseStmt
+    writeLabel afterLabel
 
 cgWhileStatement :: ASTWhileStatement -> Codegen ()
 cgWhileStatement (expr, stmt) = do
@@ -286,12 +324,12 @@ cgWhileStatement (expr, stmt) = do
     writeInstruction "branch_uncond" [beginLabel]
     writeLabel afterLabel
 
-cgPrepareAssignment :: (Int, ASTTypeDenoter) -> (Reg, ASTTypeDenoter) -> Codegen ()
+cgPrepareAssignment :: ASTTypeDenoter -> (Reg, ASTTypeDenoter) -> Codegen ()
 cgPrepareAssignment
-    (sl, OrdinaryTypeDenoter RealTypeIdentifier)
+    (OrdinaryTypeDenoter RealTypeIdentifier)
     (r, OrdinaryTypeDenoter IntegerTypeIdentifier) =
         cgIntToReal r
-cgPrepareAssignment (sl, vt) (r, et)
+cgPrepareAssignment vt (r, et)
     | vt == et  = return ()
     | otherwise = error ""
 
@@ -300,24 +338,57 @@ cgAssignmentStatement (var, expr) = do
     r <- nextRegister
     cgExpression expr r
     et <- getRegType r
-    (_, vt, sl) <- cgVariableAccess var
-    cgPrepareAssignment (sl, vt) (r, et)
-    writeInstruction "store" [show sl, showReg r]
+    (_, vt, addr) <- cgVariableAccess var
+    cgPrepareAssignment vt (r, et)
+    case addr of
+        Direct sl
+            -> writeInstruction "store" [show sl, showReg r]
+        Indirect reg
+            -> writeInstruction "store_indirect" [showReg reg, showReg r]
 
 cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
-    (_, t, sl) <- cgVariableAccess var
+    (_, t, addr) <- cgVariableAccess var
     let name = case t of
             ArrayTypeDenoter _ -> error ""
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "read_int"
             OrdinaryTypeDenoter RealTypeIdentifier -> "read_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "read_bool"
     writeInstruction "call_builtin" [name]
-    writeInstruction "store" [show sl, showReg regZero]
+    case addr of
+        Direct sl
+            -> writeInstruction "store" [show sl, showReg regZero]
+        Indirect reg
+            -> writeInstruction "store_indirect" [showReg reg, showReg regZero]
 
-cgVariableAccess :: ASTVariableAccess -> Codegen (Bool, ASTTypeDenoter, Int)
-cgVariableAccess (IndexedVariableDenoter (ident, expr)) = error ""
-cgVariableAccess (IdentifierDenoter ident) = getVariable ident
+-- the address of a variable access can either be
+-- direct (with int representing stackslot), or
+-- indirect for arrays (address stored in reg)
+data VarAddress = Direct Int | Indirect Reg
+cgVariableAccess :: ASTVariableAccess -> Codegen (Bool, ASTTypeDenoter, VarAddress)
+cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
+    (varness, typ, start) <- getVariable ident
+    r <- nextRegister
+    cgExpression expr r
+    exprTyp <- getRegType r
+    case (typ, exprTyp) of
+        (
+            ArrayTypeDenoter (_, t),
+            OrdinaryTypeDenoter IntegerTypeIdentifier) -> do
+                -- TODO Array bound checking could be performed here
+                -- calculate the address for array element
+                (lo, _) <- getArrayBounds ident
+                r1 <- nextRegister
+                r2 <- nextRegister
+                writeInstruction "load_address" [showReg r1, show start]
+                writeInstruction "int_const" [showReg r2, show lo]
+                writeInstruction "sub_int" [showReg r, showReg r, showReg r2]
+                writeInstruction "add_offset" [showReg r1, showReg r1, showReg r]
+                return (varness, OrdinaryTypeDenoter t, Indirect r1)
+        _ -> error ""
+cgVariableAccess (IdentifierDenoter ident) = do
+    (varness, typ, slot) <- getVariable ident
+    return (varness, typ, Direct slot)
 
 cgWriteln :: Codegen ()
 cgWriteln = writeInstruction "call_builtin" ["print_newline"]
@@ -523,14 +594,18 @@ cgTerm' (f1, x:xs) dest = do
             TimesDenoter -> cgArithmetic dest r "mul"
             DivideByDenoter -> cgDivideBy dest r
             DivDenoter -> cgDiv dest r
-            AndDenoter -> cgLogical dest r "or"
+            AndDenoter -> cgLogical dest r "and"
 
 cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of
     UnsignedConstantDenoter c -> cgUnsignedConstant c dest
     VariableAccessDenoter var -> do
-        (_, t, sl) <- cgVariableAccess var
-        writeInstruction "load" [showReg dest, show sl]
+        (_, t, addr) <- cgVariableAccess var
+        case addr of
+            Direct sl
+                -> writeInstruction "load" [showReg dest, show sl]
+            Indirect reg
+                -> writeInstruction "load_indirect" [showReg dest, showReg reg]
         putRegType dest t
     ExpressionDenoter expr -> cgExpression expr dest
     NegatedFactorDenoter factor -> do
