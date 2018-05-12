@@ -1,0 +1,20 @@
+program milestone6;
+
+{ Phase 6 test case
+  Arrays }
+
+var n: integer; {slot 0}
+    y: real; {slot 1}
+    {slot 2(v[3]), 3(v[2]), 4(v[1]), 5(v[0])}
+    v: array [0..3] of integer;
+
+begin
+    n := 1;
+    y := 2.0;
+    v[1] := 3;
+    read(v[2]);
+    write(v[1]);
+    writeln;
+    write(v[0]);
+    writeln
+end.

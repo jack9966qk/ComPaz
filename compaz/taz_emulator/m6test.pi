@@ -1,0 +1,66 @@
+    # program
+    # variable declaration part
+    # variable declaration
+    # variable declaration
+    # variable declaration
+    call main
+    halt
+main:
+    push_stack_frame 6
+    # compound statement
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    store 0, r1
+    # SimpleExpression
+    # term
+    real_const r2, 2.0
+    store 1, r2
+    # SimpleExpression
+    # term
+    int_const r3, 3
+    # SimpleExpression
+    # term
+    int_const r4, 1
+    load_address r5, 2
+    int_const r6, 0
+    sub_int r4, r4, r6
+    sub_offset r5, r5, r4
+    store_indirect r5, r3
+    # SimpleExpression
+    # term
+    int_const r7, 2
+    load_address r8, 2
+    debug_reg r8 # => @5
+    int_const r9, 0
+    sub_int r7, r7, r9
+    sub_offset r8, r8, r7
+    debug_reg r8 # => @3
+    call_builtin read_int
+    store_indirect r8, r0 # => error: register 8 is not valid
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r10, 1
+    load_address r11, 2
+    int_const r12, 0
+    sub_int r10, r10, r12
+    sub_offset r11, r11, r10
+    load_indirect r0, r11
+    call_builtin print_int
+    call_builtin print_newline
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r13, 0
+    load_address r14, 2
+    int_const r15, 0
+    sub_int r13, r13, r15
+    sub_offset r14, r14, r13
+    load_indirect r0, r14
+    call_builtin print_int
+    call_builtin print_newline
+    pop_stack_frame 6
+    return
