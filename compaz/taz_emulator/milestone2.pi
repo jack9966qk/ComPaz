@@ -1,0 +1,27 @@
+    # program
+    # variable declaration part
+    # variable declaration
+    # variable declaration
+    call main
+    halt
+main:
+    push_stack_frame 2
+    # compound statement
+    call_builtin read_int
+    store 0, r0
+    # SimpleExpression
+    # term
+    load r1, 0
+    int_to_real r1, r1
+    store 1, r1
+    # SimpleExpression
+    # term
+    load r0, 0
+    # term
+    load r2, 1
+    int_to_real r0, r0
+    add_real r0, r0, r2
+    call_builtin print_real
+    call_builtin print_newline
+    pop_stack_frame 2
+    return
