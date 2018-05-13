@@ -109,6 +109,9 @@ instance Applicative Codegen where
 initState :: State
 initState = State 0 [] initSymbols (-1) (-1)
 
+resetRegister :: State -> State
+resetRegister (State r c s sl l) = State 0 c s sl l
+
 regZero :: Reg
 regZero = 0
 
@@ -289,7 +292,7 @@ cgStatement stmt = case stmt of
     WriteStatementDenoter e -> cgWriteStatement e
     WriteStringStatementDenoter s -> cgWriteStringStatement s
     WritelnStatementDenoter _ -> cgWriteln
-    -- ProcedureStatementDenoter s -> cgProcedureStatement s
+    ProcedureStatementDenoter s -> cgProcedureStatement s
     CompoundStatementDenoter s -> cgCompoundStatement s
     IfStatementDenoter s -> cgIfStatement s
     WhileStatementDenoter s -> cgWhileStatement s
@@ -678,8 +681,9 @@ cgBooleanConstant bool dest = do
     writeInstruction "int_const" [regPart, boolPart]
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
 
-cgProcedureCall :: String -> [ASTExpression] -> Codegen ()
-cgProcedureCall p es = do
+-- cgProcedureStatement :: String -> [ASTExpression] -> Codegen ()
+cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
+cgProcedureStatement (p, (Maybe es)) = do
     -- setReg -1
     let cgPutArg e = do
         r <- nextRegister
