@@ -14,42 +14,42 @@ main:
     # SimpleExpression
     # term
     int_const r2, 1
-    load_address r3, 3
+    load_address r3, 2
     int_const r4, 0
     sub_int r2, r2, r4
-    add_offset r3, r3, r2
+    sub_offset r3, r3, r2
     store_indirect r3, r1
-    # SimpleExpression
-    # term
-    int_const r5, 0
-    load_address r6, 3
-    int_const r7, 0
-    sub_int r5, r5, r7
-    add_offset r6, r6, r5
     call_builtin read_int
-    store_indirect r6, r0
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    load_address r2, 2
+    int_const r3, 0
+    sub_int r1, r1, r3
+    sub_offset r2, r2, r1
+    store_indirect r2, r0
     # SimpleExpression
     # term
     # SimpleExpression
     # term
-    int_const r8, 1
-    load_address r9, 3
-    int_const r10, 0
-    sub_int r8, r8, r10
-    add_offset r9, r9, r8
-    load_indirect r0, r9
+    int_const r1, 1
+    load_address r2, 2
+    int_const r3, 0
+    sub_int r1, r1, r3
+    sub_offset r2, r2, r1
+    load_indirect r0, r2
     call_builtin print_int
     call_builtin print_newline
     # SimpleExpression
     # term
     # SimpleExpression
     # term
-    int_const r11, 0
-    load_address r12, 3
-    int_const r13, 0
-    sub_int r11, r11, r13
-    add_offset r12, r12, r11
-    load_indirect r0, r12
+    int_const r1, 0
+    load_address r2, 2
+    int_const r3, 0
+    sub_int r1, r1, r3
+    sub_offset r2, r2, r1
+    load_indirect r0, r2
     call_builtin print_int
     call_builtin print_newline
     pop_stack_frame 6

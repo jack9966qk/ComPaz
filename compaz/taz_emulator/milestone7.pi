@@ -12,53 +12,53 @@ main:
     store 0, r1
     # SimpleExpression
     # term
-    int_const r2, 1
+    int_const r1, 1
     # SimpleExpression
     # term
-    int_const r3, 10
+    int_const r2, 10
     # SimpleExpression
     # term
-    int_const r4, 1
-    store 2, r4
+    int_const r3, 1
+    store 2, r3
     # while statement
 label0:
     # SimpleExpression
     # term
-    load r6, 2
+    load r5, 2
     # SimpleExpression
     # term
     # SimpleExpression
     # term
-    int_const r7, 10
-    cmp_le_int r5, r6, r7
-    branch_on_false r5, label1
+    int_const r6, 10
+    cmp_le_int r4, r5, r6
+    branch_on_false r4, label1
     # compound statement
     # if statement
     # SimpleExpression
     # term
-    load r9, 0
+    load r2, 0
     # SimpleExpression
     # term
-    int_const r10, 0
-    cmp_ge_int r8, r9, r10
-    branch_on_false r8, label2
+    int_const r3, 0
+    cmp_ge_int r1, r2, r3
+    branch_on_false r1, label2
     # SimpleExpression
     # term
-    load r11, 0
+    load r4, 0
     # term
-    load r12, 2
-    add_int r11, r11, r12
-    store 0, r11
+    load r5, 2
+    add_int r4, r4, r5
+    store 0, r4
     branch_uncond label3
 label2:
 label3:
     # SimpleExpression
     # term
-    load r13, 2
+    load r1, 2
     # term
-    int_const r14, 1
-    add_int r13, r13, r14
-    store 2, r13
+    int_const r2, 1
+    add_int r1, r1, r2
+    store 2, r1
     branch_uncond label0
 label1:
     # SimpleExpression
@@ -68,71 +68,71 @@ label1:
     call_builtin print_newline
     # SimpleExpression
     # term
-    int_const r15, 1
+    int_const r1, 1
     # SimpleExpression
     # term
-    int_const r16, 10
+    int_const r2, 10
     # SimpleExpression
     # term
-    int_const r17, 1
-    store 2, r17
+    int_const r3, 1
+    store 2, r3
     # while statement
 label4:
     # SimpleExpression
     # term
-    load r19, 2
+    load r5, 2
     # SimpleExpression
     # term
     # SimpleExpression
     # term
-    int_const r20, 10
-    cmp_ge_int r18, r19, r20
-    branch_on_false r18, label5
+    int_const r6, 10
+    cmp_ge_int r4, r5, r6
+    branch_on_false r4, label5
     # compound statement
     string_const r0, 'bad'
     call_builtin print_string
     # SimpleExpression
     # term
-    load r21, 2
+    load r1, 2
     # term
-    int_const r22, 1
-    sub_int r21, r21, r22
-    store 2, r21
+    int_const r2, 1
+    sub_int r1, r1, r2
+    store 2, r1
     branch_uncond label4
 label5:
     # SimpleExpression
     # term
-    load r23, 0
+    load r1, 0
     # SimpleExpression
     # term
-    int_const r24, 55
+    int_const r2, 55
     # SimpleExpression
     # term
-    load r25, 0
-    store 1, r25
+    load r3, 0
+    store 1, r3
     # while statement
 label6:
     # SimpleExpression
     # term
-    load r27, 1
+    load r5, 1
     # SimpleExpression
     # term
     # SimpleExpression
     # term
-    int_const r28, 55
-    cmp_ge_int r26, r27, r28
-    branch_on_false r26, label7
+    int_const r6, 55
+    cmp_ge_int r4, r5, r6
+    branch_on_false r4, label7
     # compound statement
     # compound statement
     # if statement
     # SimpleExpression
     # term
-    load r30, 1
+    load r2, 1
     # SimpleExpression
     # term
-    int_const r31, 55
-    cmp_eq_int r29, r30, r31
-    branch_on_false r29, label8
+    int_const r3, 55
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label8
     string_const r0, 'good'
     call_builtin print_string
     branch_uncond label9
@@ -143,11 +143,11 @@ label9:
     call_builtin print_newline
     # SimpleExpression
     # term
-    load r32, 1
+    load r1, 1
     # term
-    int_const r33, 1
-    sub_int r32, r32, r33
-    store 1, r32
+    int_const r2, 1
+    sub_int r1, r1, r2
+    store 1, r1
     branch_uncond label6
 label7:
     pop_stack_frame 3
