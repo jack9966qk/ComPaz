@@ -345,21 +345,26 @@ cgForStatement (ident, fromExpr, toDownTo, toExpr, stmt) = do
     -- convert to while loop
     cgWhileStatement (condExpr, newStmt)
 
-cgIfStatement :: ASTIfStatement -> Codegen ()
-cgIfStatement (expr, ifStmt, maybeElse) = do
-    writeComment "if statement"
+cgIfStatement' :: ASTExpression -> Codegen () -> Maybe (Codegen ()) -> Codegen ()
+cgIfStatement' expr ifCg maybeElse = do
     elseLabel <- nextLabel
     afterLabel <- nextLabel
     r <- nextRegister
     cgExpression expr r
     writeInstruction "branch_on_false" [showReg r, elseLabel]
-    cgStatement ifStmt
+    ifCg
     writeInstruction "branch_uncond" [afterLabel]
     writeLabel elseLabel
     case maybeElse of
         Nothing -> return ()
-        Just elseStmt -> cgStatement elseStmt
+        Just elseCg -> elseCg
     writeLabel afterLabel
+
+cgIfStatement :: ASTIfStatement -> Codegen ()
+cgIfStatement (expr, ifStmt, maybeElse) = do
+    writeComment "if statement"
+    let maybeElseCg = maybeElse >>= (Just . cgStatement)
+    cgIfStatement' expr (cgStatement ifStmt) maybeElseCg
 
 cgWhileStatement :: ASTWhileStatement -> Codegen ()
 cgWhileStatement (expr, stmt) = do
@@ -420,6 +425,39 @@ cgGetVariableType (IndexedVariableDenoter (ident, expr)) = do
     (_, ArrayTypeDenoter (_, t), _) <- getVariable ident
     return $ OrdinaryTypeDenoter t
 
+cgArrayBoundCheck :: ASTIdentifier -> ASTExpression -> Codegen ()
+cgArrayBoundCheck ident expr = do
+    writeComment "array bound check"
+    -- construct and generate "if ( (expr < lo) or (expr > hi) ) then halt"
+    (lo, hi) <- getArrayBounds ident
+    let termFromExpr e = (ExpressionDenoter e, []) :: ASTTerm
+    let simpFromExpr e = ((Nothing), termFromExpr e, []) :: ASTSimpleExpression
+    let makeCompExpr e1 op e2 =
+            ((simpFromExpr e1), Just (op, simpFromExpr e2)) :: ASTExpression
+    let exprFromSimp s = (s, Nothing) :: ASTExpression
+    let makeAddExpr e1 op e2 =
+            exprFromSimp $ ((Nothing), termFromExpr e1, [(op, termFromExpr e2)])
+    let exprFromInt i =
+            let
+                t = (UnsignedConstantDenoter $ UnsignedIntegerDenoter $ show i, []) :: ASTTerm
+            in
+                exprFromSimp ((Nothing), t, []) :: ASTExpression
+    let loExpr = exprFromInt lo
+    let hiExpr = exprFromInt hi
+    let lessThanLo = makeCompExpr expr LessThanDenoter loExpr
+    let greaterThanHi = makeCompExpr expr GreaterThanDenoter hiExpr
+    let condExpr = makeAddExpr lessThanLo OrDenoter greaterThanHi
+    -- instructions to execute if out of bound
+    let cgOutOfBound = do
+        cgWriteStringStatement $ "array access on " ++ ident ++ " out of range"
+        cgWriteln
+        cgWriteStringStatement $ "expected [" ++ (show lo) ++ ".." ++ (show hi) ++ "], received "
+        cgWriteStatement expr
+        cgWriteln
+        writeInstruction "halt" []
+    cgIfStatement' condExpr cgOutOfBound Nothing
+    
+
 -- the address of a variable access can either be
 -- direct (with int representing stackslot), or
 -- indirect for arrays (address stored in reg)
@@ -434,7 +472,8 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
         (
             ArrayTypeDenoter (_, t),
             OrdinaryTypeDenoter IntegerTypeIdentifier) -> do
-                -- TODO Array bound checking could be performed here
+                -- array bound checking performed here
+                cgArrayBoundCheck ident expr
                 -- calculate the address for array element
                 (lo, _) <- getArrayBounds ident
                 r1 <- nextRegister
