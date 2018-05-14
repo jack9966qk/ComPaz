@@ -109,8 +109,9 @@ instance Applicative Codegen where
 initState :: State
 initState = State 0 [] initSymbols (-1) (-1)
 
-resetRegister :: State -> State
-resetRegister (State r c s sl l) = State 0 c s sl l
+resetRegister :: Codegen Reg
+resetRegister = Codegen (\(State r c s sl l)
+    -> (0, State 0 c s sl l))
 
 regZero :: Reg
 regZero = 0
@@ -220,9 +221,10 @@ generateCode prog = do
     printSepBy (putStr "\n") (map putStr instructions)
 
 cgProgram :: ASTProgram -> Codegen ()
-cgProgram (_, var, _, com) = do
+cgProgram (_, var, ps, com) = do
     writeComment "program"
     size <- cgVariableDeclarationPart var
+    cgProcedureDeclarationPart ps
     writeCode "    call main"
     writeCode "    halt"
     writeLabel "main"
@@ -261,6 +263,28 @@ cgVariableDeclaration ((ident, moreIdent), typ) = do
                 return 1 -- all primitives have size 1
     cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
 
+cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
+cgProcedureDeclarationPart ps = do
+    writeComment "procedure declaration part"
+    cgProcedureDeclarationPart' ps
+
+cgProcedureDeclarationPart' :: ASTProcedureDeclarationPart -> Codegen ()
+cgProcedureDeclarationPart' [] = return ()
+cgProcedureDeclarationPart' (p:ps) = do
+    let cgProcessAProcedure p = do
+        cgProcedureDeclaration p
+    cgJoin $ map cgProcessAProcedure ps
+
+cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
+cgProcedureDeclaration (ident, (Just ps), v, com) = do
+    writeComment "procedure declaration"
+    writeLabel ident
+    size <- cgVariableDeclarationPart v
+    cgPushStackFrame size
+    cgCompoundStatement com
+    cgPopStackFrame size
+    writeCode "    return"
+
 cgArrayType :: ASTIdentifier -> ASTArrayType -> Codegen (MemSize)
 cgArrayType ident arrayType@((lo, hi), typeId) = do
     let readConst (maybeSign, uint) = case maybeSign of
@@ -282,6 +306,7 @@ cgCompoundStatement stmt = do
 cgCompoundStatement' :: ASTCompoundStatement -> Codegen ()
 cgCompoundStatement' [] = return ()
 cgCompoundStatement' (x:xs) = do
+    r <- resetRegister
     cgStatement x
     cgCompoundStatement' xs
 
@@ -296,10 +321,52 @@ cgStatement stmt = case stmt of
     CompoundStatementDenoter s -> cgCompoundStatement s
     IfStatementDenoter s -> cgIfStatement s
     WhileStatementDenoter s -> cgWhileStatement s
-    -- ForStatementDenoter s -> cgForStatement s
-    -- ProcedureStatementDenoter s -> cgProcedureStatement s
+    ForStatementDenoter s -> cgForStatement s
     EmptyStatementDenoter -> return ()
-    _ -> error ""
+
+
+cgPrepareForStatement
+    :: (ASTIdentifier, ASTExpression, ASTExpression) -> Codegen ()
+cgPrepareForStatement (ident, fromExpr, toExpr) = do
+    -- some unnecessary work here, but easier to implement
+    r1 <- nextRegister
+    r2 <- nextRegister
+    cgExpression fromExpr r1
+    cgExpression toExpr r2
+    t1 <- getRegType r1
+    t2 <- getRegType r2
+    (_, t3, _) <- getVariable ident
+    case (t1, t2, t3) of
+        (OrdinaryTypeDenoter IntegerTypeIdentifier,
+            OrdinaryTypeDenoter IntegerTypeIdentifier,
+            OrdinaryTypeDenoter IntegerTypeIdentifier) -> return ()
+        _ -> error "for statement heading should only contain integers"
+
+cgForStatement :: ASTForStatement -> Codegen ()
+cgForStatement (ident, fromExpr, toDownTo, toExpr, stmt) = do
+    let idVarAccess = IdentifierDenoter ident
+    let idFactor = VariableAccessDenoter idVarAccess
+    cgPrepareForStatement (ident, fromExpr, toExpr)
+    cgAssignmentStatement (idVarAccess, fromExpr)
+    -- make condition for the loop to continue
+    let relOp = case toDownTo of
+            ToDenoter -> LessThanOrEqualDenoter
+            DownToDenoter -> GreaterThanOrEqualDenoter
+    let idSimpExpr = ((Nothing), (idFactor , []), [])
+    let toSimpleExpr = ((Nothing), (ExpressionDenoter toExpr, []), [])
+    let condExpr = (idSimpExpr, Just (relOp, toSimpleExpr))
+    -- add increment/decrement update to end of stmt
+    let oneTerm = (UnsignedConstantDenoter $ UnsignedIntegerDenoter "1", [])
+    let varTerm = (idFactor, [])
+    let addOp = case toDownTo of
+            ToDenoter -> PlusDenoter
+            DownToDenoter -> MinusDenoter
+    let simpleExpr = ((Nothing), varTerm, [(addOp, oneTerm)])
+    let updateExpr = (simpleExpr, Nothing)
+    let updateStmt = AssignmentStatementDenoter (idVarAccess, updateExpr)
+    let newStmt = CompoundStatementDenoter [stmt, updateStmt]
+    -- convert to while loop
+    cgWhileStatement (condExpr, newStmt)
 
 cgIfStatement :: ASTIfStatement -> Codegen ()
 cgIfStatement (expr, ifStmt, maybeElse) = do
@@ -354,18 +421,27 @@ cgAssignmentStatement (var, expr) = do
 
 cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
-    (_, t, addr) <- cgVariableAccess var
+    t <- cgGetVariableType var
     let name = case t of
             ArrayTypeDenoter _ -> error ""
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "read_int"
             OrdinaryTypeDenoter RealTypeIdentifier -> "read_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "read_bool"
     writeInstruction "call_builtin" [name]
+    (_, _, addr) <- cgVariableAccess var
     case addr of
         Direct sl
             -> writeInstruction "store" [show sl, showReg regZero]
         Indirect reg
             -> writeInstruction "store_indirect" [showReg reg, showReg regZero]
+
+cgGetVariableType :: ASTVariableAccess -> Codegen (ASTTypeDenoter)
+cgGetVariableType (IdentifierDenoter ident) = do
+    (_, t, _) <- getVariable ident
+    return t
+cgGetVariableType (IndexedVariableDenoter (ident, expr)) = do
+    (_, ArrayTypeDenoter (_, t), _) <- getVariable ident
+    return $ OrdinaryTypeDenoter t
 
 -- the address of a variable access can either be
 -- direct (with int representing stackslot), or
@@ -683,7 +759,7 @@ cgBooleanConstant bool dest = do
 
 -- cgProcedureStatement :: String -> [ASTExpression] -> Codegen ()
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
-cgProcedureStatement (p, (Maybe es)) = do
+cgProcedureStatement (p, (Just es)) = do
     -- setReg -1
     let cgPutArg e = do
         r <- nextRegister
