@@ -292,10 +292,53 @@ cgStatement stmt = case stmt of
     CompoundStatementDenoter s -> cgCompoundStatement s
     IfStatementDenoter s -> cgIfStatement s
     WhileStatementDenoter s -> cgWhileStatement s
-    -- ForStatementDenoter s -> cgForStatement s
-    -- ProcedureStatementDenoter s -> cgProcedureStatement s
+    ForStatementDenoter s -> cgForStatement s
     EmptyStatementDenoter -> return ()
     _ -> error ""
+
+
+cgPrepareForStatement
+    :: (ASTIdentifier, ASTExpression, ASTExpression) -> Codegen ()
+cgPrepareForStatement (ident, fromExpr, toExpr) = do
+    -- some unnecessary work here, but easier to implement
+    r1 <- nextRegister
+    r2 <- nextRegister
+    cgExpression fromExpr r1
+    cgExpression toExpr r2
+    t1 <- getRegType r1
+    t2 <- getRegType r2
+    (_, t3, _) <- getVariable ident
+    case (t1, t2, t3) of
+        (OrdinaryTypeDenoter IntegerTypeIdentifier,
+            OrdinaryTypeDenoter IntegerTypeIdentifier,
+            OrdinaryTypeDenoter IntegerTypeIdentifier) -> return ()
+        _ -> error "for statement heading should only contain integers"
+
+cgForStatement :: ASTForStatement -> Codegen ()
+cgForStatement (ident, fromExpr, toDownTo, toExpr, stmt) = do
+    let idVarAccess = IdentifierDenoter ident
+    let idFactor = VariableAccessDenoter idVarAccess
+    cgPrepareForStatement (ident, fromExpr, toExpr)
+    cgAssignmentStatement (idVarAccess, fromExpr)
+    -- make condition for the loop to continue
+    let relOp = case toDownTo of
+            ToDenoter -> LessThanOrEqualDenoter
+            DownToDenoter -> GreaterThanOrEqualDenoter
+    let idSimpExpr = ((Nothing), (idFactor , []), [])
+    let toSimpleExpr = ((Nothing), (ExpressionDenoter toExpr, []), [])
+    let condExpr = (idSimpExpr, Just (relOp, toSimpleExpr))
+    -- add increment/decrement update to end of stmt
+    let oneTerm = (UnsignedConstantDenoter $ UnsignedIntegerDenoter "1", [])
+    let varTerm = (idFactor, [])
+    let addOp = case toDownTo of
+            ToDenoter -> PlusDenoter
+            DownToDenoter -> MinusDenoter
+    let simpleExpr = ((Nothing), varTerm, [(addOp, oneTerm)])
+    let updateExpr = (simpleExpr, Nothing)
+    let updateStmt = AssignmentStatementDenoter (idVarAccess, updateExpr)
+    let newStmt = CompoundStatementDenoter [stmt, updateStmt]
+    -- convert to while loop
+    cgWhileStatement (condExpr, newStmt)
 
 cgIfStatement :: ASTIfStatement -> Codegen ()
 cgIfStatement (expr, ifStmt, maybeElse) = do
