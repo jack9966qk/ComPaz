@@ -109,6 +109,10 @@ instance Applicative Codegen where
 initState :: State
 initState = State 0 [] initSymbols (-1) (-1)
 
+resetRegister :: Codegen Reg
+resetRegister = Codegen (\(State r c s sl l)
+    -> (0, State 0 c s sl l))
+
 regZero :: Reg
 regZero = 0
 
@@ -279,6 +283,7 @@ cgCompoundStatement stmt = do
 cgCompoundStatement' :: ASTCompoundStatement -> Codegen ()
 cgCompoundStatement' [] = return ()
 cgCompoundStatement' (x:xs) = do
+    r <- resetRegister
     cgStatement x
     cgCompoundStatement' xs
 
@@ -289,7 +294,7 @@ cgStatement stmt = case stmt of
     WriteStatementDenoter e -> cgWriteStatement e
     WriteStringStatementDenoter s -> cgWriteStringStatement s
     WritelnStatementDenoter _ -> cgWriteln
-    -- ProcedureStatementDenoter s -> cgProcedureStatement s
+    ProcedureStatementDenoter s -> cgProcedureStatement s
     CompoundStatementDenoter s -> cgCompoundStatement s
     IfStatementDenoter s -> cgIfStatement s
     WhileStatementDenoter s -> cgWhileStatement s
@@ -678,8 +683,9 @@ cgBooleanConstant bool dest = do
     writeInstruction "int_const" [regPart, boolPart]
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
 
-cgProcedureCall :: String -> [ASTExpression] -> Codegen ()
-cgProcedureCall p es = do
+-- cgProcedureStatement :: String -> [ASTExpression] -> Codegen ()
+cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
+cgProcedureStatement (p, (Just es)) = do
     -- setReg -1
     let cgPutArg e = do
         r <- nextRegister
