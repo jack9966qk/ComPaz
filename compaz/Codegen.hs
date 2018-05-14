@@ -398,18 +398,27 @@ cgAssignmentStatement (var, expr) = do
 
 cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
-    (_, t, addr) <- cgVariableAccess var
+    t <- cgGetVariableType var
     let name = case t of
             ArrayTypeDenoter _ -> error ""
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "read_int"
             OrdinaryTypeDenoter RealTypeIdentifier -> "read_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "read_bool"
     writeInstruction "call_builtin" [name]
+    (_, _, addr) <- cgVariableAccess var
     case addr of
         Direct sl
             -> writeInstruction "store" [show sl, showReg regZero]
         Indirect reg
             -> writeInstruction "store_indirect" [showReg reg, showReg regZero]
+
+cgGetVariableType :: ASTVariableAccess -> Codegen (ASTTypeDenoter)
+cgGetVariableType (IdentifierDenoter ident) = do
+    (_, t, _) <- getVariable ident
+    return t
+cgGetVariableType (IndexedVariableDenoter (ident, expr)) = do
+    (_, ArrayTypeDenoter (_, t), _) <- getVariable ident
+    return $ OrdinaryTypeDenoter t
 
 -- the address of a variable access can either be
 -- direct (with int representing stackslot), or
