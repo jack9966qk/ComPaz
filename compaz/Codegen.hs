@@ -300,7 +300,6 @@ cgStatement stmt = case stmt of
     WhileStatementDenoter s -> cgWhileStatement s
     ForStatementDenoter s -> cgForStatement s
     EmptyStatementDenoter -> return ()
-    _ -> error ""
 
 
 cgPrepareForStatement

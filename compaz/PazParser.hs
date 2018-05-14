@@ -1583,7 +1583,7 @@ type ASTTypeDenoter = TypeDenoter
 data TypeDenoter =
     OrdinaryTypeDenoter ASTTypeIdentifier |
     ArrayTypeDenoter ASTArrayType
-    deriving(Show)
+    deriving(Eq, Show)
 parseTypeDenoter :: Parser ASTTypeDenoter
 parseTypeDenoter =
     trace
@@ -1609,7 +1609,7 @@ data TypeIdentifier =
     IntegerTypeIdentifier |
     RealTypeIdentifier |
     BooleanTypeIdentifier
-    deriving(Show)
+    deriving(Eq, Show)
 parseTypeIdentifier :: Parser ASTTypeIdentifier
 parseTypeIdentifier =
     trace
@@ -1688,7 +1688,7 @@ type ASTSign = Sign
 data Sign =
     SignPlus |
     SignMinus
-    deriving(Show)
+    deriving(Eq, Show)
 parseSign :: Parser ASTSign
 parseSign =
     trace
