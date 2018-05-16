@@ -221,11 +221,12 @@ generateCode prog = do
     printSepBy (putStr "\n") (map putStr instructions)
 
 cgProgram :: ASTProgram -> Codegen ()
-cgProgram (_, var, _, com) = do
+cgProgram (_, var, proc, com) = do
     writeComment "program"
     size <- cgVariableDeclarationPart var
     writeCode "    call main"
     writeCode "    halt"
+    cgProcedureDeclarationPart proc
     writeLabel "main"
     cgPushStackFrame size
     cgCompoundStatement com
@@ -261,6 +262,31 @@ cgVariableDeclaration ((ident, moreIdent), typ) = do
                 putVariable i (True, typ, sl)
                 return 1 -- all primitives have size 1
     cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
+
+cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
+cgProcedureDeclarationPart ps = do
+    writeComment "procedure declaration part"
+    cgProcedureDeclarationPart' ps
+    writeComment "done"
+
+cgProcedureDeclarationPart' :: ASTProcedureDeclarationPart -> Codegen ()
+cgProcedureDeclarationPart' [] = return ()
+cgProcedureDeclarationPart' ps = do
+    let cgProcessAProcedure p = do
+        writeComment "p"
+        cgProcedureDeclaration p
+    cgJoin $ map cgProcessAProcedure ps
+    -- cgProcessAProcedure (head ps)
+
+cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
+cgProcedureDeclaration (ident, (Just ps), v, com) = do
+    writeComment "procedure declaration"
+    writeLabel ident
+    -- size <- cgVariableDeclarationPart v
+    -- cgPushStackFrame size
+    -- cgCompoundStatement com
+    -- cgPopStackFrame size
+    writeCode "    return"
 
 cgArrayType :: ASTIdentifier -> ASTArrayType -> Codegen (MemSize)
 cgArrayType ident arrayType@((lo, hi), typeId) = do
