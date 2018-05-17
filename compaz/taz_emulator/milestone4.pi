@@ -1,0 +1,17 @@
+    # program
+    # variable declaration part
+    call main
+    halt
+main:
+    push_stack_frame 0
+    # compound statement
+    # SimpleExpression
+    # term
+    int_const r1, 8
+    # SimpleExpression
+    # term
+    int_const r2, 0
+    call f
+    call_builtin print_newline
+    pop_stack_frame 0
+    return

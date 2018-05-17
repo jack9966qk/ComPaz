@@ -64,7 +64,7 @@ label1:
     call_builtin read_int
     # SimpleExpression
     # term
-    int_const r1, 0
+    int_const r1, 100
     # array bound check
     # SimpleExpression
     # term
@@ -72,7 +72,7 @@ label1:
     # term
     # SimpleExpression
     # term
-    int_const r3, 0
+    int_const r3, 100
     # SimpleExpression
     # term
     # SimpleExpression
@@ -84,7 +84,7 @@ label1:
     # term
     # SimpleExpression
     # term
-    int_const r6, 0
+    int_const r6, 100
     # SimpleExpression
     # term
     # SimpleExpression
@@ -100,7 +100,7 @@ label1:
     call_builtin print_string
     # SimpleExpression
     # term
-    int_const r0, 0
+    int_const r0, 100
     call_builtin print_int
     call_builtin print_newline
 halt
