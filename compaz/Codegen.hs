@@ -113,6 +113,10 @@ resetRegister :: Codegen Reg
 resetRegister = Codegen (\(State r c s sl l)
     -> (0, State 0 c s sl l))
 
+resetStack :: Codegen StackSlot
+resetStack = Codegen (\(State r c s sl l)
+    -> ((-1), State r c s (-1) l))
+
 regZero :: Reg
 regZero = 0
 
@@ -263,29 +267,48 @@ cgVariableDeclaration ((ident, moreIdent), typ) = do
                 return 1 -- all primitives have size 1
     cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
 
+cgFormalParameterList :: ASTFormalParameterList -> Codegen (MemSize)
+cgFormalParameterList (s, ss) = do
+    -- writeComment "formal parameter section"
+    cgFormalParameterSection' ([s] ++ ss)
+
+cgFormalParameterSection' :: [ASTFormalParameterSection] -> Codegen (MemSize)
+cgFormalParameterSection' ss = do
+    let cgProcessSection s = do
+        cgFormalParameterSection s
+    cgFoldr (+) 0 $ map cgProcessSection ss
+
+cgFormalParameterSection :: ASTFormalParameterSection -> Codegen (MemSize)
+cgFormalParameterSection (b, ids, t) = do -- ignore 'var' for now
+    cgVariableDeclaration (ids, t)
+
 cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart ps = do
     writeComment "procedure declaration part"
     cgProcedureDeclarationPart' ps
-    writeComment "done"
 
 cgProcedureDeclarationPart' :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart' [] = return ()
 cgProcedureDeclarationPart' ps = do
     let cgProcessAProcedure p = do
-        writeComment "p"
         cgProcedureDeclaration p
     cgJoin $ map cgProcessAProcedure ps
-    -- cgProcessAProcedure (head ps)
 
 cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
-cgProcedureDeclaration (ident, (Just ps), v, com) = do
+cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     writeComment "procedure declaration"
     writeLabel ident
-    -- size <- cgVariableDeclarationPart v
-    -- cgPushStackFrame size
-    -- cgCompoundStatement com
-    -- cgPopStackFrame size
+    size  <- cgFormalParameterList (s, ss)
+    size2 <- cgVariableDeclarationPart v
+    cgPushStackFrame (size + size2)
+    resetStack
+    let cgStoreArg a = do
+        r <- nextRegister
+        sl <- nextSlot
+        writeInstruction "store" [show sl, showReg r]
+    cgJoin $ map cgStoreArg (s:ss)
+    cgCompoundStatement com
+    cgPopStackFrame (size + size2)
     writeCode "    return"
 
 cgArrayType :: ASTIdentifier -> ASTArrayType -> Codegen (MemSize)
@@ -760,12 +783,11 @@ cgBooleanConstant bool dest = do
     writeInstruction "int_const" [regPart, boolPart]
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
 
--- cgProcedureStatement :: String -> [ASTExpression] -> Codegen ()
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
-cgProcedureStatement (p, (Just es)) = do
+cgProcedureStatement (p, (Just as)) = do
     -- setReg -1
-    let cgPutArg e = do
+    let cgStoreArg a = do
         r <- nextRegister
-        cgExpression e r
-    cgJoin $ map cgPutArg es
+        cgExpression a r
+    cgJoin $ map cgStoreArg as
     writeInstruction "call" [p]
