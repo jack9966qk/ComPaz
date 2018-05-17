@@ -53,3 +53,10 @@ insertArrayBounds name val (a, b, c, map) =
 
 lookupArrayBounds :: String -> Symbols -> (Int, Int)
 lookupArrayBounds name (_, _, _, map) = (map ! name)
+
+insertProcedure :: String -> [(Bool, ASTTypeDenoter)] -> Symbols -> Symbols
+insertProcedure name vals (map, b, c, d) =
+    (insert name vals map, b, c, d)
+
+lookupProcedure :: String -> Symbols -> [(Bool, ASTTypeDenoter)]
+lookupProcedure name (map, _, _, _) = (map ! name)
