@@ -310,6 +310,7 @@ cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     size  <- cgFormalParameterList (s, ss)
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
+    putProcedure ident (bareParameters (s:ss))
     resetStack  -- probably insufficient for recursion 1:13 PM 19/5/18
     let cgStoreArg a = do
         r <- nextRegister
