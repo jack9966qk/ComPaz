@@ -301,7 +301,7 @@ cgProcedureDeclarationPart' ps = do
     cgJoin $ map cgProcessAProcedure ps
 
 bareParameters :: [ASTFormalParameterSection] -> [(Bool, ASTTypeDenoter)]
-bareParameters ss = map (\tup -> (fst tup, let (_, _, d) = tup in d)) ss
+bareParameters ss = map (\(x, _, d) -> (x, d)) ss
 
 cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
 cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
@@ -310,7 +310,7 @@ cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     size  <- cgFormalParameterList (s, ss)
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
-    resetStack	-- probably insufficient for recursion 1:13 PM 19/5/18
+    resetStack  -- probably insufficient for recursion 1:13 PM 19/5/18
     let cgStoreArg a = do
         r <- nextRegister
         sl <- nextSlot
