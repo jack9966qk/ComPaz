@@ -269,7 +269,8 @@ cgVariableDeclaration ((ident, moreIdent), typ) = do
             ArrayTypeDenoter arrayType -> cgArrayType i arrayType
             _ -> do
                 sl <- nextSlot
-                putVariable i (True, typ, sl)
+                -- all vars in declaration are used "by value"
+                putVariable i (False, typ, sl) 
                 return 1 -- all primitives have size 1
     cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
 
@@ -330,7 +331,10 @@ cgArrayType ident arrayType@((lo, hi), typeId) = do
     let boundHi = readConst hi
     let size = boundHi - boundLo + 1
     sl <- nextSlotMulti size
-    putVariable ident (True, ArrayTypeDenoter arrayType, sl)
+    -- varness of array declaration is not important
+    -- since they are used by reference anyway
+    -- here, putVariable stores the slot number of the beginning of array
+    putVariable ident (False, ArrayTypeDenoter arrayType, sl)
     putArrayBounds ident (boundLo, boundHi)
     return (size * 1)
 
@@ -452,34 +456,13 @@ cgAssignmentStatement (var, expr) = do
     r <- nextRegister
     cgExpression expr r
     et <- getRegType r
-    (varness, vt, addr) <- cgVariableAccess var
+    (vt, addr) <- cgVariableAccess var
     cgPrepareAssignment vt (r, et)
-    case varness of
-        False
-            -> do
-                writeComment "False"
-                case addr of
-                    Direct sl
-                        -> writeInstruction "store" [show sl, showReg r]
-                    Indirect reg
-                        -> writeInstruction "store_indirect" [showReg reg, showReg r]
-        True
-            -> case addr of
-                Direct sl
-                    -> do
-                        writeComment "Direct"
-                        return ()
-                Indirect reg
-                    -> do
-                        writeComment "Indirect"
-                        case var of
-                            IndexedVariableDenoter _
-                                -> return ()
-                            IdentifierDenoter ident
-                                -> do
-                                    (_, _, slot) <- getVariable ident
-                                    writeInstruction "load" [showReg (reg + 1), show slot]
-                                    writeInstruction "store_indirect" [showReg reg, showReg (reg + 1)]
+    case addr of
+        Direct sl
+            -> writeInstruction "store" [show sl, showReg r]
+        Indirect reg 
+            -> writeInstruction "store_indirect" [showReg reg, showReg r]
 
 cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
@@ -490,7 +473,7 @@ cgReadStatement var = do
             OrdinaryTypeDenoter RealTypeIdentifier -> "read_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "read_bool"
     writeInstruction "call_builtin" [name]
-    (_, _, addr) <- cgVariableAccess var
+    (_, addr) <- cgVariableAccess var
     case addr of
         Direct sl
             -> writeInstruction "store" [show sl, showReg regZero]
@@ -542,9 +525,10 @@ cgArrayBoundCheck ident expr = do
 -- direct (with int representing stackslot), or
 -- indirect for arrays (address stored in reg)
 data VarAddress = Direct Int | Indirect Reg
-cgVariableAccess :: ASTVariableAccess -> Codegen (Bool, ASTTypeDenoter, VarAddress)
+cgVariableAccess :: ASTVariableAccess -> Codegen (ASTTypeDenoter, VarAddress)
 cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
-    (varness, typ, start) <- getVariable ident
+    -- varness of an array variable is not considered
+    (_, typ, start) <- getVariable ident
     r <- nextRegister
     cgExpression expr r
     exprTyp <- getRegType r
@@ -562,14 +546,20 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 writeInstruction "int_const" [showReg r2, show lo]
                 writeInstruction "sub_int" [showReg r, showReg r, showReg r2]
                 writeInstruction "sub_offset" [showReg r1, showReg r1, showReg r]
-                return (varness, OrdinaryTypeDenoter t, Indirect r1)
+                -- return register that holds address to the array element
+                return (OrdinaryTypeDenoter t, Indirect r1)
         _ -> error ""
 cgVariableAccess (IdentifierDenoter ident) = do
     (varness, typ, slot) <- getVariable ident
-    if varness then 
-        return (varness, typ, Indirect slot)
+    if varness then do
+        -- slot holds the address of variable
+        -- load address to register and return
+        r <- nextRegister
+        writeInstruction "load" [showReg r, show slot]
+        return (typ, Indirect r)
     else
-        return (varness, typ, Direct slot)
+        -- slot holds the value of variable
+        return (typ, Direct slot)
 
 cgWriteln :: Codegen ()
 cgWriteln = writeInstruction "call_builtin" ["print_newline"]
@@ -589,16 +579,6 @@ cgWriteStatement expr = do
             OrdinaryTypeDenoter RealTypeIdentifier -> "print_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "print_bool"
     writeInstruction "call_builtin" [name]
-
--- cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
--- cgProcedureStatement (id, maybeParams) = case id of
---     "writeln" -> case maybeParams of
---         Just [expr] -> (do
---             cgExpression expr regZero
---             writeInstruction "call_builtin print_string"
---             )
---         _ -> error ""
---     _ -> error ""
 
 astTypeInt :: ASTTypeDenoter
 astTypeInt = OrdinaryTypeDenoter IntegerTypeIdentifier
@@ -781,22 +761,12 @@ cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of
     UnsignedConstantDenoter c -> cgUnsignedConstant c dest
     VariableAccessDenoter var -> do
-        (varness, t, addr) <- cgVariableAccess var
-        case varness of
-            False
-                -> case addr of
-                    Direct sl
-                        -> writeInstruction "load" [showReg dest, show sl]
-                    Indirect reg
-                        -> writeInstruction "load_indirect" [showReg dest, showReg reg]
-            True
-                -> case addr of
-                    Direct _
-                        -> return ()
-                    Indirect sl
-                        -> do
-                            writeInstruction "load" [showReg (dest + 1), show sl]
-                            writeInstruction "load_indirect" [showReg dest, showReg (dest + 1)]
+        (t, addr) <- cgVariableAccess var
+        case addr of
+            Direct sl
+                -> writeInstruction "load" [showReg dest, show sl]
+            Indirect reg
+                -> writeInstruction "load_indirect" [showReg dest, showReg reg]
         putRegType dest t
     ExpressionDenoter expr -> cgExpression expr dest
     NegatedFactorDenoter factor -> do
@@ -814,8 +784,6 @@ cgUnsignedConstant const dest = case const of
     BooleanConstantDenoter bool -> cgBooleanConstant bool dest
     UnsignedIntegerDenoter int -> cgUnsignedInteger int dest
     UnsignedRealDenoter real -> cgUnsignedReal real dest
-    -- CharacterStringDenoter str -> cgCharacterString str dest
-    -- UnsignedNumberDenoter num -> cgUnsignedNumber num dest
 
 cgCharacterString :: ASTCharacterString -> Reg -> Codegen ()
 cgCharacterString str dest =
