@@ -73,7 +73,9 @@ import Symbol (
     insertVariable,
     lookupVariable,
     insertArrayBounds,
-    lookupArrayBounds
+    lookupArrayBounds,
+    insertProcedure,
+    lookupProcedure
     )
 
 import qualified Data.Map as Map
@@ -192,6 +194,10 @@ putArrayBounds :: String -> (Int, Int) -> Codegen ()
 putArrayBounds name val = Codegen (\(State r c symbols sl l) ->
     ((), State r c (insertArrayBounds name val symbols) sl l))
 
+putProcedure :: String -> [(Bool, ASTTypeDenoter)] -> Codegen ()
+putProcedure name params = Codegen (\(State r c symbols sl l) ->
+    ((), State r c (insertProcedure name params symbols) sl l))
+
 strJoin :: String -> [String] -> String
 strJoin _ [] = ""
 strJoin _ [x] = x
@@ -231,7 +237,6 @@ cgProgram (_, var, proc, com) = do
     writeCode "    call main"
     writeCode "    halt"
     cgProcedureDeclarationPart proc
-    resetStack
     writeLabel "main"
     cgPushStackFrame size
     cgCompoundStatement com
@@ -270,7 +275,7 @@ cgVariableDeclaration ((ident, moreIdent), typ) = do
 
 cgFormalParameterList :: ASTFormalParameterList -> Codegen (MemSize)
 cgFormalParameterList (s, ss) = do
-    writeComment "formal parameter section"
+    -- writeComment "formal parameter section"
     cgFormalParameterSection' ([s] ++ ss)
 
 cgFormalParameterSection' :: [ASTFormalParameterSection] -> Codegen (MemSize)
@@ -280,34 +285,38 @@ cgFormalParameterSection' ss = do
     cgFoldr (+) 0 $ map cgProcessSection ss
 
 cgFormalParameterSection :: ASTFormalParameterSection -> Codegen (MemSize)
--- cgFormalParameterSection [] = return 0
 cgFormalParameterSection (b, ids, t) = do -- ignore 'var' for now
-    -- cgFoldr (+) 0 $ map cgVariableDeclaration (ids, t)
     cgVariableDeclaration (ids, t)
 
 cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart ps = do
     writeComment "procedure declaration part"
     cgProcedureDeclarationPart' ps
-    writeComment "done"
 
 cgProcedureDeclarationPart' :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart' [] = return ()
 cgProcedureDeclarationPart' ps = do
-    {- cgProcedureDeclaration p
-    cgProcedureDeclarationPart ps -}
     let cgProcessAProcedure p = do
         cgProcedureDeclaration p
     cgJoin $ map cgProcessAProcedure ps
-    -- cgProcessAProcedure (head ps)
+
+bareParameters :: [ASTFormalParameterSection] -> [(Bool, ASTTypeDenoter)]
+bareParameters ss = map (\(x, _, d) -> (x, d)) ss
 
 cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
-cgProcedureDeclaration (ident, (Just l), v, com) = do
+cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     writeComment "procedure declaration"
     writeLabel ident
-    size  <- cgFormalParameterList l
+    size  <- cgFormalParameterList (s, ss)
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
+    putProcedure ident (bareParameters (s:ss))
+    resetStack  -- probably insufficient for recursion 1:13 PM 19/5/18
+    let cgStoreArg a = do
+        r <- nextRegister
+        sl <- nextSlot
+        writeInstruction "store" [show sl, showReg r]
+    cgJoin $ map cgStoreArg (s:ss)
     cgCompoundStatement com
     cgPopStackFrame (size + size2)
     writeCode "    return"
@@ -395,21 +404,26 @@ cgForStatement (ident, fromExpr, toDownTo, toExpr, stmt) = do
     -- convert to while loop
     cgWhileStatement (condExpr, newStmt)
 
-cgIfStatement :: ASTIfStatement -> Codegen ()
-cgIfStatement (expr, ifStmt, maybeElse) = do
-    writeComment "if statement"
+cgIfStatement' :: ASTExpression -> Codegen () -> Maybe (Codegen ()) -> Codegen ()
+cgIfStatement' expr ifCg maybeElse = do
     elseLabel <- nextLabel
     afterLabel <- nextLabel
     r <- nextRegister
     cgExpression expr r
     writeInstruction "branch_on_false" [showReg r, elseLabel]
-    cgStatement ifStmt
+    ifCg
     writeInstruction "branch_uncond" [afterLabel]
     writeLabel elseLabel
     case maybeElse of
         Nothing -> return ()
-        Just elseStmt -> cgStatement elseStmt
+        Just elseCg -> elseCg
     writeLabel afterLabel
+
+cgIfStatement :: ASTIfStatement -> Codegen ()
+cgIfStatement (expr, ifStmt, maybeElse) = do
+    writeComment "if statement"
+    let maybeElseCg = maybeElse >>= (Just . cgStatement)
+    cgIfStatement' expr (cgStatement ifStmt) maybeElseCg
 
 cgWhileStatement :: ASTWhileStatement -> Codegen ()
 cgWhileStatement (expr, stmt) = do
@@ -470,6 +484,39 @@ cgGetVariableType (IndexedVariableDenoter (ident, expr)) = do
     (_, ArrayTypeDenoter (_, t), _) <- getVariable ident
     return $ OrdinaryTypeDenoter t
 
+cgArrayBoundCheck :: ASTIdentifier -> ASTExpression -> Codegen ()
+cgArrayBoundCheck ident expr = do
+    writeComment "array bound check"
+    -- construct and generate "if ( (expr < lo) or (expr > hi) ) then halt"
+    (lo, hi) <- getArrayBounds ident
+    let termFromExpr e = (ExpressionDenoter e, []) :: ASTTerm
+    let simpFromExpr e = ((Nothing), termFromExpr e, []) :: ASTSimpleExpression
+    let makeCompExpr e1 op e2 =
+            ((simpFromExpr e1), Just (op, simpFromExpr e2)) :: ASTExpression
+    let exprFromSimp s = (s, Nothing) :: ASTExpression
+    let makeAddExpr e1 op e2 =
+            exprFromSimp $ ((Nothing), termFromExpr e1, [(op, termFromExpr e2)])
+    let exprFromInt i =
+            let
+                t = (UnsignedConstantDenoter $ UnsignedIntegerDenoter $ show i, []) :: ASTTerm
+            in
+                exprFromSimp ((Nothing), t, []) :: ASTExpression
+    let loExpr = exprFromInt lo
+    let hiExpr = exprFromInt hi
+    let lessThanLo = makeCompExpr expr LessThanDenoter loExpr
+    let greaterThanHi = makeCompExpr expr GreaterThanDenoter hiExpr
+    let condExpr = makeAddExpr lessThanLo OrDenoter greaterThanHi
+    -- instructions to execute if out of bound
+    let cgOutOfBound = do
+        cgWriteStringStatement $ "array access on " ++ ident ++ " out of range"
+        cgWriteln
+        cgWriteStringStatement $ "expected [" ++ (show lo) ++ ".." ++ (show hi) ++ "], received "
+        cgWriteStatement expr
+        cgWriteln
+        writeInstruction "halt" []
+    cgIfStatement' condExpr cgOutOfBound Nothing
+    
+
 -- the address of a variable access can either be
 -- direct (with int representing stackslot), or
 -- indirect for arrays (address stored in reg)
@@ -484,7 +531,8 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
         (
             ArrayTypeDenoter (_, t),
             OrdinaryTypeDenoter IntegerTypeIdentifier) -> do
-                -- TODO Array bound checking could be performed here
+                -- array bound checking performed here
+                cgArrayBoundCheck ident expr
                 -- calculate the address for array element
                 (lo, _) <- getArrayBounds ident
                 r1 <- nextRegister
@@ -497,7 +545,10 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
         _ -> error ""
 cgVariableAccess (IdentifierDenoter ident) = do
     (varness, typ, slot) <- getVariable ident
-    return (varness, typ, Direct slot)
+    if varness then 
+        return (varness, typ, Indirect slot)
+    else
+        return (varness, typ, Direct slot)
 
 cgWriteln :: Codegen ()
 cgWriteln = writeInstruction "call_builtin" ["print_newline"]
@@ -784,16 +835,11 @@ cgBooleanConstant bool dest = do
     writeInstruction "int_const" [regPart, boolPart]
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
 
--- cgProcedureStatement :: String -> [ASTExpression] -> Codegen ()
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
 cgProcedureStatement (p, (Just as)) = do
     -- setReg -1
     let cgStoreArg a = do
         r <- nextRegister
         cgExpression a r
-        sl <- nextSlot
-        writeInstruction "store" [show sl, showReg r]
     cgJoin $ map cgStoreArg as
-    {- let cgStoreArg a = do
-    cgJoin $ map cgPutArg es -}
     writeInstruction "call" [p]
