@@ -545,7 +545,10 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
         _ -> error ""
 cgVariableAccess (IdentifierDenoter ident) = do
     (varness, typ, slot) <- getVariable ident
-    return (varness, typ, Direct slot)
+    if varness then 
+        return (varness, typ, Indirect slot)
+    else
+        return (varness, typ, Direct slot)
 
 cgWriteln :: Codegen ()
 cgWriteln = writeInstruction "call_builtin" ["print_newline"]
@@ -757,12 +760,18 @@ cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest = case factor of
     UnsignedConstantDenoter c -> cgUnsignedConstant c dest
     VariableAccessDenoter var -> do
-        (_, t, addr) <- cgVariableAccess var
-        case addr of
-            Direct sl
-                -> writeInstruction "load" [showReg dest, show sl]
-            Indirect reg
-                -> writeInstruction "load_indirect" [showReg dest, showReg reg]
+        (varness, t, addr) <- cgVariableAccess var
+        case varness of
+            False
+                -> case addr of
+                    Direct sl
+                        -> writeInstruction "load" [showReg dest, show sl]
+                    Indirect reg
+                        -> writeInstruction "load_indirect" [showReg dest, showReg reg]
+            True
+                ->  let Direct sl = addr in do
+                        writeInstruction "load" [showReg (dest + 1), show sl]
+                        writeInstruction "load_indirect" [showReg dest, showReg (dest + 1)]
         putRegType dest t
     ExpressionDenoter expr -> cgExpression expr dest
     NegatedFactorDenoter factor -> do
