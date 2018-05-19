@@ -452,13 +452,34 @@ cgAssignmentStatement (var, expr) = do
     r <- nextRegister
     cgExpression expr r
     et <- getRegType r
-    (_, vt, addr) <- cgVariableAccess var
+    (varness, vt, addr) <- cgVariableAccess var
     cgPrepareAssignment vt (r, et)
-    case addr of
-        Direct sl
-            -> writeInstruction "store" [show sl, showReg r]
-        Indirect reg
-            -> writeInstruction "store_indirect" [showReg reg, showReg r]
+    case varness of
+        False
+            -> do
+                writeComment "False"
+                case addr of
+                    Direct sl
+                        -> writeInstruction "store" [show sl, showReg r]
+                    Indirect reg
+                        -> writeInstruction "store_indirect" [showReg reg, showReg r]
+        True
+            -> case addr of
+                Direct sl
+                    -> do
+                        writeComment "Direct"
+                        return ()
+                Indirect reg
+                    -> do
+                        writeComment "Indirect"
+                        case var of
+                            IndexedVariableDenoter _
+                                -> return ()
+                            IdentifierDenoter ident
+                                -> do
+                                    (_, _, slot) <- getVariable ident
+                                    writeInstruction "load" [showReg (reg + 1), show slot]
+                                    writeInstruction "store_indirect" [showReg reg, showReg (reg + 1)]
 
 cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
@@ -769,9 +790,13 @@ cgFactor factor dest = case factor of
                     Indirect reg
                         -> writeInstruction "load_indirect" [showReg dest, showReg reg]
             True
-                ->  let Direct sl = addr in do
-                        writeInstruction "load" [showReg (dest + 1), show sl]
-                        writeInstruction "load_indirect" [showReg dest, showReg (dest + 1)]
+                -> case addr of
+                    Direct _
+                        -> return ()
+                    Indirect sl
+                        -> do
+                            writeInstruction "load" [showReg (dest + 1), show sl]
+                            writeInstruction "load_indirect" [showReg dest, showReg (dest + 1)]
         putRegType dest t
     ExpressionDenoter expr -> cgExpression expr dest
     NegatedFactorDenoter factor -> do
