@@ -73,7 +73,9 @@ import Symbol (
     insertVariable,
     lookupVariable,
     insertArrayBounds,
-    lookupArrayBounds
+    lookupArrayBounds,
+    insertProcedure,
+    lookupProcedure
     )
 
 import qualified Data.Map as Map
@@ -192,6 +194,10 @@ putArrayBounds :: String -> (Int, Int) -> Codegen ()
 putArrayBounds name val = Codegen (\(State r c symbols sl l) ->
     ((), State r c (insertArrayBounds name val symbols) sl l))
 
+putProcedure :: String -> [(Bool, ASTTypeDenoter)] -> Codegen ()
+putProcedure name params = Codegen (\(State r c symbols sl l) ->
+    ((), State r c (insertProcedure name params symbols) sl l))
+
 strJoin :: String -> [String] -> String
 strJoin _ [] = ""
 strJoin _ [x] = x
@@ -294,6 +300,9 @@ cgProcedureDeclarationPart' ps = do
         cgProcedureDeclaration p
     cgJoin $ map cgProcessAProcedure ps
 
+bareParameters :: [ASTFormalParameterSection] -> [(Bool, ASTTypeDenoter)]
+bareParameters ss = map (\tup -> (fst tup, let (_, _, d) = tup in d)) ss
+
 cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
 cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     writeComment "procedure declaration"
@@ -301,7 +310,7 @@ cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     size  <- cgFormalParameterList (s, ss)
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
-    resetStack
+    resetStack	-- probably insufficient for recursion 1:13 PM 19/5/18
     let cgStoreArg a = do
         r <- nextRegister
         sl <- nextSlot
