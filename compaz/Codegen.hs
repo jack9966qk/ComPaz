@@ -267,15 +267,14 @@ cgVariableDeclarationPart' _ (Just (decl, more)) = do
 
 cgVariableDeclaration :: Bool -> ASTVariableDeclaration -> Codegen (MemSize)
 cgVariableDeclaration varness ((ident, moreIdent), typ) = do
-    writeComment "variable declaration"
-    writeComment ident
+    writeComment ("variable declaration " ++ ident)
     case varness of
         True -> do
             let cgDecl i = do
                 case typ of
                     OrdinaryTypeDenoter _ -> do
                         sl <- nextSlot
-                        writeComment (show sl)
+                        -- writeComment (show sl)
                         putVariable i (True, typ, sl)
                         return 1
                     _ -> return 0
@@ -286,7 +285,7 @@ cgVariableDeclaration varness ((ident, moreIdent), typ) = do
                     ArrayTypeDenoter arrayType -> cgArrayType i arrayType
                     _ -> do
                         sl <- nextSlot
-                        writeComment (show sl)
+                        -- writeComment (show sl)
                         -- all vars in declaration are used "by value"
                         putVariable i (False, typ, sl) 
                         return 1 -- all primitives have size 1
@@ -294,18 +293,10 @@ cgVariableDeclaration varness ((ident, moreIdent), typ) = do
 
 cgFormalParameterList :: ASTFormalParameterList -> Codegen (MemSize)
 cgFormalParameterList (s, ss) = do
-    -- writeComment "formal parameter section"
-    cgFormalParameterSection' (s:ss)
-
-cgFormalParameterSection' :: [ASTFormalParameterSection] -> Codegen (MemSize)
-cgFormalParameterSection' ss = do
-    let cgProcessSection s = do
-        cgFormalParameterSection s
-    cgFoldr (+) 0 $ map cgProcessSection ss
-
-cgFormalParameterSection :: ASTFormalParameterSection -> Codegen (MemSize)
-cgFormalParameterSection (b, ids, t) = do -- take into account 'var' 10:58 20/05
-    cgVariableDeclaration b (ids, t)
+    writeComment "formal parameter section"
+    let cgProcessSection (varness, ids, t) =
+            cgVariableDeclaration varness (ids, t)
+    cgFoldr (+) 0 $ map cgProcessSection (s:ss)
 
 cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart ps = do
@@ -326,12 +317,12 @@ cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
 cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     writeComment "procedure declaration"
     writeLabel ident
-    resetStack  -- 4:31 PM 20/5/18
+    resetStack
     size  <- cgFormalParameterList (s, ss)
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
     putProcedure ident (bareParameters (s:ss))
-    resetStack  -- probably insufficient for recursion 1:13 PM 19/5/18
+    resetStack
     let cgStoreArg a = do
         r <- nextRegister
         sl <- nextSlot
@@ -382,7 +373,6 @@ cgStatement stmt = case stmt of
     WhileStatementDenoter s -> cgWhileStatement s
     ForStatementDenoter s -> cgForStatement s
     EmptyStatementDenoter -> return ()
-
 
 cgPrepareForStatement
     :: (ASTIdentifier, ASTExpression, ASTExpression) -> Codegen ()
@@ -476,7 +466,6 @@ cgAssignmentStatement (var, expr) = do
     cgExpression expr False r
     et <- getRegType r
     (vt, addr) <- cgVariableAccess var
-    return ()
     cgPrepareAssignment vt (r, et)
     case addr of
         Direct sl
@@ -570,7 +559,7 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 return (OrdinaryTypeDenoter t, Indirect r1)
         _ -> error ""
 cgVariableAccess (IdentifierDenoter ident) = do
-    writeComment ident
+    -- writeComment ident
     (varness, typ, slot) <- getVariable ident
     if varness then do
         -- slot holds the address of variable
@@ -578,9 +567,8 @@ cgVariableAccess (IdentifierDenoter ident) = do
         r <- nextRegister
         writeInstruction "load" [showReg r, show slot]
         return (typ, Indirect r)
-    else do
+    else
         -- slot holds the value of variable
-        writeComment "last branch"
         return (typ, Direct slot)
 
 cgWriteln :: Codegen ()
@@ -779,7 +767,7 @@ cgTerm' (f1, x:xs) _ dest = do
             DivDenoter -> cgDiv dest r
             AndDenoter -> cgLogical dest r "and"
 
--- need a Bool to indicate if caller passes Factor by reference 9:46 PM 20/5/18
+-- Bool indicates if caller passes Factor by reference
 cgFactor :: ASTFactor -> Bool -> Reg -> Codegen ()
 cgFactor factor varness dest = case varness of
     True -> case factor of
@@ -869,7 +857,6 @@ cgBooleanConstant bool dest = do
 
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
 cgProcedureStatement (p, (Just arguments)) = do
-    -- setReg -1
     formalParameters <- getProcedure p
     let cgPassArgument (arg, (varness, t)) = do
         r <- nextRegister
