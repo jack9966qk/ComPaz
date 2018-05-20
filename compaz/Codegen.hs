@@ -258,30 +258,42 @@ cgPopStackFrame size =
 cgVariableDeclarationPart :: ASTVariableDeclarationPart -> Codegen (MemSize)
 cgVariableDeclarationPart var = do
     writeComment "variable declaration part"
-    cgVariableDeclarationPart' var
+    cgVariableDeclarationPart' False var
 
-cgVariableDeclarationPart' :: ASTVariableDeclarationPart -> Codegen (MemSize)
-cgVariableDeclarationPart' Nothing = return 0
-cgVariableDeclarationPart' (Just (decl, more)) = do
-    cgFoldr (+) 0 $ map cgVariableDeclaration (decl:more)
+cgVariableDeclarationPart' :: Bool -> ASTVariableDeclarationPart -> Codegen (MemSize)
+cgVariableDeclarationPart' _ Nothing = return 0
+cgVariableDeclarationPart' _ (Just (decl, more)) = do
+    cgFoldr (+) 0 $ map (cgVariableDeclaration False) (decl:more)
 
-cgVariableDeclaration :: ASTVariableDeclaration -> Codegen (MemSize)
-cgVariableDeclaration ((ident, moreIdent), typ) = do
+cgVariableDeclaration :: Bool -> ASTVariableDeclaration -> Codegen (MemSize)
+cgVariableDeclaration varness ((ident, moreIdent), typ) = do
     writeComment "variable declaration"
-    let cgDecl i = do
-        case typ of
-            ArrayTypeDenoter arrayType -> cgArrayType i arrayType
-            _ -> do
-                sl <- nextSlot
-                -- all vars in declaration are used "by value"
-                putVariable i (False, typ, sl) 
-                return 1 -- all primitives have size 1
-    cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
+    case varness of
+        True -> do
+            writeComment "varness True"
+            let cgDecl i = do
+                case typ of
+                    OrdinaryTypeDenoter _ -> do
+                        sl <- nextSlot
+                        putVariable i (True, typ, sl)
+                        return 1
+                    _ -> return 0
+            cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
+        False -> do
+            let cgDecl i = do
+                case typ of
+                    ArrayTypeDenoter arrayType -> cgArrayType i arrayType
+                    _ -> do
+                        sl <- nextSlot
+                        -- all vars in declaration are used "by value"
+                        putVariable i (False, typ, sl) 
+                        return 1 -- all primitives have size 1
+            cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
 
 cgFormalParameterList :: ASTFormalParameterList -> Codegen (MemSize)
 cgFormalParameterList (s, ss) = do
     -- writeComment "formal parameter section"
-    cgFormalParameterSection' ([s] ++ ss)
+    cgFormalParameterSection' (s:ss)
 
 cgFormalParameterSection' :: [ASTFormalParameterSection] -> Codegen (MemSize)
 cgFormalParameterSection' ss = do
@@ -290,8 +302,8 @@ cgFormalParameterSection' ss = do
     cgFoldr (+) 0 $ map cgProcessSection ss
 
 cgFormalParameterSection :: ASTFormalParameterSection -> Codegen (MemSize)
-cgFormalParameterSection (b, ids, t) = do -- ignore 'var' for now
-    cgVariableDeclaration (ids, t)
+cgFormalParameterSection (b, ids, t) = do -- take into account 'var' 10:58 20/05
+    cgVariableDeclaration b (ids, t)
 
 cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart ps = do
@@ -461,6 +473,7 @@ cgAssignmentStatement (var, expr) = do
     cgExpression expr False r
     et <- getRegType r
     (vt, addr) <- cgVariableAccess var
+    return ()
     cgPrepareAssignment vt (r, et)
     case addr of
         Direct sl
@@ -554,6 +567,7 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 return (OrdinaryTypeDenoter t, Indirect r1)
         _ -> error ""
 cgVariableAccess (IdentifierDenoter ident) = do
+    writeComment ident
     (varness, typ, slot) <- getVariable ident
     if varness then do
         -- slot holds the address of variable
@@ -561,8 +575,9 @@ cgVariableAccess (IdentifierDenoter ident) = do
         r <- nextRegister
         writeInstruction "load" [showReg r, show slot]
         return (typ, Indirect r)
-    else
+    else do
         -- slot holds the value of variable
+        writeComment "last branch"
         return (typ, Direct slot)
 
 cgWriteln :: Codegen ()
