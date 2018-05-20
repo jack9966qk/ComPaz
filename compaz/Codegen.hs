@@ -268,13 +268,14 @@ cgVariableDeclarationPart' _ (Just (decl, more)) = do
 cgVariableDeclaration :: Bool -> ASTVariableDeclaration -> Codegen (MemSize)
 cgVariableDeclaration varness ((ident, moreIdent), typ) = do
     writeComment "variable declaration"
+    writeComment ident
     case varness of
         True -> do
-            writeComment "varness True"
             let cgDecl i = do
                 case typ of
                     OrdinaryTypeDenoter _ -> do
                         sl <- nextSlot
+                        writeComment (show sl)
                         putVariable i (True, typ, sl)
                         return 1
                     _ -> return 0
@@ -285,6 +286,7 @@ cgVariableDeclaration varness ((ident, moreIdent), typ) = do
                     ArrayTypeDenoter arrayType -> cgArrayType i arrayType
                     _ -> do
                         sl <- nextSlot
+                        writeComment (show sl)
                         -- all vars in declaration are used "by value"
                         putVariable i (False, typ, sl) 
                         return 1 -- all primitives have size 1
@@ -324,6 +326,7 @@ cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
 cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     writeComment "procedure declaration"
     writeLabel ident
+    resetStack  -- 4:31 PM 20/5/18
     size  <- cgFormalParameterList (s, ss)
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
