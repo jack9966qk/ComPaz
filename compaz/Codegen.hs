@@ -198,6 +198,10 @@ putProcedure :: String -> [(Bool, ASTTypeDenoter)] -> Codegen ()
 putProcedure name params = Codegen (\(State r c symbols sl l) ->
     ((), State r c (insertProcedure name params symbols) sl l))
 
+getProcedure :: String -> Codegen ([(Bool, ASTTypeDenoter)])
+getProcedure name = Codegen (\(State r c symbols sl l) ->
+    (lookupProcedure name symbols, State r c symbols sl l))
+
 strJoin :: String -> [String] -> String
 strJoin _ [] = ""
 strJoin _ [x] = x
@@ -371,8 +375,8 @@ cgPrepareForStatement (ident, fromExpr, toExpr) = do
     -- some unnecessary work here, but easier to implement
     r1 <- nextRegister
     r2 <- nextRegister
-    cgExpression fromExpr r1
-    cgExpression toExpr r2
+    cgExpression fromExpr False r1
+    cgExpression toExpr False r2
     t1 <- getRegType r1
     t2 <- getRegType r2
     (_, t3, _) <- getVariable ident
@@ -413,7 +417,7 @@ cgIfStatement' expr ifCg maybeElse = do
     elseLabel <- nextLabel
     afterLabel <- nextLabel
     r <- nextRegister
-    cgExpression expr r
+    cgExpression expr False r
     writeInstruction "branch_on_false" [showReg r, elseLabel]
     ifCg
     writeInstruction "branch_uncond" [afterLabel]
@@ -436,7 +440,7 @@ cgWhileStatement (expr, stmt) = do
     afterLabel <- nextLabel
     writeLabel beginLabel
     r <- nextRegister
-    cgExpression expr r
+    cgExpression expr False r
     writeInstruction "branch_on_false" [showReg r, afterLabel]
     cgStatement stmt
     writeInstruction "branch_uncond" [beginLabel]
@@ -454,7 +458,7 @@ cgPrepareAssignment vt (r, et)
 cgAssignmentStatement :: ASTAssignmentStatement -> Codegen ()
 cgAssignmentStatement (var, expr) = do
     r <- nextRegister
-    cgExpression expr r
+    cgExpression expr False r
     et <- getRegType r
     (vt, addr) <- cgVariableAccess var
     cgPrepareAssignment vt (r, et)
@@ -530,7 +534,7 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
     -- varness of an array variable is not considered
     (_, typ, start) <- getVariable ident
     r <- nextRegister
-    cgExpression expr r
+    cgExpression expr False r
     exprTyp <- getRegType r
     case (typ, exprTyp) of
         (
@@ -571,7 +575,7 @@ cgWriteStringStatement str = do
 
 cgWriteStatement :: ASTExpression -> Codegen ()
 cgWriteStatement expr = do
-    cgExpression expr regZero
+    cgExpression expr False regZero
     t <- getRegType regZero
     let name = case t of
             ArrayTypeDenoter _ -> error ""
@@ -654,14 +658,14 @@ cgPrepareDivideBy dest r = do
     cgPrepareArithmetic dest r
     return ()
 
-cgExpression :: ASTExpression -> Reg -> Codegen ()
-cgExpression (simpExpr, Nothing) dest =
-    cgSimpleExpression simpExpr dest
-cgExpression (e1, Just (relOp, e2)) dest = do
+cgExpression :: ASTExpression -> Bool -> Reg -> Codegen ()
+cgExpression (simpExpr, Nothing) varness dest =
+    cgSimpleExpression simpExpr varness dest
+cgExpression (e1, Just (relOp, e2)) _ dest = do
     r1 <- nextRegister
     r2 <- nextRegister
-    cgSimpleExpression e1 r1
-    cgSimpleExpression e2 r2
+    cgSimpleExpression e1 False r1
+    cgSimpleExpression e2 False r2
     ot <- cgPrepareComparison r1 r2
     let a = case relOp of
             EqualDenoter -> "cmp_eq"
@@ -713,71 +717,82 @@ cgDivideBy dest r = do
     writeInstruction "div_real" [showReg dest, showReg dest, showReg r]
     putRegType dest astTypeReal
 
-cgSimpleExpression :: ASTSimpleExpression -> Reg -> Codegen ()
-cgSimpleExpression expr dest = do
+cgSimpleExpression :: ASTSimpleExpression -> Bool -> Reg -> Codegen ()
+cgSimpleExpression expr varness dest = do
     writeComment "SimpleExpression"
-    cgSimpleExpression' expr dest
+    cgSimpleExpression' expr varness dest
 
-cgSimpleExpression' :: ASTSimpleExpression -> Reg -> Codegen ()
-cgSimpleExpression' (Just PazParser.SignMinus, term, []) dest = do
-    cgTerm term dest
+cgSimpleExpression' :: ASTSimpleExpression -> Bool -> Reg -> Codegen ()
+cgSimpleExpression' (Just PazParser.SignMinus, term, []) _ dest = do
+    cgTerm term False dest
     t <- getRegType dest
     let cmd = case t of
             OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
             _ -> error ""
     writeInstruction cmd [showReg dest]
-cgSimpleExpression' (_, term, []) dest =
-    cgTerm term dest
-cgSimpleExpression' (ms, t1, x:xs) dest = do
+cgSimpleExpression' (_, term, []) varness dest =
+    cgTerm term varness dest
+cgSimpleExpression' (ms, t1, x:xs) _ dest = do
     let (addOp, t2) = x
-    cgTerm t1 dest
+    cgTerm t1 False dest
     r <- nextRegister
-    cgTerm t2 r
+    cgTerm t2 False r
     case addOp of
         PlusDenoter -> cgArithmetic dest r "add"
         MinusDenoter -> cgArithmetic dest r "sub"
         OrDenoter -> cgLogical dest r "or"
 
-cgTerm :: ASTTerm -> Reg -> Codegen ()
-cgTerm term dest = do
+cgTerm :: ASTTerm -> Bool -> Reg -> Codegen ()
+cgTerm term varness dest = do
     writeComment "term"
-    cgTerm' term dest
+    cgTerm' term varness dest
 
-cgTerm' :: ASTTerm -> Reg -> Codegen ()
-cgTerm' (factor, []) dest = cgFactor factor dest
-cgTerm' (f1, x:xs) dest = do
+cgTerm' :: ASTTerm -> Bool -> Reg -> Codegen ()
+cgTerm' (factor, []) varness dest = cgFactor factor varness dest
+cgTerm' (f1, x:xs) _ dest = do
     let (mulOp, f2) = x
-    cgFactor f1 dest
+    cgFactor f1 False dest
     r <- nextRegister
-    cgFactor f2 r
+    cgFactor f2 False r
     case mulOp of
             TimesDenoter -> cgArithmetic dest r "mul"
             DivideByDenoter -> cgDivideBy dest r
             DivDenoter -> cgDiv dest r
             AndDenoter -> cgLogical dest r "and"
 
-cgFactor :: ASTFactor -> Reg -> Codegen ()
-cgFactor factor dest = case factor of
-    UnsignedConstantDenoter c -> cgUnsignedConstant c dest
-    VariableAccessDenoter var -> do
-        (t, addr) <- cgVariableAccess var
-        case addr of
-            Direct sl
-                -> writeInstruction "load" [showReg dest, show sl]
-            Indirect reg
-                -> writeInstruction "load_indirect" [showReg dest, showReg reg]
-        putRegType dest t
-    ExpressionDenoter expr -> cgExpression expr dest
-    NegatedFactorDenoter factor -> do
-        cgFactor factor dest
-        t <- getRegType dest
-        let cmd = case t of
-                OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
-                OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
-                _ -> error ""
-        writeInstruction cmd [showReg dest]
-        putRegType dest t
+-- need a Bool to indicate if caller passes Factor by reference 9:46 PM 20/5/18
+cgFactor :: ASTFactor -> Bool -> Reg -> Codegen ()
+cgFactor factor varness dest = case varness of
+    True -> case factor of
+        VariableAccessDenoter var -> do
+            (_, addr) <- cgVariableAccess var   -- does type matter???
+            case addr of
+                Direct sl
+                    -> writeInstruction "load_address" [showReg dest, show sl]
+                _ -> return ()
+            -- putRegType dest t
+        _ -> return ()
+    False -> case factor of
+        UnsignedConstantDenoter c -> cgUnsignedConstant c dest
+        VariableAccessDenoter var -> do
+            (t, addr) <- cgVariableAccess var
+            case addr of
+                Direct sl
+                    -> writeInstruction "load" [showReg dest, show sl]
+                Indirect reg
+                    -> writeInstruction "load_indirect" [showReg dest, showReg reg]
+            putRegType dest t
+        ExpressionDenoter expr -> cgExpression expr False dest -- expr in expr
+        NegatedFactorDenoter factor -> do
+            cgFactor factor False dest
+            t <- getRegType dest
+            let cmd = case t of
+                    OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
+                    OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
+                    _ -> error ""
+            writeInstruction cmd [showReg dest]
+            putRegType dest t
 
 cgUnsignedConstant :: ASTUnsignedConstant -> Reg -> Codegen ()
 cgUnsignedConstant const dest = case const of
@@ -835,10 +850,11 @@ cgBooleanConstant bool dest = do
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
 
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
-cgProcedureStatement (p, (Just as)) = do
+cgProcedureStatement (p, (Just arguments)) = do
     -- setReg -1
-    let cgStoreArg a = do
+    formalParameters <- getProcedure p
+    let cgPassArgument (arg, (varness, t)) = do
         r <- nextRegister
-        cgExpression a r
-    cgJoin $ map cgStoreArg as
+        cgExpression arg varness r
+    cgJoin $ map cgPassArgument (zip arguments formalParameters)
     writeInstruction "call" [p]
