@@ -60,3 +60,6 @@ insertProcedure name vals (map, b, c, d) =
 
 lookupProcedure :: String -> Symbols -> [(Bool, ASTTypeDenoter)]
 lookupProcedure name (map, _, _, _) = (map ! name)
+
+clearVariables :: Symbols -> Symbols
+clearVariables (a, _, c, d) = (a, Map.empty, c, d)
