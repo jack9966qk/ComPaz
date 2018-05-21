@@ -75,7 +75,8 @@ import Symbol (
     insertArrayBounds,
     lookupArrayBounds,
     insertProcedure,
-    lookupProcedure
+    lookupProcedure,
+    clearVariables
     )
 
 import qualified Data.Map as Map
@@ -110,6 +111,10 @@ instance Applicative Codegen where
 
 initState :: State
 initState = State 0 [] initSymbols (-1) (-1)
+
+setRegister :: Reg -> Codegen ()
+setRegister r' = Codegen (\(State r c s sl l)
+    -> ((), State r' c s sl l))
 
 resetRegister :: Codegen Reg
 resetRegister = Codegen (\(State r c s sl l)
@@ -178,6 +183,10 @@ putRegType :: Reg -> ASTTypeDenoter -> Codegen ()
 putRegType reg typ = Codegen (\(State r c symbols sl l) ->
     ((), State r c (insertRegType reg typ symbols) sl l))
 
+resetVariables :: Codegen ()
+resetVariables = Codegen (\(State r c symbols sl l) ->
+    ((), State r c (clearVariables symbols) sl l))
+
 getVariable :: String -> Codegen (Bool, ASTTypeDenoter, Int)
 getVariable name = Codegen (\(State r c symbols sl l) ->
     (lookupVariable name symbols, State r c symbols sl l))
@@ -237,10 +246,11 @@ generateCode prog = do
 cgProgram :: ASTProgram -> Codegen ()
 cgProgram (_, var, proc, com) = do
     writeComment "program"
-    size <- cgVariableDeclarationPart var
     writeCode "    call main"
     writeCode "    halt"
     cgProcedureDeclarationPart proc
+    resetStack
+    size <- cgVariableDeclarationPart var
     writeLabel "main"
     cgPushStackFrame size
     cgCompoundStatement com
@@ -313,22 +323,23 @@ cgProcedureDeclarationPart' ps = do
 bareParameters :: [ASTFormalParameterSection] -> [(Bool, ASTTypeDenoter)]
 bareParameters ss = map (\(x, _, d) -> (x, d)) ss
 
+cgStoreArg :: Reg -> StackSlot -> [ASTFormalParameterSection] -> Codegen ()
+cgStoreArg _ _ [] = return ()
+cgStoreArg r sl (_:xs) = do
+    writeInstruction "store" [show sl, showReg r]
+    cgStoreArg (r+1) (sl+1) xs
+
 cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
 cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     writeComment "procedure declaration"
+    resetVariables
     writeLabel ident
     resetStack
     size  <- cgFormalParameterList (s, ss)
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
     putProcedure ident (bareParameters (s:ss))
-    resetRegister
-    resetStack
-    let cgStoreArg a = do
-        r <- nextRegister
-        sl <- nextSlot
-        writeInstruction "store" [show sl, showReg r]
-    cgJoin $ map cgStoreArg (s:ss)
+    cgStoreArg 1 0 (s:ss)
     cgCompoundStatement com
     cgPopStackFrame (size + size2)
     writeCode "    return"
@@ -666,15 +677,13 @@ cgPrepareDivideBy dest r = do
     return ()
 
 cgExpression :: ASTExpression -> Bool -> Reg -> Codegen ()
-cgExpression (simpExpr, Nothing) varness dest = do
-    writeComment "first pattern"
-    writeComment (show dest)
-    cgSimpleExpression simpExpr varness dest
-cgExpression (e1, Just (relOp, e2)) _ dest = do
+cgExpression (simpExpr, Nothing) False dest =
+    cgSimpleExpression simpExpr dest
+cgExpression (e1, Just (relOp, e2)) False dest = do
     r1 <- nextRegister
     r2 <- nextRegister
-    cgSimpleExpression e1 False r1
-    cgSimpleExpression e2 False r2
+    cgSimpleExpression e1 r1
+    cgSimpleExpression e2 r2
     ot <- cgPrepareComparison r1 r2
     let a = case relOp of
             EqualDenoter -> "cmp_eq"
@@ -689,6 +698,18 @@ cgExpression (e1, Just (relOp, e2)) _ dest = do
     let cmd = a ++ "_" ++ b
     writeInstruction cmd [showReg dest, showReg r1, showReg r2]
     putRegType dest astTypeBool
+cgExpression (
+    (
+        Nothing, (
+            VariableAccessDenoter (
+                IdentifierDenoter var
+                ), []
+            ), []
+        ), Nothing
+    ) True dest = do
+    (_, _, sl) <- getVariable var
+    writeInstruction "load_address" [showReg dest, show sl]
+cgExpression _ True _ = error ""
 
 
 cgMove :: Reg -> Reg -> Codegen ()
@@ -726,65 +747,53 @@ cgDivideBy dest r = do
     writeInstruction "div_real" [showReg dest, showReg dest, showReg r]
     putRegType dest astTypeReal
 
-cgSimpleExpression :: ASTSimpleExpression -> Bool -> Reg -> Codegen ()
-cgSimpleExpression expr varness dest = do
+cgSimpleExpression :: ASTSimpleExpression -> Reg -> Codegen ()
+cgSimpleExpression expr dest = do
     writeComment "SimpleExpression"
-    writeComment (show dest)
-    cgSimpleExpression' expr varness dest
+    cgSimpleExpression' expr dest
 
-cgSimpleExpression' :: ASTSimpleExpression -> Bool -> Reg -> Codegen ()
-cgSimpleExpression' (Just PazParser.SignMinus, term, []) _ dest = do
-    cgTerm term False dest
+cgSimpleExpression' :: ASTSimpleExpression -> Reg -> Codegen ()
+cgSimpleExpression' (Just PazParser.SignMinus, term, []) dest = do
+    cgTerm term dest
     t <- getRegType dest
     let cmd = case t of
             OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
             _ -> error ""
     writeInstruction cmd [showReg dest]
-cgSimpleExpression' (_, term, []) varness dest =
-    cgTerm term varness dest
-cgSimpleExpression' (ms, t1, x:xs) _ dest = do
+cgSimpleExpression' (_, term, []) dest =
+    cgTerm term dest
+cgSimpleExpression' (ms, t1, x:xs) dest = do
     let (addOp, t2) = x
-    cgTerm t1 False dest
+    cgTerm t1 dest
     r <- nextRegister
-    cgTerm t2 False r
+    cgTerm t2 r
     case addOp of
         PlusDenoter -> cgArithmetic dest r "add"
         MinusDenoter -> cgArithmetic dest r "sub"
         OrDenoter -> cgLogical dest r "or"
 
-cgTerm :: ASTTerm -> Bool -> Reg -> Codegen ()
-cgTerm term varness dest = do
+cgTerm :: ASTTerm -> Reg -> Codegen ()
+cgTerm term dest = do
     writeComment "term"
-    writeComment (show dest)
-    cgTerm' term varness dest
+    cgTerm' term dest
 
-cgTerm' :: ASTTerm -> Bool -> Reg -> Codegen ()
-cgTerm' (factor, []) varness dest = cgFactor factor varness dest
-cgTerm' (f1, x:xs) _ dest = do
+cgTerm' :: ASTTerm -> Reg -> Codegen ()
+cgTerm' (factor, []) dest = cgFactor factor dest
+cgTerm' (f1, x:xs) dest = do
     let (mulOp, f2) = x
-    cgFactor f1 False dest
+    cgFactor f1 dest
     r <- nextRegister
-    cgFactor f2 False r
+    cgFactor f2 r
     case mulOp of
             TimesDenoter -> cgArithmetic dest r "mul"
             DivideByDenoter -> cgDivideBy dest r
             DivDenoter -> cgDiv dest r
             AndDenoter -> cgLogical dest r "and"
 
--- Bool indicates if caller passes Factor by reference
-cgFactor :: ASTFactor -> Bool -> Reg -> Codegen ()
-cgFactor factor varness dest = case varness of
-    True -> case factor of
-        VariableAccessDenoter var -> do
-            (_, addr) <- cgVariableAccess var   -- does type matter???
-            case addr of
-                Direct sl
-                    -> writeInstruction "load_address" [showReg dest, show sl]
-                _ -> return ()
-            -- putRegType dest t
-        _ -> return ()
-    False -> case factor of
+cgFactor :: ASTFactor -> Reg -> Codegen ()
+cgFactor factor dest =
+    case factor of
         UnsignedConstantDenoter c -> cgUnsignedConstant c dest
         VariableAccessDenoter var -> do
             (t, addr) <- cgVariableAccess var
@@ -798,7 +807,7 @@ cgFactor factor varness dest = case varness of
             putRegType dest t
         ExpressionDenoter expr -> cgExpression expr False dest -- expr in expr
         NegatedFactorDenoter factor -> do
-            cgFactor factor False dest
+            cgFactor factor dest
             t <- getRegType dest
             let cmd = case t of
                     OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
@@ -862,15 +871,27 @@ cgBooleanConstant bool dest = do
     writeInstruction "int_const" [regPart, boolPart]
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
 
+cgAllocateRegs :: [ASTExpression] -> Codegen ()
+cgAllocateRegs [] = return ()
+cgAllocateRegs (_:xs) = nextRegister >> (cgAllocateRegs xs)
+
+cgPassArgument :: Reg -> [ASTExpression] -> [(Bool, ASTTypeDenoter)] -> Codegen ()
+cgPassArgument _ (_:_) [] = error "num of arguments incorrect"
+cgPassArgument _ [] (_:_) = error "num of arguments incorrect"
+cgPassArgument _ [] [] = return ()
+cgPassArgument r (a:as) ((v, _):ps) = do
+    cgExpression a v r
+    cgPassArgument (r+1) as ps
+
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
-cgProcedureStatement (p, (Just arguments)) = do
-    writeComment "procedure statement"
+cgProcedureStatement (p, paramList) = do
     formalParameters <- getProcedure p
-    resetRegister
-    writeComment "reset register"
-    let cgPassArgument (arg, (varness, t)) = do
-        r <- nextRegister
-        writeComment (show r)
-        cgExpression arg varness r
-    cgJoin $ map cgPassArgument (zip arguments formalParameters)
+    case paramList of
+        Nothing -> return ()
+        Just arguments -> do
+            -- prepare registers
+            resetRegister
+            cgAllocateRegs arguments
+            -- put in arguments
+            cgPassArgument 1 arguments formalParameters
     writeInstruction "call" [p]

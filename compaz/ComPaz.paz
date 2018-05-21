@@ -1,0 +1,90 @@
+{ This is a Paz implementation of the C code from Skiena (2008). }
+program ComPaz;
+
+var A0, A1, A2: real;
+
+procedure swap(var x: real; var y: real);
+	var tmp: real;
+begin
+	tmp := x;
+	x := y;
+	y := tmp;
+end;
+
+procedure partition(var A0: real; var A1: real; var A2: real; lo: integer;
+		hi: integer; var firstHigh: integer);
+	var i: integer; p: integer; pVal: real;
+begin
+	p := hi;
+	firstHigh := lo;
+
+	if hi = 0 then pVal := A0
+	else if hi = 1 then pVal := A1
+	else if hi = 2 then pVal := A2;
+
+	{ for i := lo to hi - 1 do begin
+		if A[i] < A[p] then begin
+			swap(A[i], A[firstHigh]);
+			firstHigh := firstHigh + 1
+		end;
+	end; }
+
+	if (hi > 0) and (lo <= 0) and (A0 < pVal) then
+	begin
+		if firstHigh = 0 then begin swap(A0, A0); firstHigh := firstHigh + 1 end;
+		if firstHigh = 1 then begin swap(A0, A1); firstHigh := firstHigh + 1 end;
+		if firstHigh = 2 then begin swap(A0, A2); firstHigh := firstHigh + 1 end;
+	end;
+
+	if (hi > 1) and (lo <= 1) and (A1 < pVal) then
+	begin
+		if firstHigh = 0 then begin swap(A1, A0); firstHigh := firstHigh + 1 end;
+		if firstHigh = 1 then begin swap(A1, A1); firstHigh := firstHigh + 1 end;
+		if firstHigh = 2 then begin swap(A1, A2); firstHigh := firstHigh + 1 end;
+	end;
+
+	{ if A2 < pVal then
+	begin
+		if firstHigh = 0 then begin swap(A2, A0); firstHigh := firstHigh + 1 end;
+		if firstHigh = 1 then begin swap(A2, A1); firstHigh := firstHigh + 1 end;
+		if firstHigh = 2 then begin swap(A2, A2); firstHigh := firstHigh + 1 end;
+	end; }
+
+	{ swap(A[p], A[firstHigh]); }
+	if (p = 0) and (firstHigh = 0) then swap(A0, A0) else
+	if (p = 0) and (firstHigh = 1) then swap(A0, A1) else
+	if (p = 0) and (firstHigh = 2) then swap(A0, A2) else
+	if (p = 1) and (firstHigh = 0) then swap(A1, A0) else
+	if (p = 1) and (firstHigh = 1) then swap(A1, A1) else
+	if (p = 1) and (firstHigh = 2) then swap(A1, A2) else
+	if (p = 2) and (firstHigh = 0) then swap(A2, A0) else
+	if (p = 2) and (firstHigh = 1) then swap(A2, A1) else
+	if (p = 2) and (firstHigh = 2) then swap(A2, A2)
+end;
+
+procedure quicksort(var A0: real; var A1: real; var A2: real; lo: integer;
+		hi: integer);
+	var p: integer; firstHigh: integer;
+begin
+	firstHigh := 0;
+	if hi - lo > 0 then begin
+		partition(A0, A1, A2, lo, hi, firstHigh);
+		quicksort(A0, A1, A2, lo, firstHigh - 1);
+		quicksort(A0, A1, A2, firstHigh + 1, hi);
+	end;
+end;
+
+begin
+	{ for i := 0 to 2 do A[i] := 2 - i; }
+	A0 := 2;
+	A1 := 1;
+	A2 := 0;
+
+	quicksort(A0, A1, A2, 0, 2);
+
+	{ for i := 0 to 9 do begin write(A[i]); write(' ') end; }
+	write(A0); write(' ');
+	write(A1); write(' ');
+	write(A2); write(' ');
+	writeln
+end.
