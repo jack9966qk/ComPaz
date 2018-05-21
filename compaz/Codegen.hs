@@ -322,6 +322,7 @@ cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
     size2 <- cgVariableDeclarationPart v
     cgPushStackFrame (size + size2)
     putProcedure ident (bareParameters (s:ss))
+    resetRegister
     resetStack
     let cgStoreArg a = do
         r <- nextRegister
@@ -665,7 +666,9 @@ cgPrepareDivideBy dest r = do
     return ()
 
 cgExpression :: ASTExpression -> Bool -> Reg -> Codegen ()
-cgExpression (simpExpr, Nothing) varness dest =
+cgExpression (simpExpr, Nothing) varness dest = do
+    writeComment "first pattern"
+    writeComment (show dest)
     cgSimpleExpression simpExpr varness dest
 cgExpression (e1, Just (relOp, e2)) _ dest = do
     r1 <- nextRegister
@@ -726,6 +729,7 @@ cgDivideBy dest r = do
 cgSimpleExpression :: ASTSimpleExpression -> Bool -> Reg -> Codegen ()
 cgSimpleExpression expr varness dest = do
     writeComment "SimpleExpression"
+    writeComment (show dest)
     cgSimpleExpression' expr varness dest
 
 cgSimpleExpression' :: ASTSimpleExpression -> Bool -> Reg -> Codegen ()
@@ -752,6 +756,7 @@ cgSimpleExpression' (ms, t1, x:xs) _ dest = do
 cgTerm :: ASTTerm -> Bool -> Reg -> Codegen ()
 cgTerm term varness dest = do
     writeComment "term"
+    writeComment (show dest)
     cgTerm' term varness dest
 
 cgTerm' :: ASTTerm -> Bool -> Reg -> Codegen ()
@@ -785,7 +790,9 @@ cgFactor factor varness dest = case varness of
             (t, addr) <- cgVariableAccess var
             case addr of
                 Direct sl
-                    -> writeInstruction "load" [showReg dest, show sl]
+                    -> do
+                        writeComment (show dest)
+                        writeInstruction "load" [showReg dest, show sl]
                 Indirect reg
                     -> writeInstruction "load_indirect" [showReg dest, showReg reg]
             putRegType dest t
@@ -857,9 +864,13 @@ cgBooleanConstant bool dest = do
 
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
 cgProcedureStatement (p, (Just arguments)) = do
+    writeComment "procedure statement"
     formalParameters <- getProcedure p
+    resetRegister
+    writeComment "reset register"
     let cgPassArgument (arg, (varness, t)) = do
         r <- nextRegister
+        writeComment (show r)
         cgExpression arg varness r
     cgJoin $ map cgPassArgument (zip arguments formalParameters)
     writeInstruction "call" [p]
