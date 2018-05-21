@@ -1,0 +1,6 @@
+program unaryplus;
+
+begin
+    write(10 > +10);
+    writeln;
+end.
