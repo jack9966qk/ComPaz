@@ -13,10 +13,11 @@ end;
 
 procedure partition(var A0: real; var A1: real; var A2: real; lo: integer;
 		hi: integer; var firstHigh: integer);
-	var i: integer; p: integer; pVal: real;
+	var i: integer; p: integer; pVal: real; foo: boolean;
 begin
 	p := hi;
 	firstHigh := lo;
+	{- write('firstHigh: '); write(firstHigh); writeln; -}
 
 	if hi = 0 then pVal := A0
 	else if hi = 1 then pVal := A1
@@ -29,26 +30,34 @@ begin
 		end;
 	end; }
 
-	if (hi > 0) and (lo <= 0) and (A0 < pVal) then
+	{- write('A0: '); write(A0); writeln;
+	write('pVal: '); write(pVal); writeln; -}
+
+	foo := (hi > 0) and (lo <= 0);
+	if foo and (A0 < pVal) then
 	begin
-		if firstHigh = 0 then begin swap(A0, A0); firstHigh := firstHigh + 1 end;
-		if firstHigh = 1 then begin swap(A0, A1); firstHigh := firstHigh + 1 end;
 		if firstHigh = 2 then begin swap(A0, A2); firstHigh := firstHigh + 1 end;
+		if firstHigh = 1 then begin swap(A0, A1); firstHigh := firstHigh + 1 end;
+		if firstHigh = 0 then begin write('here'); swap(A0, A0); firstHigh := firstHigh + 1 end;
 	end;
 
-	if (hi > 1) and (lo <= 1) and (A1 < pVal) then
+	{- write('1firstHigh: '); write(firstHigh); writeln;
+	write('A0: '); write(A0);
+	write('; A1: '); write(A1);
+	write('; A2: '); write(A2); writeln; -}
+
+	foo := (hi > 1) and (lo <= 1);
+	if foo and (A1 < pVal) then
 	begin
-		if firstHigh = 0 then begin swap(A1, A0); firstHigh := firstHigh + 1 end;
-		if firstHigh = 1 then begin swap(A1, A1); firstHigh := firstHigh + 1 end;
 		if firstHigh = 2 then begin swap(A1, A2); firstHigh := firstHigh + 1 end;
+		if firstHigh = 1 then begin swap(A1, A1); firstHigh := firstHigh + 1 end;
+		if firstHigh = 0 then begin swap(A1, A0); firstHigh := firstHigh + 1 end;
 	end;
 
-	{ if A2 < pVal then
-	begin
-		if firstHigh = 0 then begin swap(A2, A0); firstHigh := firstHigh + 1 end;
-		if firstHigh = 1 then begin swap(A2, A1); firstHigh := firstHigh + 1 end;
-		if firstHigh = 2 then begin swap(A2, A2); firstHigh := firstHigh + 1 end;
-	end; }
+	{- write('2firstHigh: '); write(firstHigh); writeln;
+	write('A0: '); write(A0);
+	write('; A1: '); write(A1);
+	write('; A2: '); write(A2); writeln;-} 
 
 	{ swap(A[p], A[firstHigh]); }
 	if (p = 0) and (firstHigh = 0) then swap(A0, A0) else
@@ -66,17 +75,24 @@ procedure quicksort(var A0: real; var A1: real; var A2: real; lo: integer;
 		hi: integer);
 	var p: integer; firstHigh: integer;
 begin
+	{- write('quicksort('); write(A0); write(', '); write(A1); write(', '); write(A2); write(', '); write(lo); write(', '); write(hi); writeln; -}
 	firstHigh := 0;
-	write(lo);
-	write(' ');
-	write(hi);
-	write(' ');
 	if hi - lo > 0 then begin
 		partition(A0, A1, A2, lo, hi, firstHigh);
-		write(firstHigh);
-		writeln;
+
+		{- write('A0: '); write(A0);
+		write('; A1: '); write(A1);
+		write('; A2: '); write(A2);
+		write('; firstHigh: '); write(firstHigh); writeln; -}
+
+		{- write('end partition');
+		writeln; -}
+
 		quicksort(A0, A1, A2, lo, firstHigh - 1);
-		quicksort(A0, A1, A2, firstHigh + 1, hi);
+
+		{- writeln; -}
+
+		quicksort(A0, A1, A2, firstHigh + 1, hi); {- -}
 	end;
 end;
 
