@@ -143,8 +143,8 @@ label1:
     cmp_eq_int r1, r2, r3
     branch_on_false r1, label8
     # compound statement
-    load_address r1, 0
-    load_address r2, 0
+    load r1, 0
+    load r2, 0
     call swap
     # SimpleExpression
     # term
@@ -169,8 +169,8 @@ label9:
     cmp_eq_int r1, r2, r3
     branch_on_false r1, label10
     # compound statement
-    load_address r1, 0
-    load_address r2, 1
+    load r1, 0
+    load r2, 1
     call swap
     # SimpleExpression
     # term
@@ -195,8 +195,8 @@ label11:
     cmp_eq_int r1, r2, r3
     branch_on_false r1, label12
     # compound statement
-    load_address r1, 0
-    load_address r2, 2
+    load r1, 0
+    load r2, 2
     call swap
     # SimpleExpression
     # term
@@ -244,8 +244,8 @@ label7:
     cmp_eq_int r1, r2, r3
     branch_on_false r1, label16
     # compound statement
-    load_address r1, 1
-    load_address r2, 0
+    load r1, 1
+    load r2, 0
     call swap
     # SimpleExpression
     # term
@@ -270,8 +270,8 @@ label17:
     cmp_eq_int r1, r2, r3
     branch_on_false r1, label18
     # compound statement
-    load_address r1, 1
-    load_address r2, 1
+    load r1, 1
+    load r2, 1
     call swap
     # SimpleExpression
     # term
@@ -296,8 +296,8 @@ label19:
     cmp_eq_int r1, r2, r3
     branch_on_false r1, label20
     # compound statement
-    load_address r1, 1
-    load_address r2, 2
+    load r1, 1
+    load r2, 2
     call swap
     # SimpleExpression
     # term
@@ -334,8 +334,8 @@ label15:
     cmp_eq_int r4, r5, r6
     and r1, r1, r4
     branch_on_false r1, label22
-    load_address r1, 0
-    load_address r2, 0
+    load r1, 0
+    load r2, 0
     call swap
     branch_uncond label23
 label22:
@@ -359,8 +359,8 @@ label22:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label24
-    load_address r1, 0
-    load_address r2, 1
+    load r1, 0
+    load r2, 1
     call swap
     branch_uncond label25
 label24:
@@ -384,8 +384,8 @@ label24:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label26
-    load_address r1, 0
-    load_address r2, 2
+    load r1, 0
+    load r2, 2
     call swap
     branch_uncond label27
 label26:
@@ -409,8 +409,8 @@ label26:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label28
-    load_address r1, 1
-    load_address r2, 0
+    load r1, 1
+    load r2, 0
     call swap
     branch_uncond label29
 label28:
@@ -434,8 +434,8 @@ label28:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label30
-    load_address r1, 1
-    load_address r2, 1
+    load r1, 1
+    load r2, 1
     call swap
     branch_uncond label31
 label30:
@@ -459,8 +459,8 @@ label30:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label32
-    load_address r1, 1
-    load_address r2, 2
+    load r1, 1
+    load r2, 2
     call swap
     branch_uncond label33
 label32:
@@ -484,8 +484,8 @@ label32:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label34
-    load_address r1, 2
-    load_address r2, 0
+    load r1, 2
+    load r2, 0
     call swap
     branch_uncond label35
 label34:
@@ -509,8 +509,8 @@ label34:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label36
-    load_address r1, 2
-    load_address r2, 1
+    load r1, 2
+    load r2, 1
     call swap
     branch_uncond label37
 label36:
@@ -534,8 +534,8 @@ label36:
     cmp_eq_int r6, r7, r8
     and r3, r3, r6
     branch_on_false r3, label38
-    load_address r1, 2
-    load_address r2, 2
+    load r1, 2
+    load r2, 2
     call swap
     branch_uncond label39
 label38:
@@ -572,6 +572,18 @@ quicksort:
     # term
     int_const r1, 0
     store 6, r1
+    # SimpleExpression
+    # term
+    load r0, 3
+    call_builtin print_int
+    string_const r0, ' '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 4
+    call_builtin print_int
+    string_const r0, ' '
+    call_builtin print_string
     # if statement
     # SimpleExpression
     # term
@@ -585,9 +597,9 @@ quicksort:
     cmp_gt_int r1, r2, r3
     branch_on_false r1, label40
     # compound statement
-    load_address r1, 0
-    load_address r2, 1
-    load_address r3, 2
+    load r1, 0
+    load r2, 1
+    load r3, 2
     # SimpleExpression
     # term
     load r4, 3
@@ -596,9 +608,14 @@ quicksort:
     load r5, 4
     load_address r6, 6
     call partition
-    load_address r1, 0
-    load_address r2, 1
-    load_address r3, 2
+    # SimpleExpression
+    # term
+    load r0, 6
+    call_builtin print_int
+    call_builtin print_newline
+    load r1, 0
+    load r2, 1
+    load r3, 2
     # SimpleExpression
     # term
     load r4, 3
@@ -609,9 +626,9 @@ quicksort:
     int_const r6, 1
     sub_int r5, r5, r6
     call quicksort
-    load_address r1, 0
-    load_address r2, 1
-    load_address r3, 2
+    load r1, 0
+    load r2, 1
+    load r3, 2
     # SimpleExpression
     # term
     load r4, 6
