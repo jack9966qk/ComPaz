@@ -67,8 +67,14 @@ procedure quicksort(var A0: real; var A1: real; var A2: real; lo: integer;
 	var p: integer; firstHigh: integer;
 begin
 	firstHigh := 0;
+	write(lo);
+	write(' ');
+	write(hi);
+	write(' ');
 	if hi - lo > 0 then begin
 		partition(A0, A1, A2, lo, hi, firstHigh);
+		write(firstHigh);
+		writeln;
 		quicksort(A0, A1, A2, lo, firstHigh - 1);
 		quicksort(A0, A1, A2, firstHigh + 1, hi);
 	end;

@@ -707,8 +707,12 @@ cgExpression (
             ), []
         ), Nothing
     ) True dest = do
-    (_, _, sl) <- getVariable var
-    writeInstruction "load_address" [showReg dest, show sl]
+    (varness, _, sl) <- getVariable var
+    case varness of
+        True
+            -> writeInstruction "load" [showReg dest, show sl]
+        False
+            -> writeInstruction "load_address" [showReg dest, show sl]
 cgExpression _ True _ = error ""
 
 
