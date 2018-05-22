@@ -45,7 +45,7 @@ begin
 	write('; A2: '); write(A2);
 	{- write('; firstHigh: '); write(firstHigh); -} writeln;
 
-	if {- (hi > 1) and (lo <= 1) and -} (A1 < pVal) then
+	if (hi > 1) and (lo <= 1) and (A1 < pVal) then
 	begin
 		if firstHigh = 2 then begin swap(A1, A2); firstHigh := firstHigh + 1 end;
 		if firstHigh = 1 then begin swap(A1, A1); firstHigh := firstHigh + 1 end;
