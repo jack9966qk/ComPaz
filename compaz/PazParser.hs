@@ -1583,9 +1583,9 @@ type ASTTypeDenoter = TypeDenoter
 data TypeDenoter =
     OrdinaryTypeDenoter ASTTypeIdentifier |
     ArrayTypeDenoter ASTArrayType
-    deriving(Eq, Show)
+    deriving(Eq)
 
-instance Show ASTTypeDenoter where
+instance Show TypeDenoter where
     show (OrdinaryTypeDenoter typ) = show typ
     show (ArrayTypeDenoter (_, typ)) =
         "array[" ++ (show typ) ++ "]"
@@ -1616,9 +1616,9 @@ data TypeIdentifier =
     IntegerTypeIdentifier |
     RealTypeIdentifier |
     BooleanTypeIdentifier
-    deriving(Eq, Show)
+    deriving(Eq)
 
-instance Show ASTTypeIdentifier where
+instance Show TypeIdentifier where
     show IntegerTypeIdentifier = "int"
     show RealTypeIdentifier = "real"
     show BooleanTypeIdentifier = "bool"

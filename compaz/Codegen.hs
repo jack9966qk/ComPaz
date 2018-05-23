@@ -470,7 +470,7 @@ cgPrepareAssignment
         cgIntToReal r
 cgPrepareAssignment vt (_, et)
     | vt == et  = return ()
-    | otherwise = error "cannot assign " ++ (show et) ++ " to " ++ (show vt)
+    | otherwise = error $ "cannot assign " ++ (show et) ++ " to " ++ (show vt)
 
 cgAssignmentStatement :: ASTAssignmentStatement -> Codegen ()
 cgAssignmentStatement (var, expr) = do
@@ -570,8 +570,8 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 -- return register that holds address to the array element
                 return (OrdinaryTypeDenoter t, Indirect r1)
         (_, OrdinaryTypeDenoter IntegerTypeIdentifier)
-            -> error "indexing of variable " ++ ident ++ " that is not array"
-        (_, _) -> error "index of " ++ ident ++ " is not integer"
+            -> error $ "indexing of variable " ++ ident ++ " that is not array"
+        (_, _) -> error $ "index of " ++ ident ++ " is not integer"
 cgVariableAccess (IdentifierDenoter ident) = do
     -- writeComment ident
     (varness, typ, slot) <- getVariable ident
@@ -646,7 +646,7 @@ cgPrepareArithmetic r1 r2 = do
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
             ) -> return IntOp
-        _ -> error "arithmetic/comparision cannot be done between " ++
+        _ -> error $ "arithmetic/comparision cannot be done between " ++
                 (show t1) ++ " and " ++ (show t2)
 
 cgPrepareLogical :: Reg -> Reg -> Codegen ()
@@ -658,7 +658,7 @@ cgPrepareLogical r1 r2 = do
             OrdinaryTypeDenoter BooleanTypeIdentifier,
             OrdinaryTypeDenoter BooleanTypeIdentifier
             ) -> return ()
-        _ -> error "logical operation cannot be done between " ++
+        _ -> error $ "logical operation cannot be done between " ++
                 (show t1) ++ " and " ++ (show t2)
 
 cgPrepareComparison :: Reg -> Reg -> Codegen (OperatorType)
@@ -673,7 +673,7 @@ cgPrepareDiv r1 r2 = do
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
             ) -> return ()
-        _ -> error "integer division cannot be done between " ++
+        _ -> error $ "integer division cannot be done between " ++
                 (show t1) ++ " and " ++ (show t2)
 
 cgPrepareDivideBy :: Reg -> Reg -> Codegen ()
