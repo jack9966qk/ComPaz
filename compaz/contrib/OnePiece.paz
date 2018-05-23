@@ -1,0 +1,68 @@
+{
+    input: integer
+    output: if input is a prime number, then print the input-th fibonacci number
+}
+
+program OnePiece;
+
+var
+    in: integer;
+    flag: integer;
+    fib: integer;
+
+procedure isPrime(in: integer; var out: integer);
+var
+    try: integer;
+    quotient: integer;
+    reminder: integer;
+begin
+    out := 1;
+    if in > 1 then
+    begin
+        if ((in = 2) or (in = 3)) then
+            out := 0
+        else
+        begin
+            try := 2;
+            while (try <= (in div 2)) do
+            begin
+                quotient := in div try;
+                reminder := in - quotient * try;
+                if reminder = 0 then
+                    out := 0;
+                try := try + 1 { Nick has added this to avoid infinite loop }
+            end
+        end
+    end
+end;
+
+procedure fibonacci(in: integer; var out: integer);
+var  
+    temp1: integer;
+    temp2: integer;
+begin
+    if ((in = 1) or (in = 2)) then
+        out := 1
+    else
+    begin
+        fibonacci(in - 1, temp1);
+        fibonacci(in - 2, temp2);
+        out := temp1 + temp2
+    end
+end;
+
+begin
+    in := 7;
+    isPrime(in, flag);
+
+    if flag = 0 then
+    begin
+        fibonacci(in, fib);
+        write('The ');
+        write(in);
+        write('th Fibonacci number is ');
+        write(fib);
+    end
+    else
+        write('The input is not a Prime number!')
+end.

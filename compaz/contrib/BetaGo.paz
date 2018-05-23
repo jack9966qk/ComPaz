@@ -1,0 +1,58 @@
+program BetaGo;
+{This is a test paz example for the code generator 
+ in this example the main focus is about global and 
+ local virables where in a formula should use the local 
+ virable and outside should use the global also after read
+ actions}
+
+var 
+	a:integer;
+	b:integer;
+
+procedure f(n: integer; m: integer);
+var 
+	a: integer;
+	b: integer;
+begin
+	a := n;
+	write('a is: ');
+        write(a);
+        writeln;
+	b := m;
+	write('b is: ');
+        write(b);
+        writeln
+end;
+
+begin 
+	a := 1;
+	b := 2;
+	f(3,4);
+	write('global a is: ');
+        write(a);
+        writeln;
+	write('global b is: ');
+        write(b);
+        writeln;
+	for a := 2 to 8 do
+	begin 
+		b := b + 1
+	end;
+	write('after for a is: ');
+        write(a);
+        writeln;
+	write('after for b is: ');
+        write(b);
+        writeln;
+	write('input a: ');
+	read(a);
+	write('input b: ');
+	read(b);
+	f(a+1,b+1);
+	write('global a is: ');
+        write(a);
+        writeln;
+	write('global b is: ');
+        write(b);
+        writeln
+end.

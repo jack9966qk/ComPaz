@@ -1,0 +1,49 @@
+program add9;
+
+var
+    a: integer;
+    b: array[3..7] of real;
+    c: real;
+
+{ Shadows global var a on line 4 }
+procedure f1;
+var
+    a: boolean;
+begin
+    a := true;
+    write(a)
+end;
+
+{ Shadows global var a on line 4 }
+procedure f2;
+var
+    a: array[3..7] of real;
+begin
+    a[3] := 10;
+    write(a[3])
+end;
+
+{ Shadows global var b on line 5 }
+procedure f3;
+var
+    b: boolean;
+begin
+    b := true;
+    write(b)
+end;
+
+{ Shadows global var a on line 4 }
+procedure f4(a: real);
+begin
+    write(a)
+end;
+
+begin
+    f1;
+    f2;
+    f3;
+    a := 1;
+    c := 2;
+    f4(c)
+
+end.

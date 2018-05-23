@@ -1,0 +1,473 @@
+    # program
+    call main
+    halt
+    # procedure declaration part
+    # procedure declaration
+k:
+    # formal parameter section
+    # variable declaration a
+    # variable declaration b
+    # variable declaration part
+    push_stack_frame 2
+    store 0, r1
+    store 1, r2
+    # compound statement
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    load r2, 0
+    store_indirect r2, r1
+    # SimpleExpression
+    # term
+    load r2, 0
+    load_indirect r1, r2
+    # term
+    load r3, 1
+    add_int r1, r1, r3
+    store 1, r1
+    pop_stack_frame 2
+    return
+    # procedure declaration
+f:
+    # formal parameter section
+    # variable declaration a
+    # variable declaration b
+    # variable declaration part
+    push_stack_frame 2
+    store 0, r1
+    store 1, r2
+    # compound statement
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    load r2, 0
+    store_indirect r2, r1
+    # SimpleExpression
+    # term
+    load r2, 0
+    load_indirect r1, r2
+    # term
+    load r4, 1
+    load_indirect r3, r4
+    add_int r1, r1, r3
+    load r5, 1
+    store_indirect r5, r1
+    pop_stack_frame 2
+    return
+    # procedure declaration
+p:
+    # formal parameter section
+    # variable declaration input
+    # variable declaration output
+    # variable declaration part
+    push_stack_frame 2
+    store 0, r1
+    store 1, r2
+    # compound statement
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r1, 0
+    # term
+    int_const r2, 1
+    sub_int r1, r1, r2
+    int_const r3, 3
+    mul_int r1, r1, r3
+    # term
+    int_const r4, 4
+    sub_int r1, r1, r4
+    load r5, 1
+    store_indirect r5, r1
+    pop_stack_frame 2
+    return
+    # variable declaration part
+    # variable declaration i
+    # variable declaration b
+    # variable declaration r
+main:
+    push_stack_frame 10
+    # compound statement
+    # SimpleExpression
+    # term
+    real_const r1, 1.0
+    store 9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    int_to_real r1, r1
+    store 9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    store 0, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    store 7, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    store 7, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # term
+    int_const r2, 1
+    add_int r1, r1, r2
+    store 0, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # term
+    int_const r2, 1
+    add_int r1, r1, r2
+    int_to_real r1, r1
+    store 9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # term
+    real_const r2, 1.1
+    int_to_real r1, r1
+    add_real r1, r1, r2
+    store 9, r1
+    # SimpleExpression
+    # term
+    real_const r1, 1.1
+    # term
+    real_const r2, 1.1
+    add_real r1, r1, r2
+    store 9, r1
+    # SimpleExpression
+    # term
+    real_const r2, 1.1
+    # SimpleExpression
+    # term
+    int_const r3, 1
+    int_to_real r3, r3
+    cmp_gt_real r1, r2, r3
+    store 7, r1
+    # SimpleExpression
+    # term
+    int_const r2, 2
+    # SimpleExpression
+    # term
+    int_const r3, 1
+    cmp_gt_int r1, r2, r3
+    store 7, r1
+    # SimpleExpression
+    # term
+    int_const r1, 5
+    neg_int r1
+    store 1, r1
+    # SimpleExpression
+    # term
+    load r2, 1
+    # term
+    real_const r4, 6.0
+    int_to_real r2, r2
+    add_real r2, r2, r4
+    # SimpleExpression
+    # term
+    real_const r3, 1.0
+    cmp_eq_real r1, r2, r3
+    store 8, r1
+    # SimpleExpression
+    # term
+    load r0, 8
+    call_builtin print_bool
+    # SimpleExpression
+    # term
+    int_const r1, 8
+    store 1, r1
+    # SimpleExpression
+    # term
+    int_const r0, 8
+    real_const r1, 4.0
+    int_to_real r0, r0
+    div_real r0, r0, r1
+    call_builtin print_real
+    string_const r0, 'Input a positive integer'
+    call_builtin print_string
+    call_builtin read_int
+    store 1, r0
+    string_const r0, 'Your input number'
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 1
+    call_builtin print_int
+    string_const r0, 'is greater than 5'
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    store 3, r1
+    # SimpleExpression
+    # term
+    int_const r1, 100
+    # SimpleExpression
+    # term
+    int_const r2, 10
+    # SimpleExpression
+    # term
+    int_const r3, 100
+    store 4, r3
+    # while statement
+label0:
+    # SimpleExpression
+    # term
+    load r5, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r6, 10
+    cmp_le_int r4, r5, r6
+    branch_on_false r4, label1
+    # compound statement
+    # compound statement
+    # SimpleExpression
+    # term
+    load r1, 3
+    load r2, 4
+    mul_int r1, r1, r2
+    store 3, r1
+    # SimpleExpression
+    # term
+    load r0, 3
+    call_builtin print_int
+    call_builtin print_newline
+    # SimpleExpression
+    # term
+    load r1, 4
+    # term
+    int_const r2, 1
+    add_int r1, r1, r2
+    store 4, r1
+    branch_uncond label0
+label1:
+    # SimpleExpression
+    # term
+    load r1, 4
+    int_const r2, 2
+    mul_int r1, r1, r2
+    store 3, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 10
+    # SimpleExpression
+    # term
+    int_const r3, 1
+    store 4, r3
+    # while statement
+label2:
+    # SimpleExpression
+    # term
+    load r5, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r6, 10
+    cmp_ge_int r4, r5, r6
+    branch_on_false r4, label3
+    # compound statement
+    # compound statement
+    # SimpleExpression
+    # term
+    load r1, 4
+    load_address r2, 6
+    call p
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 3
+    # SimpleExpression
+    # term
+    load r3, 6
+    cmp_gt_int r1, r2, r3
+    branch_on_false r1, label4
+    string_const r0, 'm > result'
+    call_builtin print_string
+    branch_uncond label5
+label4:
+    string_const r0, 'm < result'
+    call_builtin print_string
+label5:
+    call_builtin print_newline
+    # SimpleExpression
+    # term
+    load r1, 4
+    # term
+    int_const r2, 1
+    sub_int r1, r1, r2
+    store 4, r1
+    branch_uncond label2
+label3:
+    # SimpleExpression
+    # term
+    int_const r1, 10
+    store 1, r1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r1, 1
+    int_const r2, 2
+    div_int r1, r1, r2
+    # term
+    int_const r3, 1
+    sub_int r1, r1, r3
+    store 2, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 9
+    # SimpleExpression
+    # term
+    int_const r3, 0
+    store 4, r3
+    # while statement
+label6:
+    # SimpleExpression
+    # term
+    load r5, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r6, 9
+    cmp_le_int r4, r5, r6
+    branch_on_false r4, label7
+    # compound statement
+    # compound statement
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 2
+    # SimpleExpression
+    # term
+    int_const r3, 0
+    cmp_gt_int r1, r2, r3
+    branch_on_false r1, label8
+    string_const r0, 'y > 0'
+    call_builtin print_string
+    branch_uncond label9
+label8:
+    string_const r0, 'y <= 0'
+    call_builtin print_string
+label9:
+    call_builtin print_newline
+    # SimpleExpression
+    # term
+    load r1, 4
+    # term
+    int_const r2, 1
+    add_int r1, r1, r2
+    store 4, r1
+    branch_uncond label6
+label7:
+    # SimpleExpression
+    # term
+    int_const r1, 10
+    store 1, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    store 2, r1
+    # SimpleExpression
+    # term
+    load r1, 1
+    load r2, 2
+    div_int r1, r1, r2
+    store 5, r1
+    # SimpleExpression
+    # term
+    load r1, 1
+    # term
+    load r2, 5
+    sub_int r1, r1, r2
+    store 6, r1
+    # while statement
+label10:
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    branch_on_false r1, label11
+    # compound statement
+    # SimpleExpression
+    # term
+    load r1, 5
+    # term
+    load r2, 6
+    add_int r1, r1, r2
+    store 1, r1
+    # SimpleExpression
+    # term
+    load r1, 6
+    # term
+    int_const r2, 1
+    add_int r1, r1, r2
+    store 2, r1
+    # SimpleExpression
+    # term
+    load r1, 1
+    load r2, 2
+    div_int r1, r1, r2
+    store 5, r1
+    # SimpleExpression
+    # term
+    load r1, 1
+    # term
+    load r2, 5
+    sub_int r1, r1, r2
+    store 6, r1
+    branch_uncond label10
+label11:
+    # SimpleExpression
+    # term
+    int_const r1, 3
+    store 1, r1
+    # SimpleExpression
+    # term
+    int_const r1, 3
+    store 2, r1
+    # SimpleExpression
+    # term
+    int_const r1, 3
+    store 0, r1
+    load_address r1, 1
+    # SimpleExpression
+    # term
+    load r2, 1
+    call k
+    load_address r1, 2
+    load_address r2, 2
+    call f
+    # SimpleExpression
+    # term
+    load r1, 0
+    load_address r2, 0
+    call p
+    # SimpleExpression
+    # term
+    load r0, 1
+    call_builtin print_int
+    # SimpleExpression
+    # term
+    load r0, 2
+    call_builtin print_int
+    # SimpleExpression
+    # term
+    load r0, 0
+    call_builtin print_int
+    call_builtin print_newline
+    pop_stack_frame 10
+    return

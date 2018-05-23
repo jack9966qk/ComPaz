@@ -1,0 +1,30 @@
+program factorial;
+
+var
+    x, curr, result: integer;
+
+procedure factorial(x: integer; var out: integer);
+var
+    curr, res: integer;
+begin
+    res := 1;
+    if x > 1 then
+    begin
+        curr := 2;
+        while curr < 1 do
+        begin
+            res := res * curr;
+            curr := curr + 1;
+        end;
+    end;
+    out := res
+end;
+
+begin
+    write('Input an integer: ');
+    read(x);
+    factorial(x, result);
+    write('x! is: ');
+    write(result);
+    writeln
+end.

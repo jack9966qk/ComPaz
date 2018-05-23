@@ -1,0 +1,41 @@
+program pyramid;
+
+var
+    hei: integer;
+    vol: real;
+
+procedure printPyra(h: integer; var v: real);
+var
+    i: integer;
+    j: integer;
+    k: integer;
+
+begin
+    if h < 1 then
+    begin
+        write('Number must be greater than 1.');
+        writeln
+    end
+    else
+    begin
+        for i := 0 to h do
+            for k := 0 to h-i do
+            begin
+                write(' ');
+                for j := 0 to i do
+                    write('| ')
+            end;
+            writeln
+    end;
+    v := 0.5 * h * h
+end;
+
+begin
+    write('Enter a number> ');
+    read(hei);
+    printPyra(hei, vol);
+    write('Pyramid has volume ');
+    write(vol);
+    write('.');
+    writeln
+end.

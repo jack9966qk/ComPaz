@@ -1,0 +1,60 @@
+program ninetynine;
+
+{ Program for printing lyrics to a popular song. }
+
+procedure singIt;
+    var n: integer;
+begin
+    for n := 99 downto 0 do
+        singStanza(n)
+end;
+
+procedure singStanza(n: integer);
+begin
+    singFirstLine(n);
+    singSecondLine(n-1);
+    writeln
+end;
+
+procedure singFirstLine(n: integer);
+begin
+    if n >= 2 then
+    begin
+        write(n);
+        write(' bottles of beer on the wall, ');
+        write(n);
+        write(' bottles of beer.');
+    end
+    else 
+        if n = 1 then
+            write('1 bottle of beer on the wall, 1 bottle of beer.')
+        else
+            write('No more bottles of beer on the wall, no more bottles of beer.');
+
+    writeln
+end;
+
+procedure singSecondLine(n: integer);
+begin
+    if n >= 2 then
+    begin
+        write('Take one down and pass it around, ');
+        write(n);
+        write(' bottles of beer on the wall.')
+    end
+    else 
+        if n = 1 then
+            write('Take one down and pass it around, 1 bottle of beer on the wall.')
+        else 
+            if n = 0 then
+                write('Take one down and pass it around, no more bottles of beer on the wall.')
+            else
+                write('Go to the store and buy some more, 99 bottles of beer on the wall.');
+
+    writeln
+end;
+
+{ main procedure }
+begin
+    singIt;
+end.

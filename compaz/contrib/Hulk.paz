@@ -1,0 +1,57 @@
+program yourname;
+
+var
+    size: integer;
+    { Nick fixed this: a: array [1..10] of real; }
+    a: array [0..10] of real;
+    i: integer;
+    max: real;
+    h: integer;
+    j: integer;
+    v: real;
+    
+begin
+    { Nick added this: }
+    a[0] := 0;
+    {read array}
+    size := 10; 
+    write('Provide ');
+    write(size);
+    write(' numbers: ');
+    for i := 1 to size do
+    begin
+        read(a[i]);
+    end;
+    {find max number in array}
+    max := a[1];
+    for i:= 1 to size do
+    begin
+        if max < a[i] then 
+            max := a[i]
+    end;
+    write('Max number is: ');
+    write(max);
+    {sort array}
+    for h := 2 to size do
+    begin
+        v := a[h];
+        j := h-1;
+        { The following is problematic due to no short-circuit evaluation }
+        { The workaround solution is to create a dummy element 0 in the array }
+        while (j > 0) and (v < a[j]) do
+        begin
+            a[j+1] := a[j];
+            j := j-1
+        end;
+        a[j+1] := v;
+    end;
+    { Nick fixed this: write('\n The number from small to large: \n'); }
+    writeln; write(' The number from small to large: '); writeln;
+    for h := 1 to size do
+    begin
+        write(a[h]);
+        { Nick fixed this: write('\n'); }
+        writeln;
+    end;
+
+end.

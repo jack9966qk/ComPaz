@@ -1,0 +1,10 @@
+a is: 3
+b is: 4
+global a is: 1
+global b is: 2
+after for a is: 9
+after for b is: 9
+input a: input b: a is: 6
+b is: 8
+global a is: 5
+global b is: 7

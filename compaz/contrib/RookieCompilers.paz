@@ -1,0 +1,38 @@
+program ascendingsort;
+
+var
+    num: array[1..5] of integer;
+    {'k' will never be used}
+    i,j,k,temp: integer;
+
+
+begin
+    num[1] := 5;
+    num[2] := 3;
+    num[3] := 8;
+    num[4] := 1;
+    num[5] := 2;
+
+    write('numbers before sort');
+    for i := 1 to 5 do
+        write (num[i]);
+
+    {Sort the numbers}
+    for i := 1 to 4 do
+    begin
+        for j := (i+1) to 5 do
+        begin
+            if(num[i] > num[j]) then
+            begin
+                temp := num[i];
+                num[i] := num[j];
+                num[j] := temp
+            end
+        end
+    end;
+
+    write('numbers after sort');
+    for i := 1 to 5 do
+        write (num[i]);
+
+end.

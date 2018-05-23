@@ -1,0 +1,114 @@
+program PLIcraftsman;
+
+{ Phase 2 test case
+  Read and assignment statements }
+
+var
+  i, x, y, m, n, temp, result: integer;
+  b, z: boolean;
+  r: real;
+
+procedure k(var a: integer; b: integer);
+begin
+    a := 1;
+    b := a + b
+end;
+
+procedure f(var a: integer; var b: integer);
+begin
+    a := 1;
+    b := a + b
+end;
+
+procedure p(input: integer; var output: integer);
+begin
+    output := (input - 1) * 3 - 4
+end;
+
+
+
+begin
+    {basic test}
+    r := 1.0;
+    r := 1;
+    i := 1;
+    b := true;
+    b := false;
+    i := 1 + 1;
+    r := 1 + 1;
+    r := 1 + 1.1;
+    r := 1.1 + 1.1;
+    b := 1.1 > 1;
+    b := 2 > 1;
+    x := -5;
+    z := x + 6.0 = 1.0;
+
+    {read and write test}
+    write(z);
+    x := 8;
+    write(8 / 4.0);
+    write('Input a positive integer' );
+    read(x);
+    write('Your input number' );
+    write(x);
+    write('is greater than 5');
+
+    {loop test0}
+    m := 0;
+    for n := 100 to 10 do
+    begin
+        m := m * n;
+        write(m);
+        writeln
+    end;
+
+    {loop test1}
+    m := n * 2;
+    for n:= 1 downto 10 do
+    begin
+        p(n, result);
+        if m > result then
+            write('m > result')
+        else
+            write('m < result');
+        writeln
+    end;
+
+    {loop test2}
+    x := 10;
+    y := (x div 2) -1;
+    for n := 0 to 9 do
+    begin
+        if y > 0 then
+            write('y > 0')
+        else
+            write('y <= 0');
+        writeln
+    end;
+
+    {loop test3}
+    x := 10;
+    y := 1;
+    temp := x div y;
+    result := x - temp;
+    while false do { Nick removed due to infinite loop: while result < y do}
+    begin
+        x := temp + result;
+        y := result + 1;
+        temp := x div y;
+        result := x - temp
+    end;
+
+    {function test}
+      x := 3;
+      y := 3;
+      i := 3;
+      k(x,x);
+      f(y,y);
+      p(i,i);
+      write(x);
+      write(y);
+      write(i);
+
+    writeln
+end.

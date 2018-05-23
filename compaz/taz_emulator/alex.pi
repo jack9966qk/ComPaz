@@ -1,0 +1,2733 @@
+    # program
+    call main
+    halt
+    # procedure declaration part
+    # variable declaration part
+    # variable declaration date
+    # variable declaration decade
+    # variable declaration months
+    # variable declaration decades
+    # variable declaration leapyearseven
+    # variable declaration sum
+main:
+    push_stack_frame 55
+    # compound statement
+    string_const r0, 'Date of birth (eg. 23 for the 23rd): '
+    call_builtin print_string
+    call_builtin read_int
+    store 0, r0
+    string_const r0, 'Month of birth (eg 10 for October): '
+    call_builtin print_string
+    call_builtin read_int
+    store 1, r0
+    string_const r0, 'Year of birth (eg. 1990): '
+    call_builtin print_string
+    call_builtin read_int
+    store 2, r0
+    # SimpleExpression
+    # term
+    int_const r1, 6
+    # SimpleExpression
+    # term
+    int_const r2, 1
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label0
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 1
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label1
+label0:
+label1:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 2
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label2
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 2
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label3
+label2:
+label3:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 3
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label4
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 3
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label5
+label4:
+label5:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 5
+    # SimpleExpression
+    # term
+    int_const r2, 4
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label6
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 4
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label7
+label6:
+label7:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 5
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label8
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 5
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label9
+label8:
+label9:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 3
+    # SimpleExpression
+    # term
+    int_const r2, 6
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label10
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 6
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label11
+label10:
+label11:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 5
+    # SimpleExpression
+    # term
+    int_const r2, 7
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label12
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 7
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label13
+label12:
+label13:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 8
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label14
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 8
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label15
+label14:
+label15:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 4
+    # SimpleExpression
+    # term
+    int_const r2, 9
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label16
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 9
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label17
+label16:
+label17:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 6
+    # SimpleExpression
+    # term
+    int_const r2, 10
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 10
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 10
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label18
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 10
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label19
+label18:
+label19:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 11
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 11
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 11
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label20
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 11
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label21
+label20:
+label21:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 4
+    # SimpleExpression
+    # term
+    int_const r2, 12
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 12
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 12
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label22
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 12
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label23
+label22:
+label23:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 0
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 0
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 0
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label24
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 0
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label25
+label24:
+label25:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 6
+    # SimpleExpression
+    # term
+    int_const r2, 1
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label26
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 1
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label27
+label26:
+label27:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 5
+    # SimpleExpression
+    # term
+    int_const r2, 2
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label28
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 2
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label29
+label28:
+label29:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 3
+    # SimpleExpression
+    # term
+    int_const r2, 3
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label30
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 3
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label31
+label30:
+label31:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 4
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label32
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 4
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label33
+label32:
+label33:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 5
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label34
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 5
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label35
+label34:
+label35:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 6
+    # SimpleExpression
+    # term
+    int_const r2, 6
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label36
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 6
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label37
+label36:
+label37:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 4
+    # SimpleExpression
+    # term
+    int_const r2, 7
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label38
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 7
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label39
+label38:
+label39:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 3
+    # SimpleExpression
+    # term
+    int_const r2, 8
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label40
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 8
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label41
+label40:
+label41:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 9
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label42
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 9
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label43
+label42:
+label43:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 10
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 10
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 10
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label44
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 10
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label45
+label44:
+label45:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 5
+    # SimpleExpression
+    # term
+    int_const r2, 11
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 11
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 11
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label46
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 11
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label47
+label46:
+label47:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 0
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 0
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 0
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label48
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 0
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label49
+label48:
+label49:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 1
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label50
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 1
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label51
+label50:
+label51:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 2
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label52
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 2
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label53
+label52:
+label53:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 3
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label54
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 3
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label55
+label54:
+label55:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 4
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label56
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 4
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label57
+label56:
+label57:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 5
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label58
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 5
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label59
+label58:
+label59:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 6
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label60
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 6
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label61
+label60:
+label61:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 7
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label62
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 7
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label63
+label62:
+label63:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 8
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label64
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 8
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label65
+label64:
+label65:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 9
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label66
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 9
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label67
+label66:
+label67:
+    load_address r9, 32
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 0
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 0
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 0
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label68
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 0
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label69
+label68:
+label69:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    # SimpleExpression
+    # term
+    int_const r2, 1
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label70
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 1
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label71
+label70:
+label71:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 2
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 2
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label72
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 2
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label73
+label72:
+label73:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 3
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label74
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 3
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label75
+label74:
+label75:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 4
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label76
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 4
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label77
+label76:
+label77:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 1
+    # SimpleExpression
+    # term
+    int_const r2, 5
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 5
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label78
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 5
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label79
+label78:
+label79:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 6
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 6
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label80
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 6
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label81
+label80:
+label81:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 7
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 7
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label82
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 7
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label83
+label82:
+label83:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 8
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 8
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label84
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 8
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label85
+label84:
+label85:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    int_const r1, 2
+    # SimpleExpression
+    # term
+    int_const r2, 9
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r4, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r7, 9
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 9
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label86
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    int_const r0, 9
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label87
+label86:
+label87:
+    load_address r9, 42
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    store_indirect r9, r1
+    # SimpleExpression
+    # term
+    load r1, 2
+    int_const r2, 10
+    div_int r1, r1, r2
+    # term
+    int_const r3, 190
+    sub_int r1, r1, r3
+    store 3, r1
+    # SimpleExpression
+    # term
+    load r1, 2
+    # term
+    load r2, 3
+    int_const r3, 10
+    mul_int r2, r2, r3
+    sub_int r1, r1, r2
+    store 4, r1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r2, 1
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r4, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 1
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r7, 1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 12
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label88
+    string_const r0, 'array access on months out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [1..12], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 1
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label89
+label88:
+label89:
+    load_address r9, 8
+    int_const r10, 1
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    load_indirect r1, r9
+    store 5, r1
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r2, 3
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r4, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r5, 0
+    cmp_lt_int r3, r4, r5
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r7, 3
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r8, 11
+    cmp_gt_int r6, r7, r8
+    or r3, r3, r6
+    branch_on_false r3, label90
+    string_const r0, 'array access on decades out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..11], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 3
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label91
+label90:
+label91:
+    load_address r9, 20
+    int_const r10, 0
+    sub_int r2, r2, r10
+    sub_offset r9, r9, r2
+    load_indirect r1, r9
+    store 6, r1
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 3
+    int_const r4, 2
+    int_to_real r2, r2
+    int_to_real r4, r4
+    div_real r2, r2, r4
+    # SimpleExpression
+    # term
+    load r3, 3
+    int_const r5, 2
+    div_int r3, r3, r5
+    int_to_real r3, r3
+    cmp_eq_real r1, r2, r3
+    branch_on_false r1, label92
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r7, 4
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r9, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r10, 0
+    cmp_lt_int r8, r9, r10
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r12, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r13, 9
+    cmp_gt_int r11, r12, r13
+    or r8, r8, r11
+    branch_on_false r8, label94
+    string_const r0, 'array access on leapyearseven out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 4
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label95
+label94:
+label95:
+    load_address r14, 32
+    int_const r15, 0
+    sub_int r7, r7, r15
+    sub_offset r14, r14, r7
+    load_indirect r6, r14
+    store 7, r6
+    branch_uncond label93
+label92:
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r17, 4
+    # array bound check
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r19, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r20, 0
+    cmp_lt_int r18, r19, r20
+    # term
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r22, 4
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    int_const r23, 9
+    cmp_gt_int r21, r22, r23
+    or r18, r18, r21
+    branch_on_false r18, label96
+    string_const r0, 'array access on leapyearsodd out of range'
+    call_builtin print_string
+    call_builtin print_newline
+    string_const r0, 'expected [0..9], received '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 4
+    call_builtin print_int
+    call_builtin print_newline
+halt
+    branch_uncond label97
+label96:
+label97:
+    load_address r24, 42
+    int_const r25, 0
+    sub_int r17, r17, r25
+    sub_offset r24, r24, r17
+    load_indirect r16, r24
+    store 7, r16
+label93:
+    # SimpleExpression
+    # term
+    load r1, 0
+    # term
+    load r2, 5
+    add_int r1, r1, r2
+    store 52, r1
+    # SimpleExpression
+    # term
+    load r1, 52
+    int_const r2, 7
+    div_int r1, r1, r2
+    store 53, r1
+    # SimpleExpression
+    # term
+    load r1, 52
+    # term
+    load r2, 53
+    int_const r3, 7
+    mul_int r2, r2, r3
+    sub_int r1, r1, r2
+    store 54, r1
+    call_builtin print_newline
+    string_const r0, 'You were born on a '
+    call_builtin print_string
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 54
+    # SimpleExpression
+    # term
+    int_const r3, 1
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label98
+    string_const r0, 'Monday'
+    call_builtin print_string
+    branch_uncond label99
+label98:
+label99:
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 54
+    # SimpleExpression
+    # term
+    int_const r3, 2
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label100
+    string_const r0, 'Tuesday'
+    call_builtin print_string
+    branch_uncond label101
+label100:
+label101:
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 54
+    # SimpleExpression
+    # term
+    int_const r3, 3
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label102
+    string_const r0, 'Wednesday'
+    call_builtin print_string
+    branch_uncond label103
+label102:
+label103:
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 54
+    # SimpleExpression
+    # term
+    int_const r3, 4
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label104
+    string_const r0, 'Thursday'
+    call_builtin print_string
+    branch_uncond label105
+label104:
+label105:
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 54
+    # SimpleExpression
+    # term
+    int_const r3, 5
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label106
+    string_const r0, 'Friday'
+    call_builtin print_string
+    branch_uncond label107
+label106:
+label107:
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 54
+    # SimpleExpression
+    # term
+    int_const r3, 6
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label108
+    string_const r0, 'Saturday'
+    call_builtin print_string
+    branch_uncond label109
+label108:
+label109:
+    # if statement
+    # SimpleExpression
+    # term
+    load r2, 54
+    # SimpleExpression
+    # term
+    int_const r3, 7
+    cmp_eq_int r1, r2, r3
+    branch_on_false r1, label110
+    string_const r0, 'Sunday'
+    call_builtin print_string
+    branch_uncond label111
+label110:
+label111:
+    call_builtin print_newline
+    pop_stack_frame 55
+    return

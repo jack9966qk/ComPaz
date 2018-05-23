@@ -45,7 +45,8 @@ insertVariable name val (a, map, c, d) =
     (a, insert name val map, c, d)
 
 lookupVariable :: String -> Symbols -> (Bool, ASTTypeDenoter, Int)
-lookupVariable name (_, map, _, _) = (map ! name)
+lookupVariable name (_, map, _, _) = -- trace ( (show map) ++ " get " ++ (show r) )
+    (map ! name)
 
 insertArrayBounds :: String -> (Int, Int) -> Symbols -> Symbols
 insertArrayBounds name val (a, b, c, map) =
@@ -59,7 +60,8 @@ insertProcedure name vals (map, b, c, d) =
     (insert name vals map, b, c, d)
 
 lookupProcedure :: String -> Symbols -> [(Bool, ASTTypeDenoter)]
-lookupProcedure name (map, _, _, _) = (map ! name)
+lookupProcedure name (map, _, _, _) = -- trace ( (show map) ++ " get " ++ (show name) )
+    (map ! name)
 
 clearVariables :: Symbols -> Symbols
 clearVariables (a, _, c, d) = (a, Map.empty, c, d)
