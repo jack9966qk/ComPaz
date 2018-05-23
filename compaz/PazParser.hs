@@ -1584,6 +1584,13 @@ data TypeDenoter =
     OrdinaryTypeDenoter ASTTypeIdentifier |
     ArrayTypeDenoter ASTArrayType
     deriving(Eq, Show)
+
+instance Show ASTTypeDenoter where
+    show (OrdinaryTypeDenoter typ) = show typ
+    show (ArrayTypeDenoter (_, typ)) =
+        "array[" ++ (show typ) ++ "]"
+
+
 parseTypeDenoter :: Parser ASTTypeDenoter
 parseTypeDenoter =
     trace
@@ -1610,6 +1617,12 @@ data TypeIdentifier =
     RealTypeIdentifier |
     BooleanTypeIdentifier
     deriving(Eq, Show)
+
+instance Show ASTTypeIdentifier where
+    show IntegerTypeIdentifier = "int"
+    show RealTypeIdentifier = "real"
+    show BooleanTypeIdentifier = "bool"
+
 parseTypeIdentifier :: Parser ASTTypeIdentifier
 parseTypeIdentifier =
     trace

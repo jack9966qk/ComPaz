@@ -468,9 +468,9 @@ cgPrepareAssignment
     (OrdinaryTypeDenoter RealTypeIdentifier)
     (r, OrdinaryTypeDenoter IntegerTypeIdentifier) =
         cgIntToReal r
-cgPrepareAssignment vt (r, et)
+cgPrepareAssignment vt (_, et)
     | vt == et  = return ()
-    | otherwise = error ""
+    | otherwise = error "cannot assign " ++ (show et) ++ " to " ++ (show vt)
 
 cgAssignmentStatement :: ASTAssignmentStatement -> Codegen ()
 cgAssignmentStatement (var, expr) = do
@@ -489,7 +489,7 @@ cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
     t <- cgGetVariableType var
     let name = case t of
-            ArrayTypeDenoter _ -> error ""
+            ArrayTypeDenoter _ -> error "cannot read array"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "read_int"
             OrdinaryTypeDenoter RealTypeIdentifier -> "read_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "read_bool"
@@ -569,7 +569,9 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 writeInstruction "sub_offset" [showReg r1, showReg r1, showReg r]
                 -- return register that holds address to the array element
                 return (OrdinaryTypeDenoter t, Indirect r1)
-        _ -> error ""
+        (_, OrdinaryTypeDenoter IntegerTypeIdentifier)
+            -> error "indexing of variable " ++ ident ++ " that is not array"
+        (_, _) -> error "index of " ++ ident ++ " is not integer"
 cgVariableAccess (IdentifierDenoter ident) = do
     -- writeComment ident
     (varness, typ, slot) <- getVariable ident
@@ -596,7 +598,7 @@ cgWriteStatement expr = do
     cgExpression expr False regZero
     t <- getRegType regZero
     let name = case t of
-            ArrayTypeDenoter _ -> error ""
+            ArrayTypeDenoter _ -> error "cannot write array"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "print_int"
             OrdinaryTypeDenoter RealTypeIdentifier -> "print_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "print_bool"
@@ -644,7 +646,8 @@ cgPrepareArithmetic r1 r2 = do
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
             ) -> return IntOp
-        _   -> error ""
+        _ -> error "arithmetic/comparision cannot be done between " ++
+                (show t1) ++ " and " ++ (show t2)
 
 cgPrepareLogical :: Reg -> Reg -> Codegen ()
 cgPrepareLogical r1 r2 = do
@@ -655,7 +658,8 @@ cgPrepareLogical r1 r2 = do
             OrdinaryTypeDenoter BooleanTypeIdentifier,
             OrdinaryTypeDenoter BooleanTypeIdentifier
             ) -> return ()
-        _   -> error ""
+        _ -> error "logical operation cannot be done between " ++
+                (show t1) ++ " and " ++ (show t2)
 
 cgPrepareComparison :: Reg -> Reg -> Codegen (OperatorType)
 cgPrepareComparison = cgPrepareArithmetic
@@ -669,7 +673,8 @@ cgPrepareDiv r1 r2 = do
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
             ) -> return ()
-        _   -> error ""
+        _ -> error "integer division cannot be done between " ++
+                (show t1) ++ " and " ++ (show t2)
 
 cgPrepareDivideBy :: Reg -> Reg -> Codegen ()
 cgPrepareDivideBy dest r = do
@@ -763,7 +768,7 @@ cgSimpleExpression' (Just PazParser.SignMinus, term, []) dest = do
     let cmd = case t of
             OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
-            _ -> error ""
+            _ -> error "negation cannot be done with " ++ (show t)
     writeInstruction cmd [showReg dest]
 cgSimpleExpression' (_, term, []) dest =
     cgTerm term dest
@@ -815,7 +820,7 @@ cgFactor factor dest =
             let cmd = case t of
                     OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
                     OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
-                    _ -> error ""
+                    _ -> error "negation cannot be done with " ++ (show t)
             writeInstruction cmd [showReg dest]
             putRegType dest t
 
