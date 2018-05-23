@@ -783,17 +783,17 @@ cgTerm term dest = do
     cgTerm' term dest
 
 cgTerm' :: ASTTerm -> Reg -> Codegen ()
-cgTerm' (factor, []) dest = cgFactor factor dest
-cgTerm' (f1, x:xs) dest = do
-    let (mulOp, f2) = x
-    cgFactor f1 dest
-    r <- nextRegister
-    cgFactor f2 r
-    case mulOp of
-            TimesDenoter -> cgArithmetic dest r "mul"
-            DivideByDenoter -> cgDivideBy dest r
-            DivDenoter -> cgDiv dest r
-            AndDenoter -> cgLogical dest r "and"
+cgTerm' (factor, modifiers) dest = do
+    cgFactor factor dest
+    let cgOne (op, f) = do
+        r <- nextRegister
+        cgFactor f r
+        case op of
+                TimesDenoter -> cgArithmetic dest r "mul"
+                DivideByDenoter -> cgDivideBy dest r
+                DivDenoter -> cgDiv dest r
+                AndDenoter -> cgLogical dest r "and"
+    cgJoin $ map cgOne modifiers
 
 -- Bool indicates if caller passes Factor by reference
 cgFactor :: ASTFactor -> Reg -> Codegen ()
