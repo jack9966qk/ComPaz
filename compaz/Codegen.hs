@@ -76,6 +76,8 @@ import Symbol (
     lookupArrayBounds,
     insertProcedure,
     lookupProcedure,
+    lookupVarState,
+    insertVarState,
     clearVariables
     )
 
@@ -191,6 +193,14 @@ putVariable :: String -> (Bool, ASTTypeDenoter, Int) -> Codegen ()
 putVariable name val = Codegen (\(State r c symbols sl l) ->
     ((), State r c (insertVariable name val symbols) sl l))
 
+getVarState :: String -> Codegen (Bool)
+getVarState name = Codegen (\(State r c symbols sl l) ->
+    (lookupVarState name symbols, State r c symbols sl l))
+
+putVarState :: String -> Bool -> Codegen ()
+putVarState name val = Codegen (\(State r c symbols sl l) ->
+    ((), State r c (insertVarState name val symbols) sl l))
+
 getArrayBounds :: String -> Codegen (Int, Int)
 getArrayBounds name = Codegen (\(State r c symbols sl l) ->
     (lookupArrayBounds name symbols, State r c symbols sl l))
@@ -270,39 +280,28 @@ cgVariableDeclarationPart var = do
 cgVariableDeclarationPart' :: Bool -> ASTVariableDeclarationPart -> Codegen (MemSize)
 cgVariableDeclarationPart' _ Nothing = return 0
 cgVariableDeclarationPart' _ (Just (decl, more)) = do
-    cgFoldr (+) 0 $ map (cgVariableDeclaration False) (decl:more)
+    cgFoldr (+) 0 $ map (cgVariableDeclaration False False) (decl:more)
 
-cgVariableDeclaration :: Bool -> ASTVariableDeclaration -> Codegen (MemSize)
-cgVariableDeclaration varness ((ident, moreIdent), typ) = do
+cgVariableDeclaration :: Bool -> Bool -> ASTVariableDeclaration -> Codegen (MemSize)
+cgVariableDeclaration areParams varness ((ident, moreIdent), typ) = do
     writeComment ("variable declaration " ++ ident)
-    case varness of
-        True -> do
-            let cgDecl i = do
-                case typ of
-                    OrdinaryTypeDenoter _ -> do
-                        sl <- nextSlot
-                        -- writeComment (show sl)
-                        putVariable i (True, typ, sl)
-                        return 1
-                    _ -> return 0
-            cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
-        False -> do
-            let cgDecl i = do
-                case typ of
-                    ArrayTypeDenoter arrayType -> cgArrayType i arrayType
-                    _ -> do
-                        sl <- nextSlot
-                        -- writeComment (show sl)
-                        -- all vars in declaration are used "by value"
-                        putVariable i (False, typ, sl) 
-                        return 1 -- all primitives have size 1
-            cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
+    let cgDecl i = do
+        case typ of
+            ArrayTypeDenoter arrayType -> cgArrayType i arrayType
+            _ -> do
+                sl <- nextSlot
+                -- writeComment (show sl)
+                -- all vars in declaration are used "by value"
+                putVariable i (varness, typ, sl)
+                return 1 -- all primitives have size 1
+    putVarState ident areParams
+    cgFoldr (+) 0 $ map cgDecl (ident:moreIdent)
 
 cgFormalParameterList :: ASTFormalParameterList -> Codegen (MemSize)
 cgFormalParameterList (s, ss) = do
     writeComment "formal parameter section"
     let cgProcessSection (varness, ids, t) =
-            cgVariableDeclaration varness (ids, t)
+            cgVariableDeclaration True varness (ids, t)
     cgFoldr (+) 0 $ map cgProcessSection (s:ss)
 
 cgPrepareAllProcedures :: ASTProcedureDeclarationPart -> Codegen ()
@@ -482,8 +481,13 @@ cgPrepareAssignment vt (_, et)
     | vt == et  = return ()
     | otherwise = error $ "cannot assign " ++ (show et) ++ " to " ++ (show vt)
 
+cgSetVariableAssigned :: ASTVariableAccess -> Codegen ()
+cgSetVariableAssigned (IndexedVariableDenoter (ident, _)) = putVarState ident True
+cgSetVariableAssigned (IdentifierDenoter ident) = putVarState ident True
+
 cgAssignmentStatement :: ASTAssignmentStatement -> Codegen ()
 cgAssignmentStatement (var, expr) = do
+    cgSetVariableAssigned var
     r <- nextRegister
     cgExpression expr False r
     et <- getRegType r
@@ -497,6 +501,7 @@ cgAssignmentStatement (var, expr) = do
 
 cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
+    cgSetVariableAssigned var
     t <- cgGetVariableType var
     let name = case t of
             ArrayTypeDenoter _ -> error "cannot read array"
@@ -558,6 +563,10 @@ cgArrayBoundCheck ident expr = do
 data VarAddress = Direct Int | Indirect Reg
 cgVariableAccess :: ASTVariableAccess -> Codegen (ASTTypeDenoter, VarAddress)
 cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
+    assigned <- getVarState ident
+    case assigned of
+        True -> return ()
+        False -> error $ "variable " ++ ident ++ " used before assignment"
     -- varness of an array variable is not considered
     (_, typ, start) <- getVariable ident
     r <- nextRegister
@@ -583,6 +592,10 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
             -> error $ "indexing of variable " ++ ident ++ " that is not array"
         (_, _) -> error $ "index of " ++ ident ++ " is not integer"
 cgVariableAccess (IdentifierDenoter ident) = do
+    assigned <- getVarState ident
+    case assigned of
+        True -> return ()
+        False -> error $ "variable " ++ ident ++ " used before assignment"
     -- writeComment ident
     (varness, typ, slot) <- getVariable ident
     if varness then do
@@ -726,6 +739,7 @@ cgExpression (
             ), []
         ), Nothing
     ) True dest = do
+    putVarState var True
     (varness, _, sl) <- getVariable var
     case varness of
         True

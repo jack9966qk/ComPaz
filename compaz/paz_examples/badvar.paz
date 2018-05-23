@@ -1,0 +1,8 @@
+program hello;
+
+var x: integer;
+
+begin
+        write(x);
+        write('Hello, world!')
+end.
