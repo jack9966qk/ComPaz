@@ -1,3 +1,7 @@
+-- COMP90045 Stage 3, Team ComPaz
+-- PazUtil.hs
+-- Helper functions to help with parentheses removal in printer.
+
 module PazUtil where
 
 import PazParser(

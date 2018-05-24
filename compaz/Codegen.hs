@@ -113,12 +113,12 @@ instance Monad Codegen where
 -- functor and applicative, required for monad to be implemented
 -- (only) for higher version of GHC, need to be removed for it to
 -- compile on dimefox (GHC version 7.0.4)
-instance Functor Codegen where
-    fmap = liftM
+-- instance Functor Codegen where
+--     fmap = liftM
 
-instance Applicative Codegen where
-    pure = return
-    (<*>) = ap
+-- instance Applicative Codegen where
+--     pure = return
+--     (<*>) = ap
 
 -- helper functions for operations on monad
 initState :: State
