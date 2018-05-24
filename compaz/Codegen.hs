@@ -850,12 +850,6 @@ cgCharacterString str dest =
     in
         writeInstruction "string_const" [regPart, strPart]
 
-cgUnsignedNumber :: ASTUnsignedConstant -> Reg -> Codegen ()
-cgUnsignedNumber num dest = case num of
-    UnsignedIntegerDenoter i    -> cgUnsignedInteger i dest
-    UnsignedRealDenoter r       -> cgUnsignedReal r dest
-    BooleanConstantDenoter b    -> cgBooleanConstant b dest
-
 cgUnsignedInteger :: ASTUnsignedInteger -> Reg -> Codegen ()
 cgUnsignedInteger int dest = do
     writeInstruction "int_const" [showReg dest, int]
@@ -891,10 +885,12 @@ cgBooleanConstant bool dest = do
     writeInstruction "int_const" [regPart, boolPart]
     putRegType dest (OrdinaryTypeDenoter BooleanTypeIdentifier)
 
+-- reserve registers for arguments to be passed
 cgAllocateRegs :: [ASTExpression] -> Codegen ()
 cgAllocateRegs [] = return ()
 cgAllocateRegs (_:xs) = nextRegister >> (cgAllocateRegs xs)
 
+-- generate code to pass variables according to varnesses that callee specifies
 cgPassArgument :: Reg -> [ASTExpression] -> [(Bool, ASTTypeDenoter)] -> Codegen ()
 cgPassArgument _ (_:_) [] = error "num of arguments incorrect"
 cgPassArgument _ [] (_:_) = error "num of arguments incorrect"
@@ -910,6 +906,8 @@ cgPassArgument r (a:as) ((v, vt):ps) = do
         cgPrepareAssignment vt (r, at)
     cgPassArgument (r+1) as ps
 
+-- have caller pass arguments by reference depending on whether they were
+-- reference parameters.
 cgVariableReference :: ASTExpression -> ASTTypeDenoter -> Reg -> Codegen ()
 cgVariableReference (
     (
@@ -925,12 +923,13 @@ cgVariableReference (
         error "var argument type mismatch"
     else return ()
     case varness of
-        True
+        True	-- already stored variable's address
             -> writeInstruction "load" [showReg dest, show sl]
         False
             -> writeInstruction "load_address" [showReg dest, show sl]
-cgVariableReference _ _ _ = error $ "var argument must be passed as varaible"
+cgVariableReference _ _ _ = error $ "var argument must be passed as variable"
 
+-- generate code to call a procedure. Put arguments in registers starting at r0
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
 cgProcedureStatement (p, paramList) = do
     formalParameters <- getProcedure p
