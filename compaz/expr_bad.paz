@@ -1,0 +1,10 @@
+program exprBad;
+
+var a, b: integer;
+
+begin
+    write(a - b * 10 - 1900)
+end.
+
+    
+

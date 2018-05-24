@@ -760,25 +760,25 @@ cgSimpleExpression expr dest = do
     cgSimpleExpression' expr dest
 
 cgSimpleExpression' :: ASTSimpleExpression -> Reg -> Codegen ()
-cgSimpleExpression' (Just PazParser.SignMinus, term, []) dest = do
+cgSimpleExpression' (maybeSign, term, modifiers) dest = do
     cgTerm term dest
-    t <- getRegType dest
-    let cmd = case t of
-            OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
-            OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
-            _ -> error "negation cannot be done with " ++ (show t)
-    writeInstruction cmd [showReg dest, showReg dest]
-cgSimpleExpression' (_, term, []) dest =
-    cgTerm term dest
-cgSimpleExpression' (ms, t1, x:xs) dest = do
-    let (addOp, t2) = x
-    cgTerm t1 dest
-    r <- nextRegister
-    cgTerm t2 r
-    case addOp of
-        PlusDenoter -> cgArithmetic dest r "add"
-        MinusDenoter -> cgArithmetic dest r "sub"
-        OrDenoter -> cgLogical dest r "or"
+    case maybeSign of
+        Just PazParser.SignMinus -> do
+            t <- getRegType dest
+            let cmd = case t of
+                    OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
+                    OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
+                    _ -> error "negation cannot be done with " ++ (show t)
+            writeInstruction cmd [showReg dest, showReg dest]
+        _ -> return ()
+    let cgOne (op, t) = do
+        r <- nextRegister
+        cgTerm t r
+        case op of
+            PlusDenoter -> cgArithmetic dest r "add"
+            MinusDenoter -> cgArithmetic dest r "sub"
+            OrDenoter -> cgLogical dest r "or"
+    cgJoin $ map cgOne modifiers
 
 cgTerm :: ASTTerm -> Reg -> Codegen ()
 cgTerm term dest = do
