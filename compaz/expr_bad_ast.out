@@ -1,0 +1,46 @@
+(
+"exprbad",
+Just ((("a",["b"]),int),[]),
+[],
+[
+    WriteStatementDenoter (
+        ( // simp
+            Nothing, // sign
+            ( // term
+                VariableAccessDenoter (
+                    IdentifierDenoter "a"
+                ),
+                []
+            ),
+            [ // postTerm
+                (
+                    MinusDenoter, // addOp
+                    ( // term
+                        VariableAccessDenoter (
+                            IdentifierDenoter "b"
+                        ),
+                        [
+                            (
+                                TimesDenoter,
+                                UnsignedConstantDenoter (
+                                    UnsignedIntegerDenoter "10"
+                                )
+                            )
+                        ]
+                    )
+                ),
+                (
+                    MinusDenoter, // addOp
+                    ( // term
+                        UnsignedConstantDenoter (
+                            UnsignedIntegerDenoter "1900"
+                        ),
+                        []
+                    )
+                )
+            ]
+        ),
+        Nothing
+    )
+]
+)

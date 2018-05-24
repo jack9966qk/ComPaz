@@ -2373,6 +2373,9 @@ label87:
     int_const r3, 10
     mul_int r2, r2, r3
     sub_int r1, r1, r2
+    # term
+    int_const r4, 1900
+    sub_int r1, r1, r4
     store 4, r1
     # SimpleExpression
     # term
@@ -2611,6 +2614,15 @@ label93:
     # term
     load r2, 5
     add_int r1, r1, r2
+    # term
+    load r3, 6
+    add_int r1, r1, r3
+    # term
+    load r4, 4
+    add_int r1, r1, r4
+    # term
+    load r5, 7
+    add_int r1, r1, r5
     store 52, r1
     # SimpleExpression
     # term
