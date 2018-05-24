@@ -1,3 +1,7 @@
+-- COMP90045 Stage 3, Team ComPaz
+-- Paz.hs
+-- Driver code that lexes, parses and then generates code for Paz source file.
+
 {-# LANGUAGE PackageImports #-}
 
 import Debug.Trace (trace)

@@ -1,3 +1,7 @@
+-- COMP90045 Stage 3, Team ComPaz
+-- PazParserTest.hs
+-- Test if PazParser works.
+
 {-# LANGUAGE PackageImports #-}
 
 import Debug.Trace (trace)

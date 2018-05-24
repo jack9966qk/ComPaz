@@ -1,3 +1,7 @@
+-- COMP90045 Stage 3, Team ComPaz
+-- PazLexerText.hs
+-- Test if PazLexer works.
+
 {-# LANGUAGE PackageImports #-}
 
 import Text.Parsec (parse)

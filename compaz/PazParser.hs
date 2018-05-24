@@ -1,3 +1,7 @@
+-- COMP90045 Stage 3, Team ComPaz
+-- PazParser.hs
+-- Generate an AST for a Paz source file serving as input to Codegen.
+
 module PazParser where
 
 import Debug.Trace (trace)

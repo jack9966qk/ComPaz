@@ -1,3 +1,8 @@
+-- COMP90045 Stage 3, Team ComPaz
+-- PazLexer.hs
+-- Only minor modifications made => very similar to file provided for stage 1.
+-- Performs lexical analysis for source file serving as input to PazParser.
+
 module PazLexer where
 
 import Debug.Trace (trace)
