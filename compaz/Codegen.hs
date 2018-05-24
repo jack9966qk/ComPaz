@@ -315,6 +315,14 @@ cgFormalParameterList (s, ss) = do
 cgPrepareAllProcedures :: ASTProcedureDeclarationPart -> Codegen ()
 cgPrepareAllProcedures ps = cgJoin $ map cgPrepareProcedure ps
 
+cgPrepareProcedure :: ASTProcedureDeclaration -> Codegen ()
+cgPrepareProcedure (ident, maybeParam, _, _) = do
+    case maybeParam of
+        Just (s, ss) -> do
+            putProcedure ident (bareParameters (s:ss))
+        Nothing -> do
+            putProcedure ident []
+
 cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart ps = do
     writeComment "procedure declaration part"
@@ -326,20 +334,14 @@ cgProcedureDeclarationPart' ps = cgJoin $ map cgProcedureDeclaration ps
 bareParameters :: [ASTFormalParameterSection] -> [(Bool, ASTTypeDenoter)]
 bareParameters ss = map (\(x, _, d) -> (x, d)) ss
 
+-- generate code to put procedure arguments into stack slots
 cgStoreArg :: Reg -> StackSlot -> [ASTFormalParameterSection] -> Codegen ()
 cgStoreArg _ _ [] = return ()
 cgStoreArg r sl (_:xs) = do
     writeInstruction "store" [show sl, showReg r]
     cgStoreArg (r+1) (sl+1) xs
 
-cgPrepareProcedure :: ASTProcedureDeclaration -> Codegen ()
-cgPrepareProcedure (ident, maybeParam, _, _) = do
-    case maybeParam of
-        Just (s, ss) -> do
-            putProcedure ident (bareParameters (s:ss))
-        Nothing -> do
-            putProcedure ident []
-
+-- generate procedure declaration
 cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
 cgProcedureDeclaration (ident, maybeParam, v, com) = do
     writeComment "procedure declaration"
@@ -365,6 +367,7 @@ cgProcedureDeclaration (ident, maybeParam, v, com) = do
             cgPopStackFrame size
     writeCode "    return"
 
+-- handle array declaration
 cgArrayType :: ASTIdentifier -> ASTArrayType -> Codegen (MemSize)
 cgArrayType ident arrayType@((lo, hi), typeId) = do
     let readConst (maybeSign, uint) = case maybeSign of
@@ -424,6 +427,7 @@ cgPrepareForStatement (ident, fromExpr, toExpr) = do
             OrdinaryTypeDenoter IntegerTypeIdentifier) -> return ()
         _ -> error "for statement heading should only contain integers"
 
+-- generate for statement, which is done by translating to while statement
 cgForStatement :: ASTForStatement -> Codegen ()
 cgForStatement (ident, fromExpr, toDownTo, toExpr, stmt) = do
     let idVarAccess = IdentifierDenoter ident
@@ -558,7 +562,7 @@ cgArrayBoundCheck ident expr = do
                 t = (UnsignedConstantDenoter $
                         UnsignedIntegerDenoter $ show i, [])
             in
-                exprFromSimp ((Nothing), t, []) :: ASTExpression
+                exprFromSimp ((Nothing), t, [])
     let loExpr = exprFromInt lo
     let hiExpr = exprFromInt hi
     let lessThanLo = makeCompExpr expr LessThanDenoter loExpr
@@ -568,7 +572,8 @@ cgArrayBoundCheck ident expr = do
     let cgOutOfBound = do
         cgWriteStringStatement $ "array access on " ++ ident ++ " out of range"
         cgWriteln
-        cgWriteStringStatement $ "expected [" ++ (show lo) ++ ".." ++ (show hi) ++ "], received "
+        cgWriteStringStatement $
+            "expected [" ++ (show lo) ++ ".." ++ (show hi) ++ "], received "
         cgWriteStatement expr
         cgWriteln
         writeInstruction "halt" []
@@ -759,6 +764,7 @@ cgArithmetic dest r a = do
     writeInstruction cmd [showReg dest, showReg dest, showReg r]
     putRegType dest t
 
+-- generate code for logical operation
 cgLogical :: Reg -> Reg -> String -> Codegen ()
 cgLogical dest r cmd = do
     cgPrepareLogical dest r
@@ -839,7 +845,8 @@ cgFactor factor dest =
                         writeComment (show dest)
                         writeInstruction "load" [showReg dest, show sl]
                 Indirect reg
-                    -> writeInstruction "load_indirect" [showReg dest, showReg reg]
+                    -> writeInstruction "load_indirect"
+                        [showReg dest, showReg reg]
             putRegType dest t
         ExpressionDenoter expr -> cgExpression expr dest -- expr in expr
         NegatedFactorDenoter factor -> do
@@ -876,6 +883,7 @@ cgUnsignedReal (seq, maybeSeq, maybeScale) dest = do
     let f2 = case maybeSeq of
             Just s  -> f1 + read ("0." ++ s) :: Float
             Nothing -> f1
+    -- a bit of calculation to handle different real number formats
     let scale = case maybeScale of
             Just (Nothing, s)
                 -> (read s :: Int)
@@ -906,7 +914,8 @@ cgAllocateRegs [] = return ()
 cgAllocateRegs (_:xs) = nextRegister >> (cgAllocateRegs xs)
 
 -- generate code to pass variables according to varnesses that callee specifies
-cgPassArgument :: Reg -> [ASTExpression] -> [(Bool, ASTTypeDenoter)] -> Codegen ()
+cgPassArgument
+    :: Reg -> [ASTExpression] -> [(Bool, ASTTypeDenoter)] -> Codegen ()
 cgPassArgument _ (_:_) [] = error "num of arguments incorrect"
 cgPassArgument _ [] (_:_) = error "num of arguments incorrect"
 cgPassArgument _ [] [] = return ()
@@ -938,7 +947,7 @@ cgVariableReference (
         error "var argument type mismatch"
     else return ()
     case varness of
-        True    -- already stored variable's address
+        True -- already stored variable's address
             -> writeInstruction "load" [showReg dest, show sl]
         False
             -> writeInstruction "load_address" [showReg dest, show sl]

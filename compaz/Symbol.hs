@@ -29,39 +29,34 @@ type Symbols = (
     Map String (Int, Int)
     )
 
+-- helper functions initialising/getting/setting the symbol table
 initSymbols :: Symbols
 initSymbols = (Map.empty, Map.empty, Map.empty, Map.empty)
 
 insertRegType :: Reg -> ASTTypeDenoter -> Symbols -> Symbols
-insertRegType r t (a, b, map, d) = -- trace (show $ insert r t map)
-    (a, b, insert r t map, d)
+insertRegType r t (a, b, map, d) = (a, b, insert r t map, d)
 
 lookupRegType :: Reg -> Symbols -> ASTTypeDenoter
-lookupRegType r (_, _, map, _) = -- trace ( (show map) ++ " get " ++ (show r) )
-    (map ! r)
+lookupRegType r (_, _, map, _) = (map ! r)
 
 insertVariable :: String -> (Bool, ASTTypeDenoter, Int) -> Symbols -> Symbols
 insertVariable name val (a, map, c, d) =
     (a, insert name val map, c, d)
 
 lookupVariable :: String -> Symbols -> (Bool, ASTTypeDenoter, Int)
-lookupVariable name (_, map, _, _) = -- trace ( (show map) ++ " get " ++ (show r) )
-    (map ! name)
+lookupVariable name (_, map, _, _) = (map ! name)
 
 insertArrayBounds :: String -> (Int, Int) -> Symbols -> Symbols
-insertArrayBounds name val (a, b, c, map) =
-    (a, b, c, insert name val map)
+insertArrayBounds name val (a, b, c, map) = (a, b, c, insert name val map)
 
 lookupArrayBounds :: String -> Symbols -> (Int, Int)
 lookupArrayBounds name (_, _, _, map) = (map ! name)
 
 insertProcedure :: String -> [(Bool, ASTTypeDenoter)] -> Symbols -> Symbols
-insertProcedure name vals (map, b, c, d) =
-    (insert name vals map, b, c, d)
+insertProcedure name vals (map, b, c, d) = (insert name vals map, b, c, d)
 
 lookupProcedure :: String -> Symbols -> [(Bool, ASTTypeDenoter)]
-lookupProcedure name (map, _, _, _) = -- trace ( (show map) ++ " get " ++ (show name) )
-    (map ! name)
+lookupProcedure name (map, _, _, _) = (map ! name)
 
 clearVariables :: Symbols -> Symbols
 clearVariables (a, _, c, d) = (a, Map.empty, c, d)
