@@ -887,7 +887,7 @@ cgPassArgument _ [] [] = return ()
 cgPassArgument r (a:as) ((v, vt):ps) = do
     if v then
         -- pass by reference
-        cgVariableReference a r
+        cgVariableReference a vt r
     else do
         -- pass by value
         cgExpression a r
@@ -895,7 +895,7 @@ cgPassArgument r (a:as) ((v, vt):ps) = do
         cgPrepareAssignment vt (r, at)
     cgPassArgument (r+1) as ps
 
-cgVariableReference :: ASTExpression -> Reg -> Codegen ()
+cgVariableReference :: ASTExpression -> ASTTypeDenoter -> Reg -> Codegen ()
 cgVariableReference (
     (
         Nothing, (
@@ -904,14 +904,17 @@ cgVariableReference (
                 ), []
             ), []
         ), Nothing
-    ) dest = do
-    (varness, _, sl) <- getVariable var
+    ) t dest = do
+    (varness, vt, sl) <- getVariable var
+    if t /= vt then
+        error "var argument type mismatch"
+    else return ()
     case varness of
         True
             -> writeInstruction "load" [showReg dest, show sl]
         False
             -> writeInstruction "load_address" [showReg dest, show sl]
-cgVariableReference _ _ = error $ "var argument must be passed as varaible"
+cgVariableReference _ _ _ = error $ "var argument must be passed as varaible"
 
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
 cgProcedureStatement (p, paramList) = do
