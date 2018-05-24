@@ -402,8 +402,8 @@ cgPrepareForStatement (ident, fromExpr, toExpr) = do
     -- some unnecessary work here, but easier to implement
     r1 <- nextRegister
     r2 <- nextRegister
-    cgExpression fromExpr False r1
-    cgExpression toExpr False r2
+    cgExpression fromExpr r1
+    cgExpression toExpr r2
     t1 <- getRegType r1
     t2 <- getRegType r2
     (_, t3, _) <- getVariable ident
@@ -444,7 +444,7 @@ cgIfStatement' expr ifCg maybeElse = do
     elseLabel <- nextLabel
     afterLabel <- nextLabel
     r <- nextRegister
-    cgExpression expr False r
+    cgExpression expr r
     writeInstruction "branch_on_false" [showReg r, elseLabel]
     ifCg
     writeInstruction "branch_uncond" [afterLabel]
@@ -467,7 +467,7 @@ cgWhileStatement (expr, stmt) = do
     afterLabel <- nextLabel
     writeLabel beginLabel
     r <- nextRegister
-    cgExpression expr False r
+    cgExpression expr r
     writeInstruction "branch_on_false" [showReg r, afterLabel]
     cgStatement stmt
     writeInstruction "branch_uncond" [beginLabel]
@@ -485,7 +485,7 @@ cgPrepareAssignment vt (_, et)
 cgAssignmentStatement :: ASTAssignmentStatement -> Codegen ()
 cgAssignmentStatement (var, expr) = do
     r <- nextRegister
-    cgExpression expr False r
+    cgExpression expr r
     et <- getRegType r
     (vt, addr) <- cgVariableAccess var
     cgPrepareAssignment vt (r, et)
@@ -561,7 +561,7 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
     -- varness of an array variable is not considered
     (_, typ, start) <- getVariable ident
     r <- nextRegister
-    cgExpression expr False r
+    cgExpression expr r
     exprTyp <- getRegType r
     case (typ, exprTyp) of
         (
@@ -605,7 +605,7 @@ cgWriteStringStatement str = do
 
 cgWriteStatement :: ASTExpression -> Codegen ()
 cgWriteStatement expr = do
-    cgExpression expr False regZero
+    cgExpression expr regZero
     t <- getRegType regZero
     let name = case t of
             ArrayTypeDenoter _ -> error "cannot write array"
@@ -695,10 +695,10 @@ cgPrepareDivideBy dest r = do
             cgIntToReal r
         RealOp -> return ()
 
-cgExpression :: ASTExpression -> Bool -> Reg -> Codegen ()
-cgExpression (simpExpr, Nothing) False dest =
+cgExpression :: ASTExpression -> Reg -> Codegen ()
+cgExpression (simpExpr, Nothing) dest =
     cgSimpleExpression simpExpr dest
-cgExpression (e1, Just (relOp, e2)) False dest = do
+cgExpression (e1, Just (relOp, e2)) dest = do
     r1 <- nextRegister
     r2 <- nextRegister
     cgSimpleExpression e1 r1
@@ -717,22 +717,6 @@ cgExpression (e1, Just (relOp, e2)) False dest = do
     let cmd = a ++ "_" ++ b
     writeInstruction cmd [showReg dest, showReg r1, showReg r2]
     putRegType dest astTypeBool
-cgExpression (
-    (
-        Nothing, (
-            VariableAccessDenoter (
-                IdentifierDenoter var
-                ), []
-            ), []
-        ), Nothing
-    ) True dest = do
-    (varness, _, sl) <- getVariable var
-    case varness of
-        True
-            -> writeInstruction "load" [showReg dest, show sl]
-        False
-            -> writeInstruction "load_address" [showReg dest, show sl]
-cgExpression _ True _ = error ""
 
 
 cgMove :: Reg -> Reg -> Codegen ()
@@ -827,7 +811,7 @@ cgFactor factor dest =
                 Indirect reg
                     -> writeInstruction "load_indirect" [showReg dest, showReg reg]
             putRegType dest t
-        ExpressionDenoter expr -> cgExpression expr False dest -- expr in expr
+        ExpressionDenoter expr -> cgExpression expr dest -- expr in expr
         NegatedFactorDenoter factor -> do
             cgFactor factor dest
             t <- getRegType dest
@@ -900,9 +884,34 @@ cgPassArgument :: Reg -> [ASTExpression] -> [(Bool, ASTTypeDenoter)] -> Codegen 
 cgPassArgument _ (_:_) [] = error "num of arguments incorrect"
 cgPassArgument _ [] (_:_) = error "num of arguments incorrect"
 cgPassArgument _ [] [] = return ()
-cgPassArgument r (a:as) ((v, _):ps) = do
-    cgExpression a v r
+cgPassArgument r (a:as) ((v, vt):ps) = do
+    if v then
+        -- pass by reference
+        cgVariableReference a r
+    else do
+        -- pass by value
+        cgExpression a r
+        at <- getRegType r
+        cgPrepareAssignment vt (r, at)
     cgPassArgument (r+1) as ps
+
+cgVariableReference :: ASTExpression -> Reg -> Codegen ()
+cgVariableReference (
+    (
+        Nothing, (
+            VariableAccessDenoter (
+                IdentifierDenoter var
+                ), []
+            ), []
+        ), Nothing
+    ) dest = do
+    (varness, _, sl) <- getVariable var
+    case varness of
+        True
+            -> writeInstruction "load" [showReg dest, show sl]
+        False
+            -> writeInstruction "load_address" [showReg dest, show sl]
+cgVariableReference _ _ = error $ "var argument must be passed as varaible"
 
 cgProcedureStatement :: ASTProcedureStatement -> Codegen ()
 cgProcedureStatement (p, paramList) = do

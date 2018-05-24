@@ -44,6 +44,7 @@ label0:
     # term
     int_const r1, 1
     neg_int r1, r1
+    int_to_real r1, r1
     # SimpleExpression
     # term
     load r2, 2
@@ -145,6 +146,7 @@ label2:
     # term
     int_const r1, 1
     neg_int r1, r1
+    int_to_real r1, r1
     # SimpleExpression
     # term
     load r2, 2
