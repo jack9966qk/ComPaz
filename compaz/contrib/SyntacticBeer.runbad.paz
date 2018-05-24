@@ -1,0 +1,32 @@
+program SyntacticBeer;
+var
+    a: array[-100..100] of real;
+    i: integer;
+    x: real;
+
+procedure tail(var x: real; y: real);
+var
+    unused: array[1..10000] of integer; {no need to create this array}
+begin
+    if x < 12345678 then
+    begin
+        x := x + 1;
+        tail(x, y)  {tail recursion}
+    end
+end;
+
+begin
+    for i:= +100 downto -100 do
+        a[i] := i; 
+
+    for i:= 1 to 2 do
+    begin
+        x:= i;
+        tail(x, 0);
+        a[i]:= x
+    end;
+
+    write(i);
+    writeln;
+    write(a[i])
+end.

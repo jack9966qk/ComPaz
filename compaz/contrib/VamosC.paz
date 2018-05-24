@@ -1,0 +1,21 @@
+program VamosC;
+
+{ identify if the input year is bissextile }
+
+var x: integer;
+
+procedure p(y: integer);
+var quotient, remainder: integer;
+begin
+    quotient := y div 4;
+    remainder := y- quotient*y;
+    if remainder = 0 then
+        write('The year is bissextile')
+    else
+        write('The year is not bissextile')
+end;
+
+begin
+    read(x);
+    p(x)
+end.

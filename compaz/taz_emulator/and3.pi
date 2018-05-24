@@ -1,0 +1,50 @@
+    # program
+    call main
+    halt
+    # procedure declaration part
+    # variable declaration part
+    # variable declaration x
+main:
+    push_stack_frame 1
+    # compound statement
+    # SimpleExpression
+    # term
+    int_const r1, 40
+    store 0, r1
+    # if statement
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r2, 0
+    # SimpleExpression
+    # term
+    int_const r3, 10
+    cmp_gt_int r1, r2, r3
+    # SimpleExpression
+    # term
+    load r5, 0
+    # SimpleExpression
+    # term
+    int_const r6, 20
+    cmp_gt_int r4, r5, r6
+    and r1, r1, r4
+    # SimpleExpression
+    # term
+    load r8, 0
+    # SimpleExpression
+    # term
+    int_const r9, 50
+    cmp_gt_int r7, r8, r9
+    and r1, r1, r7
+    branch_on_false r1, label0
+    string_const r0, 'bad'
+    call_builtin print_string
+    branch_uncond label1
+label0:
+    string_const r0, 'good'
+    call_builtin print_string
+label1:
+    call_builtin print_newline
+    pop_stack_frame 1
+    return

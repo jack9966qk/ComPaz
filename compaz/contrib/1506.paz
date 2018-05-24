@@ -1,0 +1,22 @@
+program t1506;
+
+var k, m, n: integer;
+    v: array [0..10] of integer;
+
+begin
+    for n := 0 to 10 do
+    begin
+        m := 0;
+        for k := 0 to n do
+        begin
+            m := m + k;
+            v[n] := m;
+        end;
+    end;
+    
+    for n := 0 to 10 do
+    begin
+        write(v[n]);
+        writeln;
+    end;
+end.

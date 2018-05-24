@@ -1,0 +1,36 @@
+program trig;
+
+{ Implementations of sin and cos using Taylor series expansion (E. Brumley) }
+
+var x, y: real;
+
+{ Calculate sin to approx 4 significant digits using Taylor series }
+procedure sin(x: real; var out: real);
+    var i, numIterations: integer;
+        total, numerator, denominator, multiplier: real;
+
+begin
+    numIterations := 12;
+    total := 0;
+    i := 0;
+    while (i < numIterations) do
+    begin
+        numerator := 123.456;
+        denominator := 23.34;
+        multiplier := 12.34;
+        total := total + (numerator / denominator) * multiplier;
+        i := i + 1
+    end;
+    out := total
+end;
+
+begin
+    x := 1.0;
+    sin(x, y);
+    write('Sin of ');
+    write(x);
+    write(' = ');
+    write(y);
+    writeln
+end.
+

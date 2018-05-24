@@ -1,0 +1,71 @@
+program birthday;
+{This program is supposed to tell you what day of the week you were born on}
+{Only works for dates between 1900 and 2019, and may fail on some leap year dates}
+{Written by the team ALEX for COMP90045 Project test data}
+
+var date, month, year: integer;
+    decade, yearDigit, monthOffset, decadeOffset, leapyearoffset: integer;
+    months: array [1..12] of integer;
+    decades: array [0..11] of integer;
+    leapyearseven, leapyearsodd: array [0..9] of integer;
+    sum, quotient, remainder: integer;
+
+begin
+  write('Date of birth (eg. 23 for the 23rd): ');
+  read(date);
+  write('Month of birth (eg 10 for October): ');
+  read(month);
+  write('Year of birth (eg. 1990): ');
+  read(year);
+  {populating reference arrays}
+  months[1] := 6; months[2] := 2; months[3] := 2; months[4] := 5;
+  months[5] := 0; months[6] := 3; months[7] := 5; months[8] := 1;
+  months[9] := 4; months[10]:= 6; months[11]:= 2; months[12]:= 4;
+  decades[0] := 1; decades[1] := 6; decades[2] := 5; decades[3] := 3; 
+  decades[4] := 2; decades[5] := 0; decades[6] := 6; decades[7] := 4; 
+  decades[8] := 3; decades[9] := 1; decades[10]:= 0; decades[11]:= 5;
+  leapyearseven[0] := 0; leapyearseven[1] := 0; leapyearseven[2] := 0;
+  leapyearseven[3] := 0; leapyearseven[4] := 1; leapyearseven[5] := 1;
+  leapyearseven[6] := 1; leapyearseven[7] := 1; leapyearseven[8] := 2; 
+  leapyearseven[9] := 2;
+  leapyearsodd[0] := 0; leapyearsodd[1] := 0; leapyearsodd[2] := 1;
+  leapyearsodd[3] := 1; leapyearsodd[4] := 1; leapyearsodd[5] := 1;
+  leapyearsodd[6] := 2; leapyearsodd[7] := 2; leapyearsodd[8] := 2;
+  leapyearsodd[9] := 2;
+  {finding decade index}
+  decade := year div 10 - 190;
+  yeardigit := year - decade * 10 - 1900;
+  {referencing offset tables}
+  monthoffset := months[month];
+  decadeoffset := decades[decade];
+  if decade/2 = decade div 2 then
+    leapyearoffset := leapyearseven[yearDigit]
+  else
+    leapyearoffset := leapyearsodd[yearDigit];
+  {calculating the sum of dates and offsets}
+  sum := date+monthOffset+decadeoffset+yeardigit+leapyearoffset;
+  {finding sum % 7}
+  quotient := sum div 7;
+  remainder := sum - quotient * 7;
+  {printing result}
+  writeln;
+  write('You were born on a ');
+  if remainder = 1 then
+    write('Monday');
+  if remainder = 2 then
+    write('Tuesday');
+  if remainder = 3 then
+    write('Wednesday');
+  if remainder = 4 then
+    write('Thursday');
+  if remainder = 5 then
+    write('Friday');
+  if remainder = 6 then
+    write('Saturday');
+  if remainder = 7 then
+    write('Sunday');
+  writeln
+end.
+
+    
+

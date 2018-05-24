@@ -1,0 +1,112 @@
+    # program
+    call main
+    halt
+    # procedure declaration part
+    # procedure declaration
+sin:
+    # formal parameter section
+    # variable declaration x
+    # variable declaration out
+    # variable declaration part
+    # variable declaration i
+    # variable declaration total
+    push_stack_frame 8
+    store 0, r1
+    store 1, r2
+    # compound statement
+    # SimpleExpression
+    # term
+    int_const r1, 12
+    store 3, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    int_to_real r1, r1
+    store 4, r1
+    # SimpleExpression
+    # term
+    int_const r1, 0
+    store 2, r1
+    # while statement
+label0:
+    # SimpleExpression
+    # term
+    # SimpleExpression
+    # term
+    load r2, 2
+    # SimpleExpression
+    # term
+    load r3, 3
+    cmp_lt_int r1, r2, r3
+    branch_on_false r1, label1
+    # compound statement
+    # SimpleExpression
+    # term
+    real_const r1, 123.456
+    store 5, r1
+    # SimpleExpression
+    # term
+    real_const r1, 23.34
+    store 6, r1
+    # SimpleExpression
+    # term
+    real_const r1, 12.34
+    store 7, r1
+    # SimpleExpression
+    # term
+    load r1, 4
+    # term
+    # SimpleExpression
+    # term
+    load r2, 5
+    load r3, 6
+    div_real r2, r2, r3
+    load r4, 7
+    mul_real r2, r2, r4
+    add_real r1, r1, r2
+    store 4, r1
+    # SimpleExpression
+    # term
+    load r1, 2
+    # term
+    int_const r2, 1
+    add_int r1, r1, r2
+    store 2, r1
+    branch_uncond label0
+label1:
+    # SimpleExpression
+    # term
+    load r1, 4
+    load r2, 1
+    store_indirect r2, r1
+    pop_stack_frame 8
+    return
+    # variable declaration part
+    # variable declaration x
+main:
+    push_stack_frame 2
+    # compound statement
+    # SimpleExpression
+    # term
+    real_const r1, 1.0
+    store 0, r1
+    # SimpleExpression
+    # term
+    load r1, 0
+    load_address r2, 1
+    call sin
+    string_const r0, 'Sin of '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 0
+    call_builtin print_real
+    string_const r0, ' = '
+    call_builtin print_string
+    # SimpleExpression
+    # term
+    load r0, 1
+    call_builtin print_real
+    call_builtin print_newline
+    pop_stack_frame 2
+    return

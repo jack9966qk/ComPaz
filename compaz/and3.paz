@@ -1,0 +1,12 @@
+program and3;
+
+var x: integer;
+
+begin
+    x := 40;
+    if (x > 10) and (x > 20) and (x > 50) then
+        write('bad')
+    else
+        write('good');
+    writeln
+end.

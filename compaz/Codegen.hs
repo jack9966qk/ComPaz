@@ -135,10 +135,6 @@ nextSlot :: Codegen StackSlot
 nextSlot = Codegen (\(State r c s sl l)
     -> (sl + 1, State r c s (sl + 1) l))
 
--- currentSlot :: Codegen StackSlot
--- currentSlot = Codegen (\(State r c s sl l)
---     -> (sl, State r c s (sl) l))
-
 -- "allocate" a chunk of stackslots given size
 -- return the final stack slot position
 nextSlotMulti :: MemSize -> Codegen StackSlot
@@ -248,6 +244,7 @@ cgProgram (_, var, proc, com) = do
     writeComment "program"
     writeCode "    call main"
     writeCode "    halt"
+    cgPrepareAllProcedures proc
     cgProcedureDeclarationPart proc
     resetStack
     size <- cgVariableDeclarationPart var
@@ -308,17 +305,16 @@ cgFormalParameterList (s, ss) = do
             cgVariableDeclaration varness (ids, t)
     cgFoldr (+) 0 $ map cgProcessSection (s:ss)
 
+cgPrepareAllProcedures :: ASTProcedureDeclarationPart -> Codegen ()
+cgPrepareAllProcedures ps = cgJoin $ map cgPrepareProcedure ps
+
 cgProcedureDeclarationPart :: ASTProcedureDeclarationPart -> Codegen ()
 cgProcedureDeclarationPart ps = do
     writeComment "procedure declaration part"
     cgProcedureDeclarationPart' ps
 
 cgProcedureDeclarationPart' :: ASTProcedureDeclarationPart -> Codegen ()
-cgProcedureDeclarationPart' [] = return ()
-cgProcedureDeclarationPart' ps = do
-    let cgProcessAProcedure p = do
-        cgProcedureDeclaration p
-    cgJoin $ map cgProcessAProcedure ps
+cgProcedureDeclarationPart' ps = cgJoin $ map cgProcedureDeclaration ps
 
 bareParameters :: [ASTFormalParameterSection] -> [(Bool, ASTTypeDenoter)]
 bareParameters ss = map (\(x, _, d) -> (x, d)) ss
@@ -329,19 +325,33 @@ cgStoreArg r sl (_:xs) = do
     writeInstruction "store" [show sl, showReg r]
     cgStoreArg (r+1) (sl+1) xs
 
+cgPrepareProcedure :: ASTProcedureDeclaration -> Codegen ()
+cgPrepareProcedure (ident, maybeParam, _, _) = do
+    case maybeParam of
+        Just (s, ss) -> do
+            putProcedure ident (bareParameters (s:ss))
+        Nothing -> do
+            putProcedure ident []
+
 cgProcedureDeclaration :: ASTProcedureDeclaration -> Codegen ()
-cgProcedureDeclaration (ident, (Just (s, ss)), v, com) = do
+cgProcedureDeclaration (ident, maybeParam, v, com) = do
     writeComment "procedure declaration"
     resetVariables
     writeLabel ident
     resetStack
-    size  <- cgFormalParameterList (s, ss)
-    size2 <- cgVariableDeclarationPart v
-    cgPushStackFrame (size + size2)
-    putProcedure ident (bareParameters (s:ss))
-    cgStoreArg 1 0 (s:ss)
-    cgCompoundStatement com
-    cgPopStackFrame (size + size2)
+    case maybeParam of
+        Just (s, ss) -> do
+            size <- cgFormalParameterList (s, ss)
+            size2 <- cgVariableDeclarationPart v
+            cgPushStackFrame (size + size2)
+            cgStoreArg 1 0 (s:ss)
+            cgCompoundStatement com
+            cgPopStackFrame (size + size2)
+        Nothing -> do
+            size <- cgVariableDeclarationPart v
+            cgPushStackFrame size
+            cgCompoundStatement com
+            cgPopStackFrame size
     writeCode "    return"
 
 cgArrayType :: ASTIdentifier -> ASTArrayType -> Codegen (MemSize)
@@ -468,9 +478,9 @@ cgPrepareAssignment
     (OrdinaryTypeDenoter RealTypeIdentifier)
     (r, OrdinaryTypeDenoter IntegerTypeIdentifier) =
         cgIntToReal r
-cgPrepareAssignment vt (r, et)
+cgPrepareAssignment vt (_, et)
     | vt == et  = return ()
-    | otherwise = error ""
+    | otherwise = error $ "cannot assign " ++ (show et) ++ " to " ++ (show vt)
 
 cgAssignmentStatement :: ASTAssignmentStatement -> Codegen ()
 cgAssignmentStatement (var, expr) = do
@@ -489,7 +499,7 @@ cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
     t <- cgGetVariableType var
     let name = case t of
-            ArrayTypeDenoter _ -> error ""
+            ArrayTypeDenoter _ -> error "cannot read array"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "read_int"
             OrdinaryTypeDenoter RealTypeIdentifier -> "read_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "read_bool"
@@ -569,7 +579,9 @@ cgVariableAccess (IndexedVariableDenoter (ident, expr)) = do
                 writeInstruction "sub_offset" [showReg r1, showReg r1, showReg r]
                 -- return register that holds address to the array element
                 return (OrdinaryTypeDenoter t, Indirect r1)
-        _ -> error ""
+        (_, OrdinaryTypeDenoter IntegerTypeIdentifier)
+            -> error $ "indexing of variable " ++ ident ++ " that is not array"
+        (_, _) -> error $ "index of " ++ ident ++ " is not integer"
 cgVariableAccess (IdentifierDenoter ident) = do
     -- writeComment ident
     (varness, typ, slot) <- getVariable ident
@@ -596,7 +608,7 @@ cgWriteStatement expr = do
     cgExpression expr False regZero
     t <- getRegType regZero
     let name = case t of
-            ArrayTypeDenoter _ -> error ""
+            ArrayTypeDenoter _ -> error "cannot write array"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "print_int"
             OrdinaryTypeDenoter RealTypeIdentifier -> "print_real"
             OrdinaryTypeDenoter BooleanTypeIdentifier -> "print_bool"
@@ -644,7 +656,8 @@ cgPrepareArithmetic r1 r2 = do
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
             ) -> return IntOp
-        _   -> error ""
+        _ -> error $ "arithmetic/comparision cannot be done between " ++
+                (show t1) ++ " and " ++ (show t2)
 
 cgPrepareLogical :: Reg -> Reg -> Codegen ()
 cgPrepareLogical r1 r2 = do
@@ -655,7 +668,8 @@ cgPrepareLogical r1 r2 = do
             OrdinaryTypeDenoter BooleanTypeIdentifier,
             OrdinaryTypeDenoter BooleanTypeIdentifier
             ) -> return ()
-        _   -> error ""
+        _ -> error $ "logical operation cannot be done between " ++
+                (show t1) ++ " and " ++ (show t2)
 
 cgPrepareComparison :: Reg -> Reg -> Codegen (OperatorType)
 cgPrepareComparison = cgPrepareArithmetic
@@ -669,12 +683,17 @@ cgPrepareDiv r1 r2 = do
             OrdinaryTypeDenoter IntegerTypeIdentifier,
             OrdinaryTypeDenoter IntegerTypeIdentifier
             ) -> return ()
-        _   -> error ""
+        _ -> error $ "integer division cannot be done between " ++
+                (show t1) ++ " and " ++ (show t2)
 
 cgPrepareDivideBy :: Reg -> Reg -> Codegen ()
 cgPrepareDivideBy dest r = do
-    cgPrepareArithmetic dest r
-    return ()
+    t <- cgPrepareArithmetic dest r
+    case t of
+        IntOp -> do
+            cgIntToReal dest
+            cgIntToReal r
+        RealOp -> return ()
 
 cgExpression :: ASTExpression -> Bool -> Reg -> Codegen ()
 cgExpression (simpExpr, Nothing) False dest =
@@ -763,8 +782,8 @@ cgSimpleExpression' (Just PazParser.SignMinus, term, []) dest = do
     let cmd = case t of
             OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
             OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
-            _ -> error ""
-    writeInstruction cmd [showReg dest]
+            _ -> error "negation cannot be done with " ++ (show t)
+    writeInstruction cmd [showReg dest, showReg dest]
 cgSimpleExpression' (_, term, []) dest =
     cgTerm term dest
 cgSimpleExpression' (ms, t1, x:xs) dest = do
@@ -783,17 +802,17 @@ cgTerm term dest = do
     cgTerm' term dest
 
 cgTerm' :: ASTTerm -> Reg -> Codegen ()
-cgTerm' (factor, []) dest = cgFactor factor dest
-cgTerm' (f1, x:xs) dest = do
-    let (mulOp, f2) = x
-    cgFactor f1 dest
-    r <- nextRegister
-    cgFactor f2 r
-    case mulOp of
-            TimesDenoter -> cgArithmetic dest r "mul"
-            DivideByDenoter -> cgDivideBy dest r
-            DivDenoter -> cgDiv dest r
-            AndDenoter -> cgLogical dest r "and"
+cgTerm' (factor, modifiers) dest = do
+    cgFactor factor dest
+    let cgOne (op, f) = do
+        r <- nextRegister
+        cgFactor f r
+        case op of
+                TimesDenoter -> cgArithmetic dest r "mul"
+                DivideByDenoter -> cgDivideBy dest r
+                DivDenoter -> cgDiv dest r
+                AndDenoter -> cgLogical dest r "and"
+    cgJoin $ map cgOne modifiers
 
 cgFactor :: ASTFactor -> Reg -> Codegen ()
 cgFactor factor dest =
@@ -813,11 +832,10 @@ cgFactor factor dest =
         NegatedFactorDenoter factor -> do
             cgFactor factor dest
             t <- getRegType dest
-            let cmd = case t of
-                    OrdinaryTypeDenoter IntegerTypeIdentifier -> "neg_int"
-                    OrdinaryTypeDenoter RealTypeIdentifier -> "neg_real"
-                    _ -> error ""
-            writeInstruction cmd [showReg dest]
+            case t of
+                OrdinaryTypeDenoter BooleanTypeIdentifier
+                    -> writeInstruction "not" [showReg dest, showReg dest]
+                _ -> error $ "negation cannot be done with " ++ (show t)
             putRegType dest t
 
 cgUnsignedConstant :: ASTUnsignedConstant -> Reg -> Codegen ()

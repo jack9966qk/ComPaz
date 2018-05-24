@@ -1,0 +1,44 @@
+program bubsort;
+
+var
+    h: integer;
+    j: integer;
+    sorted: boolean;
+    v: integer;
+    x: array[1..6] of integer;
+
+begin
+    write('Provide 6 integers separated by space: ');
+    read(x[1]);
+    read(x[2]);
+    read(x[3]);
+    read(x[4]);
+    read(x[5]);
+    read(x[6]);
+    sorted := false;
+    while not sorted do
+    begin
+        sorted := true;
+        for h := 2 to 6 do
+        begin
+            v := x[h];
+            j := h - 1;
+            if v < x[j] then
+            begin
+                x[j + 1] := x[j];
+                x[j] := v;
+                sorted := false;
+
+            end;
+
+        end;
+
+    end;
+    h := 1;
+    for h := 1 to 6 do
+    begin
+        write(x[h]);
+        write('  ');
+
+    end
+end.

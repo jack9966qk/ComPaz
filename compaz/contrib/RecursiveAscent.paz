@@ -1,0 +1,42 @@
+program recursiveascent;
+
+var a: integer;
+    b: integer;
+    c: real;
+    d: real;
+
+procedure f(var x: integer; var y: integer; z: integer);
+var a: array [1..3] of integer;
+    n: integer;
+begin
+    a[x] := 12;
+    begin
+        for n := 2 to 3 do
+        begin
+            a[n] := n
+        end
+    end;
+    a[y] := 1;
+    a[z] := 32;
+    x := a[x];
+    y := a[y];
+    z := a[z];
+end;
+
+begin
+    a := 10;
+    b := 12;
+    c := 42;
+    while b > 3 do
+    begin
+        a := a - 1;
+        b := b - 1
+    end;
+    f(a, b, b-1);
+    write(a);
+    writeln;
+    write(b);
+    writeln;
+    write(c);
+    writeln
+end.

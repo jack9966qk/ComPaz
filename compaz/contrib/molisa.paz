@@ -1,0 +1,66 @@
+program factorial;
+
+var result, x, num, y, z, n: integer ;
+procedure print ( var x : integer );
+ begin
+  write('*');
+  write(x)
+ end;
+
+procedure fac ( num : integer; var out: integer);
+ var temp: integer;
+ begin
+  if num = 0 then
+  begin
+   out := 1 ;
+   write( '1' ) ;
+  end
+  else
+  begin
+   fac(num-1, temp);
+   out := num * temp;
+   print ( num );
+  end
+ end;
+
+begin
+    read(num);
+
+    if num<=20
+    then
+    begin
+      if num = 0
+      then
+        write ('num should be larger than 0.\n')
+      else
+      begin
+        fac(num, result);
+        write('=');
+        write(result);
+        writeln
+      end
+    end
+
+    else
+    begin
+      write('num should be less or equal than 20.\n')
+    end;
+
+    write('Test for downto and while');
+    writeln;
+    y := 0;
+    for z := 10 downto 0 do
+     y := y + 1;
+    write('y=');
+    write(y);
+    writeln;
+    while y>0
+    do
+    begin
+      write('y=');
+      write(y);
+      writeln;
+      y := y-1
+    end
+end
+.

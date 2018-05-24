@@ -1,0 +1,51 @@
+program insertionSort;
+
+{ Sort an array of integers using insertion sort method.}
+
+var
+    x, res: array[0..8] of integer;
+    i, j, temp: integer;
+
+begin
+    { dummy sentinel value }
+    res[0] := 0; { Nick fixed this, formerly x[0] := 0; }
+
+    write('Input 8 integers for an array: ');
+    read(x[1]);
+    read(x[2]);
+    read(x[3]);
+    read(x[4]);
+    read(x[5]);
+    read(x[6]);
+    read(x[7]);
+    read(x[8]);
+
+    j := 1;
+
+    for i := 1 to 8 do { Nick fixed this, formerly for i := i to 8 do }
+    begin
+        res[i] := x[i];
+
+        if i > 1 then
+        begin
+            j := i;
+            while (j > 1) and (res[j] < res[j-1]) do
+            begin
+                temp := res[j];
+                res[j] := res[j-1];
+                res[j-1] := temp;
+                j := j-1;
+            end
+        end
+    end;
+
+    { Finished sorting, now print result }
+    write('\nThe integers, sorted:\n\n');
+    for i := 1 to 8 do
+    begin
+        write(res[i]);
+        write('  ')
+    end;
+    writeln
+end.
+

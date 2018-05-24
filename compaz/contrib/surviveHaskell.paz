@@ -1,0 +1,52 @@
+program SurviveHaskell;
+
+{ Prompts for 5 numbers, puts them in an array }
+{ then swaps them and prints them back }
+
+var tmp: integer;
+    xi: integer;
+    arr: array [1..5] of integer;
+
+begin
+    write('Please enter 5 numbers: ');
+    read(arr[1]);
+    read(arr[2]);
+    read(arr[3]);
+    read(arr[4]);
+    read(arr[5]);
+
+    write('\nOriginal Array:\n\n');
+    for xi := 1 to 5 do
+    begin
+        write(arr[xi]);
+        write('  ')
+    end;
+
+    tmp := arr[1];
+    arr[1] := arr[4];
+    arr[4] := tmp;
+
+    tmp := arr[2];
+    arr[2] := arr[3];
+    arr[3] := tmp;
+
+    tmp := arr[1];
+    arr[1] := arr[5];
+    arr[5] := tmp;
+
+    tmp := arr[4];
+    arr[4] := arr[3];
+    arr[3] := tmp;
+    
+
+    { Finished swapping, will print the result }
+
+    write('\nShuffled Array:\n\n');
+    for xi := 1 to 5 do
+    begin
+        write(arr[xi]);
+        write('  ')
+    end;
+    writeln
+end.
+
