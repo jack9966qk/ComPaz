@@ -514,6 +514,7 @@ cgAssignmentStatement (var, expr) = do
         Indirect reg  -- happens when passing by reference or on arrays
             -> writeInstruction "store_indirect" [showReg reg, showReg r]
 
+-- generate code to read input from console
 cgReadStatement :: ASTVariableAccess -> Codegen ()
 cgReadStatement var = do
     t <- cgGetVariableType var
@@ -530,6 +531,7 @@ cgReadStatement var = do
         Indirect reg
             -> writeInstruction "store_indirect" [showReg reg, showReg regZero]
 
+-- helper function for looking up the type of a variable
 cgGetVariableType :: ASTVariableAccess -> Codegen (ASTTypeDenoter)
 cgGetVariableType (IdentifierDenoter ident) = do
     (_, t, _) <- getVariable ident
@@ -625,6 +627,7 @@ cgWriteStringStatement str = do
     cgCharacterString str regZero
     writeInstruction "call_builtin" ["print_string"]
 
+-- generate code to print to console
 cgWriteStatement :: ASTExpression -> Codegen ()
 cgWriteStatement expr = do
     cgExpression expr regZero
@@ -681,6 +684,7 @@ cgPrepareArithmetic r1 r2 = do
         _ -> error $ "arithmetic/comparision cannot be done between " ++
                 (show t1) ++ " and " ++ (show t2)
 
+-- check that logical expressions involve two booleans
 cgPrepareLogical :: Reg -> Reg -> Codegen ()
 cgPrepareLogical r1 r2 = do
     t1 <- getRegType r1
@@ -696,6 +700,7 @@ cgPrepareLogical r1 r2 = do
 cgPrepareComparison :: Reg -> Reg -> Codegen (OperatorType)
 cgPrepareComparison = cgPrepareArithmetic
 
+-- check that integer division is between two integers
 cgPrepareDiv :: Reg -> Reg -> Codegen ()
 cgPrepareDiv r1 r2 = do
     t1 <- getRegType r1
@@ -708,6 +713,7 @@ cgPrepareDiv r1 r2 = do
         _ -> error $ "integer division cannot be done between " ++
                 (show t1) ++ " and " ++ (show t2)
 
+-- generate code if necessary to cast an integer to a real 
 cgPrepareDivideBy :: Reg -> Reg -> Codegen ()
 cgPrepareDivideBy dest r = do
     t <- cgPrepareArithmetic dest r
@@ -717,6 +723,8 @@ cgPrepareDivideBy dest r = do
             cgIntToReal r
         RealOp -> return ()
 
+-- generate code for ASTExpressions depending on whether there are 1 or 2
+-- ASTSimpleExpressions.
 cgExpression :: ASTExpression -> Reg -> Codegen ()
 cgExpression (simpExpr, Nothing) dest =
     cgSimpleExpression simpExpr dest
@@ -740,6 +748,7 @@ cgExpression (e1, Just (relOp, e2)) dest = do
     writeInstruction cmd [showReg dest, showReg r1, showReg r2]
     putRegType dest astTypeBool
 
+-- decide b/w integer and real arithmetic. then write appropriate instruction
 cgArithmetic :: Reg -> Reg -> String -> Codegen ()
 cgArithmetic dest r a = do
     ot <- cgPrepareArithmetic dest r
@@ -756,12 +765,14 @@ cgLogical dest r cmd = do
     writeInstruction cmd [showReg dest, showReg dest, showReg r]
     putRegType dest astTypeBool
 
+-- generate code for division between integers
 cgDiv :: Reg -> Reg -> Codegen ()
 cgDiv dest r = do
     cgPrepareDiv dest r
     writeInstruction "div_int" [showReg dest, showReg dest, showReg r]
     putRegType dest astTypeInt
 
+-- generate code for division between reals
 cgDivideBy :: Reg -> Reg -> Codegen ()
 cgDivideBy dest r = do
     cgPrepareDivideBy dest r
@@ -773,6 +784,8 @@ cgSimpleExpression expr dest = do
     writeComment "SimpleExpression"
     cgSimpleExpression' expr dest
 
+-- generate code for ASTSimpleExpression by first generating code for the first
+-- ASTTerm. Negate it if necessary. Then generate code for modifiers.
 cgSimpleExpression' :: ASTSimpleExpression -> Reg -> Codegen ()
 cgSimpleExpression' (maybeSign, term, modifiers) dest = do
     cgTerm term dest
@@ -799,6 +812,8 @@ cgTerm term dest = do
     writeComment "term"
     cgTerm' term dest
 
+-- generate code for ASTTerm. Store 1st factor's value at dest and others from
+-- (dest + 1) onwards.
 cgTerm' :: ASTTerm -> Reg -> Codegen ()
 cgTerm' (factor, modifiers) dest = do
     cgFactor factor dest
@@ -923,7 +938,7 @@ cgVariableReference (
         error "var argument type mismatch"
     else return ()
     case varness of
-        True	-- already stored variable's address
+        True    -- already stored variable's address
             -> writeInstruction "load" [showReg dest, show sl]
         False
             -> writeInstruction "load_address" [showReg dest, show sl]
